@@ -1,0 +1,12 @@
+node_modules/
+/.claude/
+dist/
+build/
+.next/
+.expo/
+.expo-shared/
+*.log
+.env
+.env.local
+.DS_Store
+coverage/

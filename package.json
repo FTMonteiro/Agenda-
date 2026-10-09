@@ -1,0 +1,21 @@
+{
+  "name": "slotix",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:mobile\"",
+    "dev:api": "npm run dev --workspace apps/api",
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:mobile": "npm run start --workspace apps/mobile",
+    "dev:mobile:clear": "npm run start --workspace apps/mobile -- --clear",
+    "build:api": "npm run build --workspace apps/api",
+    "test:api": "npm run test --workspace apps/api"
+  },
+  "dependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

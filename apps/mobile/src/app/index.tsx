@@ -1,0 +1,469 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from "react-native";
+import { BlurView } from "expo-blur";
+import { Image } from "expo-image";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { BusinessDTO } from "@slotix/types";
+
+import { useIOSColors } from "@/components/ios";
+import { HeroSpaceCard, RowGroup, SectionTitle, SpaceRow, SpaceTile } from "@/components/SpaceCards";
+import { CATEGORIES } from "@/constants/categories";
+import { Typography } from "@/constants/theme";
+import { useFavorites } from "../contexts/FavoritesContext";
+import { useSelectedLocation } from "../contexts/LocationContext";
+import { listBusinesses } from "../services/businesses";
+import { useT } from "@/i18n";
+
+// A secção "Perto de ti" mostra os espaços até esta distância da pessoa.
+const NEARBY_RADIUS_KM = 25;
+
+// Cada categoria "salta" para o lugar, uma a seguir à outra, e fica a flutuar devagar.
+function PopIn({ index, children }: { index: number; children: React.ReactNode }) {
+  const enter = useRef(new Animated.Value(0)).current;
+  const float = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(enter, { toValue: 1, delay: 250 + index * 70, speed: 9, bounciness: 12, useNativeDriver: true }).start();
+
+    // Sobe e desce 3 pontos, cada uma no seu compasso, para a fila parecer viva.
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(float, { toValue: 1, duration: 1600 + (index % 3) * 250, delay: index * 120, useNativeDriver: true }),
+        Animated.timing(float, { toValue: 0, duration: 1600 + (index % 3) * 250, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [enter, float, index]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: enter,
+        transform: [
+          { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) },
+          { translateY: float.interpolate({ inputRange: [0, 1], outputRange: [0, -3] }) },
+        ],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+// Entrada em cascata: cada secção sobe e aparece um pouco depois da anterior.
+function Reveal({ index, children }: { index: number; children: React.ReactNode }) {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(progress, {
+      toValue: 1,
+      delay: 80 * index,
+      useNativeDriver: true,
+      speed: 10,
+      bounciness: 4,
+    }).start();
+  }, [index, progress]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: progress,
+        transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+export default function HomeScreen() {
+  const t = useT();
+  const router = useRouter();
+  const colors = useIOSColors();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { coordinates: myPosition, requestPosition } = useSelectedLocation();
+
+  const [featured, setFeatured] = useState<BusinessDTO[]>([]);
+  const [topRated, setTopRated] = useState<BusinessDTO[]>([]);
+  const [nearby, setNearby] = useState<BusinessDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [slide, setSlide] = useState(0);
+
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const heroScrollX = useRef(new Animated.Value(0)).current;
+  const heroRef = useRef<ScrollView>(null);
+  const heroDragging = useRef(false);
+
+  const heroWidth = Math.min(width - 32, 560);
+  const heroGap = 12;
+
+  const load = useCallback(async () => {
+    try {
+      // Com a posição da pessoa, cada espaço vem com a distância até lá.
+      const around = myPosition ? { latitude: myPosition.latitude, longitude: myPosition.longitude } : {};
+      const [featuredResult, topResult] = await Promise.all([
+        listBusinesses({ sortBy: "recommended", limit: 12, ...around }),
+        // "Mais bem avaliados" são os espaços que muitas pessoas puseram nos favoritos: só
+        // entram os que têm gostos de uma boa parte de quem usa a app (a API faz a conta).
+        listBusinesses({ sortBy: "mostFavorited", popular: true, limit: 12, ...around }),
+      ]);
+      setFeatured(featuredResult.data);
+      setTopRated(topResult.data);
+
+      // Pede a localização ao telemóvel (uma vez); a posição fica no contexto, e é com ela
+      // que os outros ecrãs calculam distâncias. Recusar não impede nada: só não há "perto".
+      const coordinates = myPosition ?? (await requestPosition());
+      if (coordinates) {
+        const nearbyResult = await listBusinesses({
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+          radiusKm: NEARBY_RADIUS_KM,
+          sortBy: "nearest",
+          limit: 12,
+        });
+        setNearby(nearbyResult.data);
+      }
+    } catch {
+      // Cada secção mostra o que conseguiu carregar; uma secção vazia simplesmente não aparece.
+    } finally {
+      setLoading(false);
+    }
+  }, [myPosition, requestPosition]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
+
+  const heroSpaces = useMemo(() => featured.slice(0, 5), [featured]);
+  // "Perto de ti" é sempre à volta da pessoa, seja qual for a província escolhida no topo;
+  // só entram espaços com o ponto marcado (sem ele não há distância para comparar).
+  const nearbySpaces = useMemo(() => nearby.filter((space) => space.distanceKm !== null), [nearby]);
+  const bestSpaces = useMemo(() => topRated.slice(0, 5), [topRated]);
+
+  // O carrossel avança sozinho a cada 5 s, exceto enquanto a pessoa o está a arrastar.
+  useEffect(() => {
+    if (heroSpaces.length < 2) return;
+
+    const timer = setInterval(() => {
+      if (heroDragging.current) return;
+      setSlide((current) => {
+        const next = (current + 1) % heroSpaces.length;
+        heroRef.current?.scrollTo({ x: next * (heroWidth + heroGap), animated: true });
+        return next;
+      });
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [heroSpaces.length, heroWidth]);
+
+  const onHeroEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    heroDragging.current = false;
+    setSlide(Math.round(event.nativeEvent.contentOffset.x / (heroWidth + heroGap)));
+  };
+
+  const openSpace = (space: BusinessDTO) =>
+    router.push({ pathname: "/space", params: { businessId: space.id } } as never);
+
+  // Barra de topo translúcida que aparece quando a página sobe, como no iOS.
+  const headerOpacity = scrollY.interpolate({ inputRange: [40, 90], outputRange: [0, 1], extrapolate: "clamp" });
+
+  return (
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.textSecondary} />}
+      >
+        {heroSpaces.length > 0 ? (
+          <Reveal index={2}>
+            <ScrollView
+              ref={heroRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={heroWidth + heroGap}
+              decelerationRate="fast"
+              contentContainerStyle={styles.heroList}
+              onScrollBeginDrag={() => (heroDragging.current = true)}
+              onMomentumScrollEnd={onHeroEnd}
+              onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: heroScrollX } } }], {
+                useNativeDriver: false,
+              })}
+              scrollEventThrottle={16}
+            >
+              {heroSpaces.map((space, index) => {
+                const step = heroWidth + heroGap;
+                // Os cartões laterais ficam ligeiramente mais pequenos: profundidade ao deslizar.
+                const scale = heroScrollX.interpolate({
+                  inputRange: [(index - 1) * step, index * step, (index + 1) * step],
+                  outputRange: [0.94, 1, 0.94],
+                  extrapolate: "clamp",
+                });
+                return (
+                  <Animated.View key={space.id} style={{ marginRight: heroGap, transform: [{ scale }] }}>
+                    <HeroSpaceCard
+                      space={space}
+                      width={heroWidth}
+                      height={heroWidth * 1.08}
+                      eyebrow={index === 0 ? t("Em destaque") : t("Recomendado")}
+                      favorite={isFavorite(space.id)}
+                      onFavorite={() => void toggleFavorite(space.id)}
+                      onPress={() => openSpace(space)}
+                    />
+                  </Animated.View>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.dots}>
+              {heroSpaces.map((space, index) => (
+                <View
+                  key={space.id}
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor: index === slide ? colors.text : colors.textTertiary,
+                      width: index === slide ? 18 : 7,
+                    },
+                  ]}
+                />
+              ))}
+            </View>
+          </Reveal>
+        ) : null}
+
+        <Reveal index={3}>
+          <View style={styles.section}>
+            <SectionTitle title={t("Categorias")} action={t("Ver tudo")} onAction={() => router.replace("/explore" as never)} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
+              {CATEGORIES.map((category, index) => (
+                <PopIn key={category.name} index={index}>
+                <Pressable
+                  onPress={() => router.replace({ pathname: "/explore", params: { category: category.name } } as never)}
+                  accessibilityRole="button"
+                >
+                  {({ pressed }) => (
+                    <View style={[styles.category, { transform: [{ scale: pressed ? 0.94 : 1 }] }]}>
+                      <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
+                        <Image source={category.image} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+                      </View>
+                      <Text style={[styles.categoryLabel, { color: colors.text }]} numberOfLines={2}>
+                        {t(category.name)}
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+                </PopIn>
+              ))}
+            </ScrollView>
+          </View>
+        </Reveal>
+
+        {!loading ? (
+          <Reveal index={4}>
+            <View style={styles.section}>
+              <SectionTitle
+                title={t("Perto de ti")}
+                action={nearbySpaces.length > 0 ? t("Ver tudo") : undefined}
+                onAction={() => router.replace("/explore" as never)}
+              />
+              {nearbySpaces.length > 0 ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tiles}>
+                  {nearbySpaces.map((space) => (
+                    <SpaceTile
+                      key={space.id}
+                      space={space}
+                      favorite={isFavorite(space.id)}
+                      onFavorite={() => void toggleFavorite(space.id)}
+                      onPress={() => openSpace(space)}
+                    />
+                  ))}
+                </ScrollView>
+              ) : (
+                <View style={[styles.nearbyNote, { backgroundColor: colors.card }]}>
+                  <Ionicons name={myPosition ? "location-outline" : "navigate-outline"} size={22} color={colors.textSecondary} />
+                  <Text style={[styles.nearbyNoteText, { color: colors.textSecondary }]}>
+                    {myPosition
+                      ? t("Ainda não há espaços a menos de {0} km de ti.", [NEARBY_RADIUS_KM])
+                      : t("Ativa a localização para veres os espaços perto de ti.")}
+                  </Text>
+                  {!myPosition ? (
+                    <Pressable onPress={() => void requestPosition()} hitSlop={8} accessibilityRole="button">
+                      {({ pressed }) => (
+                        <Text style={[styles.nearbyNoteAction, { color: colors.primary, opacity: pressed ? 0.4 : 1 }]}>{t("Ativar")}</Text>
+                      )}
+                    </Pressable>
+                  ) : null}
+                </View>
+              )}
+            </View>
+          </Reveal>
+        ) : null}
+
+        {bestSpaces.length > 0 ? (
+          <Reveal index={5}>
+            <View style={styles.section}>
+              <SectionTitle title={t("Mais bem avaliados")} />
+              <RowGroup>
+                {bestSpaces.map((space) => (
+                  <SpaceRow
+                    key={space.id}
+                    space={space}
+                    favorite={isFavorite(space.id)}
+                    onFavorite={() => void toggleFavorite(space.id)}
+                    onPress={() => openSpace(space)}
+                  />
+                ))}
+              </RowGroup>
+            </View>
+          </Reveal>
+        ) : null}
+
+        {!loading && heroSpaces.length === 0 && bestSpaces.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="storefront-outline" size={44} color={colors.textTertiary} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {t("Ainda sem espaços registados")}
+            </Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              {t("Volte mais tarde para descobrir novos espaços.")}
+            </Text>
+          </View>
+        ) : null}
+      </Animated.ScrollView>
+
+      {/* Barra translúcida no topo ao fazer scroll */}
+      <Animated.View pointerEvents="none" style={[styles.topBar, { height: insets.top + 44, opacity: headerOpacity }]}>
+        <BlurView intensity={80} tint="systemChromeMaterial" style={StyleSheet.absoluteFill} />
+        <View style={[styles.topBarBorder, { backgroundColor: colors.divider }]} />
+      </Animated.View>
+
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingBottom: 140,
+  },
+  heroList: {
+    paddingRight: 4,
+  },
+  dots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 12,
+  },
+  dot: {
+    height: 7,
+    borderRadius: 4,
+  },
+  section: {
+    marginTop: 32,
+  },
+  categories: {
+    gap: 18,
+    paddingRight: 16,
+  },
+  category: {
+    alignItems: "center",
+    gap: 8,
+    width: 84,
+  },
+  categoryIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    borderCurve: "continuous",
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  categoryLabel: {
+    ...Typography.footnote,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  tiles: {
+    gap: 14,
+    paddingRight: 16,
+  },
+  nearbyNote: {
+    borderRadius: 16,
+    borderCurve: "continuous",
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  nearbyNoteText: {
+    ...Typography.subheadline,
+    flex: 1,
+  },
+  nearbyNoteAction: {
+    ...Typography.subheadline,
+    fontWeight: "600",
+  },
+  empty: {
+    alignItems: "center",
+    paddingTop: 48,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  emptyTitle: {
+    ...Typography.title3,
+    textAlign: "center",
+    marginTop: 8,
+  },
+  emptyText: {
+    ...Typography.subheadline,
+    textAlign: "center",
+  },
+  topBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  topBarBorder: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: StyleSheet.hairlineWidth,
+  },
+  topBarTitle: {
+    ...Typography.headline,
+  },
+});

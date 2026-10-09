@@ -1,0 +1,1041 @@
+@import "tailwindcss";
+
+/* ============================================================
+   TAILWIND / TEMA
+============================================================ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: #009685;
+}
+
+/* ============================================================
+   VARIÁVEIS
+============================================================ */
+
+:root {
+  --background: #ffffff;
+  --foreground: #232323;
+
+  --card: #ffffff;
+
+  --border: #e5e7eb;
+
+  --muted: #6b7280;
+
+  --surface: #ffffff;
+  --surface-secondary: #f3f4f6;
+}
+
+html.light {
+  --background: #ffffff;
+  --foreground: #232323;
+
+  --card: #ffffff;
+
+  --border: #e5e7eb;
+
+  --muted: #6b7280;
+
+  --surface: #ffffff;
+  --surface-secondary: #f3f4f6;
+}
+
+html.dark {
+  --background: #0b1120;
+  --foreground: #f9fafb;
+
+  --card: #1f2937;
+
+  --border: #374151;
+
+  --muted: #9ca3af;
+
+  --surface: #111827;
+  --surface-secondary: #1f2937;
+}
+
+/* ============================================================
+   HTML / BODY
+============================================================ */
+
+html,
+body {
+  min-height: 100%;
+
+  margin: 0;
+  padding: 0;
+
+  background: var(--background);
+  color: var(--foreground);
+
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* ============================================================
+   BOX SIZING
+============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   BORDERS
+============================================================ */
+
+* {
+  border-color: var(--border);
+}
+
+/* ============================================================
+   INPUTS
+============================================================ */
+
+/*
+ * IMPORTANTE:
+ *
+ * Os inputs da página de cadastro devem continuar brancos,
+ * mesmo quando o sistema estiver em dark mode.
+ */
+
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* ============================================================
+   CADASTRO NEVRIX
+============================================================ */
+
+/*
+ * O cadastro possui duas superfícies independentes:
+ *
+ * .nevrx-register-dark
+ *    -> lado esquerdo preto
+ *
+ * .nevrx-register-light
+ *    -> lado direito branco
+ */
+
+.nevrx-register-dark {
+  background: #05070b !important;
+  color: #ffffff !important;
+}
+
+.nevrx-register-light {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+
+/* ============================================================
+   INPUTS DO CADASTRO
+============================================================ */
+
+.nevrx-register-light input,
+.nevrx-register-light textarea,
+.nevrx-register-light select {
+  background: #ffffff !important;
+
+  color: #111111 !important;
+
+  border-color: #e5e7eb !important;
+}
+
+.nevrx-register-light input::placeholder,
+.nevrx-register-light textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+.nevrx-register-light input:hover,
+.nevrx-register-light textarea:hover,
+.nevrx-register-light select:hover {
+  background: #ffffff !important;
+
+  border-color: #d1d5db !important;
+}
+
+.nevrx-register-light input:focus,
+.nevrx-register-light textarea:focus,
+.nevrx-register-light select:focus {
+  background: #ffffff !important;
+
+  color: #111111 !important;
+
+  border-color: #3b82f6 !important;
+
+  outline: none;
+}
+
+/* ============================================================
+   LOGO NEVRIX
+============================================================ */
+
+.nevrx-logo-box {
+  background: #05070b;
+
+  color: #3b82f6;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.12);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.nevrx-logo-box:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 14px 35px rgba(37, 99, 235, 0.15);
+}
+
+/* ============================================================
+   ANIMAÇÃO DO CADASTRO
+============================================================ */
+
+@keyframes nevrxRegisterFade {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(18px)
+      scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+.nevrx-register-animation {
+  animation:
+    nevrxRegisterFade
+    0.8s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+/* ============================================================
+   ANIMAÇÃO DO PAINEL ESQUERDO
+============================================================ */
+
+@keyframes nevrxHeroIn {
+  from {
+    opacity: 0;
+
+    transform: translateX(-25px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateX(0);
+  }
+}
+
+.nevrx-hero-animation {
+  animation:
+    nevrxHeroIn
+    0.9s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+/* ============================================================
+   ANIMAÇÃO DO FORMULÁRIO
+============================================================ */
+
+@keyframes nevrxFormIn {
+  from {
+    opacity: 0;
+
+    transform: translateX(25px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateX(0);
+  }
+}
+
+.nevrx-form-animation {
+  animation:
+    nevrxFormIn
+    0.8s
+    0.1s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+/* ============================================================
+   GLOW / LUZ
+============================================================ */
+
+@keyframes nevrxGlow {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+
+    opacity: 0.35;
+  }
+
+  50% {
+    transform:
+      translate3d(20px, -15px, 0)
+      scale(1.05);
+
+    opacity: 0.55;
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+
+    opacity: 0.35;
+  }
+}
+
+.nevrx-glow {
+  animation:
+    nevrxGlow
+    7s
+    ease-in-out
+    infinite;
+}
+
+/* ============================================================
+   GRID FUTURISTA
+============================================================ */
+
+.nevrx-grid {
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px
+    );
+
+  background-size: 52px 52px;
+}
+
+/* ============================================================
+   LINHA DE LUZ
+============================================================ */
+
+@keyframes nevrxLightLine {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+.nevrx-light-line {
+  animation:
+    nevrxLightLine
+    5s
+    ease-in-out
+    infinite;
+}
+
+/* ============================================================
+   BENEFÍCIOS
+============================================================ */
+
+.nevrx-benefit {
+  opacity: 0;
+
+  animation:
+    nevrxBenefitIn
+    0.7s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    forwards;
+}
+
+@keyframes nevrxBenefitIn {
+  from {
+    opacity: 0;
+
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+.nevrx-benefit:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.nevrx-benefit:nth-child(2) {
+  animation-delay: 0.35s;
+}
+
+.nevrx-benefit:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+/* ============================================================
+   ÍCONE DOS BENEFÍCIOS
+============================================================ */
+
+@keyframes nevrxIconFloat {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.nevrx-benefit:hover .nevrx-benefit-icon {
+  animation:
+    nevrxIconFloat
+    0.7s
+    ease-in-out
+    infinite;
+}
+
+/* ============================================================
+   SOCIAL BUTTONS
+============================================================ */
+
+.nevrx-social-button {
+  background: #ffffff !important;
+
+  color: #171717 !important;
+
+  border: 1px solid #e5e7eb !important;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.nevrx-social-button:hover {
+  background: #fafafa !important;
+
+  color: #111111 !important;
+
+  border-color: #d1d5db !important;
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.05);
+
+  transform: translateY(-1px);
+}
+
+.nevrx-social-button:active {
+  transform: scale(0.99);
+}
+
+/* ============================================================
+   GOOGLE
+============================================================ */
+
+.nevrx-google-icon {
+  display: flex;
+
+  width: 20px;
+  height: 20px;
+
+  flex-shrink: 0;
+
+  align-items: center;
+  justify-content: center;
+}
+
+.nevrx-google-text {
+  display: inline-block;
+
+  color: #111111 !important;
+
+  font-weight: 500;
+}
+
+/* ============================================================
+   APPLE
+============================================================ */
+
+.nevrx-apple-icon {
+  display: flex;
+
+  width: 20px;
+  height: 20px;
+
+  flex-shrink: 0;
+
+  align-items: center;
+  justify-content: center;
+
+  color: #111111 !important;
+}
+
+.nevrx-apple-text {
+  display: inline-block;
+
+  color: #111111 !important;
+
+  font-weight: 500;
+}
+
+/* ============================================================
+   BOTÃO PRINCIPAL
+============================================================ */
+
+.nevrx-primary-button {
+  background: #05070b !important;
+
+  color: #ffffff !important;
+
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
+}
+
+.nevrx-primary-button:hover {
+  background: #2563eb !important;
+
+  color: #ffffff !important;
+
+  box-shadow:
+    0 12px 30px rgba(37, 99, 235, 0.18);
+
+  transform: translateY(-1px);
+}
+
+.nevrx-primary-button:active {
+  transform: scale(0.99);
+}
+
+/* ============================================================
+   FADE UP
+============================================================ */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation:
+    fadeUp
+    0.7s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
+
+@keyframes iconPop {
+  0% {
+    transform:
+      translateY(0)
+      scale(1)
+      rotate(0deg);
+  }
+
+  30% {
+    transform:
+      translateY(-4px)
+      scale(1.22)
+      rotate(-10deg);
+  }
+
+  60% {
+    transform:
+      translateY(1px)
+      scale(1.05)
+      rotate(6deg);
+  }
+
+  100% {
+    transform:
+      translateY(0)
+      scale(1.14)
+      rotate(0deg);
+  }
+}
+
+.sidebar-link:hover .sidebar-icon {
+  animation:
+    iconPop
+    0.45s
+    ease-out
+    forwards;
+}
+
+/* ============================================================
+   LOGIN
+============================================================ */
+
+@keyframes loginFade {
+  from {
+    opacity: 0;
+
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+.login-fade {
+  animation:
+    loginFade
+    0.7s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.login-form {
+  animation:
+    loginFade
+    0.8s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.login-dashboard {
+  animation:
+    loginFade
+    0.9s
+    0.15s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+/* ============================================================
+   DARK MODE
+============================================================ */
+
+/*
+ * IMPORTANTE:
+ *
+ * Não vamos mais fazer:
+ *
+ * html.dark .bg-white {
+ *   background: ...
+ * }
+ *
+ * porque isso interfere diretamente na página de cadastro.
+ *
+ * As páginas novas devem controlar explicitamente as próprias
+ * superfícies.
+ */
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* ============================================================
+   DARK MODE — ELEMENTOS GENÉRICOS ANTIGOS
+============================================================ */
+
+html.dark .bg-gray-50 {
+  background-color: var(--surface-secondary);
+}
+
+html.dark .bg-gray-100 {
+  background-color: var(--surface-secondary);
+}
+
+html.dark .bg-gray-900,
+html.dark .bg-gray-950 {
+  background-color: #030712;
+}
+
+html.dark .text-gray-950,
+html.dark .text-gray-900 {
+  color: var(--foreground);
+}
+
+html.dark .text-gray-800,
+html.dark .text-gray-700 {
+  color: #e5e7eb;
+}
+
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
+  color: var(--muted);
+}
+
+html.dark .text-gray-400,
+html.dark .text-gray-300 {
+  color: #6b7280;
+}
+
+html.dark .border-gray-100,
+html.dark .border-gray-200 {
+  border-color: var(--border);
+}
+
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border);
+}
+
+html.dark .ring-gray-100,
+html.dark .ring-gray-200 {
+  --tw-ring-color: var(--border);
+}
+
+html.dark .hover\:bg-gray-50:hover {
+  background-color: var(--surface-secondary);
+}
+
+html.dark .hover\:bg-gray-100:hover {
+  background-color: var(--surface-secondary);
+}
+
+/* ============================================================
+   REDUÇÃO DE MOVIMENTO
+============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+
+    animation-iteration-count: 1 !important;
+
+    animation-delay: 0ms !important;
+
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 1023px) {
+  .nevrx-register-light {
+    min-height: 100vh;
+  }
+}
+
+ /* =========================================================
+   MODAIS — DARK MODE GLOBAL OBRIGATÓRIO
+   ========================================================= */
+
+/*
+ * Quando o tema estiver em dark:
+ * qualquer elemento fixed que seja usado como modal
+ * terá aparência escura.
+ *
+ * Isto permite que as modais antigas também acompanhem
+ * automaticamente o tema.
+ */
+
+html.dark .fixed.inset-0 {
+  color: var(--foreground);
+}
+
+/* =========================================================
+   FUNDO PRINCIPAL DAS MODAIS
+   ========================================================= */
+
+html.dark .fixed.inset-0 > div {
+  color: var(--foreground);
+}
+
+/*
+ * Qualquer superfície branca dentro de uma modal
+ * passa obrigatoriamente para dark.
+ */
+
+html.dark .fixed.inset-0 .bg-white {
+  background-color: var(--surface) !important;
+  color: var(--foreground) !important;
+}
+
+/* =========================================================
+   SUPERFÍCIES CINZENTAS
+   ========================================================= */
+
+html.dark .fixed.inset-0 .bg-gray-50 {
+  background-color: var(--surface-secondary) !important;
+}
+
+html.dark .fixed.inset-0 .bg-gray-100 {
+  background-color: var(--surface-secondary) !important;
+}
+
+html.dark .fixed.inset-0 .bg-gray-200 {
+  background-color: #374151 !important;
+}
+
+/* =========================================================
+   TEXTOS
+   ========================================================= */
+
+html.dark .fixed.inset-0 .text-gray-950,
+html.dark .fixed.inset-0 .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+html.dark .fixed.inset-0 .text-gray-800,
+html.dark .fixed.inset-0 .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+html.dark .fixed.inset-0 .text-gray-600,
+html.dark .fixed.inset-0 .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+html.dark .fixed.inset-0 .text-gray-400,
+html.dark .fixed.inset-0 .text-gray-300 {
+  color: #6b7280 !important;
+}
+
+/* =========================================================
+   BORDAS
+   ========================================================= */
+
+html.dark .fixed.inset-0 .border-gray-50,
+html.dark .fixed.inset-0 .border-gray-100,
+html.dark .fixed.inset-0 .border-gray-200,
+html.dark .fixed.inset-0 .border-gray-300 {
+  border-color: #374151 !important;
+}
+
+/* =========================================================
+   INPUTS / SELECTS / TEXTAREA
+   ========================================================= */
+
+html.dark .fixed.inset-0 input,
+html.dark .fixed.inset-0 select,
+html.dark .fixed.inset-0 textarea {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+html.dark .fixed.inset-0 input::placeholder,
+html.dark .fixed.inset-0 textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+html.dark .fixed.inset-0 input:focus,
+html.dark .fixed.inset-0 select:focus,
+html.dark .fixed.inset-0 textarea:focus {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+/* =========================================================
+   OPTIONS DOS SELECTS
+   ========================================================= */
+
+html.dark .fixed.inset-0 option {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+/* =========================================================
+   HOVER
+   ========================================================= */
+
+html.dark .fixed.inset-0 .hover\:bg-gray-50:hover {
+  background-color: #374151 !important;
+}
+
+html.dark .fixed.inset-0 .hover\:bg-gray-100:hover {
+  background-color: #374151 !important;
+}
+
+/* =========================================================
+   DIVIDERS
+   ========================================================= */
+
+html.dark .fixed.inset-0 .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .fixed.inset-0 .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #374151 !important;
+}
+
+/* =========================================================
+   SHADOW
+   ========================================================= */
+
+html.dark .fixed.inset-0 .shadow,
+html.dark .fixed.inset-0 .shadow-sm,
+html.dark .fixed.inset-0 .shadow-md,
+html.dark .fixed.inset-0 .shadow-lg,
+html.dark .fixed.inset-0 .shadow-xl,
+html.dark .fixed.inset-0 .shadow-2xl {
+  --tw-shadow-color: rgba(0, 0, 0, 0.45);
+}
+
+/* =========================================================
+   MODAIS COM ROLE="DIALOG"
+   ========================================================= */
+
+html.dark [role="dialog"] {
+  background-color: var(--surface) !important;
+  color: var(--foreground) !important;
+}
+
+html.dark [role="dialog"] .bg-white {
+  background-color: var(--surface) !important;
+  color: var(--foreground) !important;
+}
+
+html.dark [role="dialog"] .bg-gray-50,
+html.dark [role="dialog"] .bg-gray-100 {
+  background-color: var(--surface-secondary) !important;
+}
+
+html.dark [role="dialog"] input,
+html.dark [role="dialog"] select,
+html.dark [role="dialog"] textarea {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+
+
+
+/* =========================================================
+   BOTÕES DAS MODAIS — TEMA GLOBAL
+   ========================================================= */
+
+/*
+ * BOTÃO PRINCIPAL
+ *
+ * Todos os botões submit dentro de uma modal
+ * ficam verdes.
+ */
+
+html.dark .fixed.inset-0 button[type="submit"] {
+  background-color: #009685 !important;
+  color: #ffffff !important;
+  border-color: #009685 !important;
+}
+
+html.dark .fixed.inset-0 button[type="submit"]:hover {
+  background-color: #007f71 !important;
+  color: #ffffff !important;
+}
+
+html.dark .fixed.inset-0 button[type="submit"]:disabled {
+  background-color: #009685 !important;
+  color: #ffffff !important;
+  border-color: #009685 !important;
+  opacity: 0.5;
+}
+
+
+/*
+ * BOTÃO CANCELAR
+ *
+ * Para não depender do texto "Cancelar",
+ * usamos o botão type="button".
+ *
+ * Assim, dentro das modais:
+ *
+ * type="submit" -> verde
+ * type="button" -> branco
+ */
+
+html.dark .fixed.inset-0 button[type="button"] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e5e7eb !important;
+}
+
+html.dark .fixed.inset-0 button[type="button"]:hover {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+html.dark .fixed.inset-0 button[type="button"]:disabled {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e5e7eb !important;
+  opacity: 0.5;
+}
+
+
+/* =========================================================
+   EXCEÇÃO — BOTÃO FECHAR DA MODAL
+   =========================================================
+ *
+ * O X não deve virar um botão branco grande.
+ *
+ * Mantemos apenas o fundo discreto.
+ */
+
+html.dark .fixed.inset-0 button[aria-label="Fechar"],
+html.dark .fixed.inset-0 button[aria-label="Close"] {
+  background-color: transparent !important;
+  color: #9ca3af !important;
+  border-color: transparent !important;
+}
+
+html.dark .fixed.inset-0 button[aria-label="Fechar"]:hover,
+html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}

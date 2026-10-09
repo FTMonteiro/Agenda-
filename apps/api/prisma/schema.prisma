@@ -1,0 +1,333 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  OWNER
+  EMPLOYEE
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// Domain-only for now (see Payment model doc comment): no gateway is wired up yet, so
+// these just describe how the money moved, recorded after the fact.
+enum PaymentMethod {
+  CASH
+  CARD
+  MULTICAIXA
+  BANK_TRANSFER
+  OTHER
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role      @default(CUSTOMER)
+  avatarUrl    String?
+  // The last position the app reported for this user (GPS, with their permission). Kept
+  // so distances to businesses can be computed when no fresh reading is available.
+  latitude          Float?
+  longitude         Float?
+  locationUpdatedAt DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  ownedBusinesses     Business[]     @relation("BusinessOwner")
+  professionalProfile Professional?
+  appointments        Appointment[]  @relation("AppointmentClient")
+  refreshTokens       RefreshToken[]
+  favorites           Favorite[]
+  reviews             Review[]
+  notifications       Notification[]
+  payments            Payment[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Business {
+  id          String   @id @default(uuid())
+  ownerId     String
+  owner       User     @relation("BusinessOwner", fields: [ownerId], references: [id])
+  name        String
+  description String?
+  address     String?
+  phone       String?
+  category    String?
+  imageUrl    String?
+  latitude    Float?
+  longitude   Float?
+  // The region the pin falls in, as OpenStreetMap names it — stored when the owner marks
+  // the location, so searching by locality never has to geocode anything.
+  provincia   String?
+  municipio   String?
+  distrito    String?
+  bairro      String?
+  rua         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  professionals Professional[]
+  services      Service[]
+  appointments  Appointment[]
+  favorites     Favorite[]
+  reviews       Review[]
+  hours         BusinessHours[]
+  payments      Payment[]
+  galleryImages GalleryImage[]
+  walkInClients WalkInClient[]
+
+  @@index([ownerId])
+  @@index([provincia, bairro])
+  @@map("businesses")
+}
+
+// A customer the business knows offline (walk-in, phone booking) who has no account of
+// their own — as opposed to a User with role CUSTOMER, who books through the app.
+// Appointment/Payment can point at either one, never both (enforced in the service layer,
+// not the DB, same as the rest of this schema's cross-field invariants).
+model WalkInClient {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String
+  email      String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  appointments Appointment[]
+  payments     Payment[]
+
+  @@index([businessId])
+  @@map("walk_in_clients")
+}
+
+// url is the public URL served to clients; path is the object key inside the storage
+// bucket, kept so a delete can remove the underlying file, not just this row.
+model GalleryImage {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  url        String
+  path       String
+  position   Int      @default(0)
+  caption    String?
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, position])
+  @@map("gallery_images")
+}
+
+// One row per open window; a day with no rows is closed, and a day can have several
+// rows (e.g. 09:00-13:00 + 14:00-18:00) to represent a lunch break as a gap.
+model BusinessHours {
+  id          String   @id @default(uuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int // 0 = Sunday .. 6 = Saturday
+  startMinute Int // minutes since midnight, e.g. 540 = 09:00
+  endMinute   Int // e.g. 1080 = 18:00
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([businessId, dayOfWeek])
+  @@map("business_hours")
+}
+
+model Professional {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  bio        String?
+  specialty  String?
+  imageUrl   String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  appointments Appointment[]
+  blocks       ProfessionalBlock[]
+
+  @@index([businessId])
+  @@map("professionals")
+}
+
+// Time off / vacation / anything that takes a professional out of availability
+// without cancelling actual appointments (those are already excluded separately).
+model ProfessionalBlock {
+  id             String       @id @default(uuid())
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  startAt        DateTime
+  endAt          DateTime
+  reason         String?
+  createdAt      DateTime     @default(now())
+
+  @@index([professionalId, startAt])
+  @@map("professional_blocks")
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  duration    Int
+  category    String?
+  imageUrl    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  appointments Appointment[]
+
+  @@index([businessId])
+  @@map("services")
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  businessId      String
+  business        Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  // Exactly one of clientId/walkInClientId is set: clientId for a self-service booking
+  // by a logged-in CUSTOMER, walkInClientId for one entered by the business on behalf of
+  // someone without an account. Enforced in appointments.service, not the DB.
+  clientId        String?
+  client          User?             @relation("AppointmentClient", fields: [clientId], references: [id])
+  walkInClientId  String?
+  walkInClient    WalkInClient?     @relation(fields: [walkInClientId], references: [id])
+  serviceId       String
+  service         Service           @relation(fields: [serviceId], references: [id])
+  professionalId  String
+  professional    Professional      @relation(fields: [professionalId], references: [id])
+  scheduledAt     DateTime
+  durationMinutes Int
+  price           Decimal           @db.Decimal(10, 2)
+  status          AppointmentStatus @default(PENDING)
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  review  Review?
+  payment Payment?
+
+  @@index([businessId])
+  @@index([clientId])
+  @@index([walkInClientId])
+  @@index([professionalId, scheduledAt])
+  @@map("appointments")
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, businessId])
+  @@index([businessId])
+  @@map("favorites")
+}
+
+model Review {
+  id            String      @id @default(uuid())
+  businessId    String
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  clientId      String
+  client        User        @relation(fields: [clientId], references: [id])
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  rating        Int
+  comment       String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([businessId])
+  @@map("reviews")
+}
+
+// One payment per appointment (appointmentId is unique): a PENDING payment moves through
+// PAID/FAILED/REFUNDED as status transitions rather than spawning new rows, so the
+// original record — and its history — is never lost. amount/currency/userId/businessId
+// are always derived server-side from the appointment; never accept them from a client.
+model Payment {
+  id             String        @id @default(uuid())
+  appointmentId  String        @unique
+  appointment    Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  // Mirrors Appointment: exactly one of userId/walkInClientId is set, matching whichever
+  // one the paid appointment itself used.
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  walkInClientId String?
+  walkInClient   WalkInClient? @relation(fields: [walkInClientId], references: [id])
+  businessId     String
+  business       Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  amount         Decimal       @db.Decimal(10, 2)
+  currency       String        @default("AOA")
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([businessId])
+  @@map("payments")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
+}
