@@ -14,7 +14,8 @@
     "dev:mobile:clear": "npm run start --workspace apps/mobile -- --clear",
     "build:api": "npm run build --workspace apps/api",
     "test:api": "npm run test --workspace apps/api",
-    "start": "npm run start --workspace apps/api"
+    "start": "npm run start --workspace apps/api",
+    "build": "npm run build --workspace apps/api"
   },
   "dependencies": {
     "concurrently": "^10.0.5"
