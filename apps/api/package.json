@@ -10,7 +10,7 @@
     "postinstall": "prisma generate",
     "prebuild": "prisma generate",
     "build": "tsc -p tsconfig.json",
-    "start": "node --import tsx dist/app/server.js",
+    "start": "tsx src/app/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src tests",
