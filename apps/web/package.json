@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@slotix/types": "1.0.0",
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.31.0",
