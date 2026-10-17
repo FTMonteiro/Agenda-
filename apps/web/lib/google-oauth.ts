@@ -12,9 +12,9 @@ export interface GoogleOAuthPending {
 }
 
 // Must be identical in both steps and match a redirect URI authorised in Google Cloud.
-// NEXT_PUBLIC_APP_URL pins it in production; locally it follows the address in use.
+// NEXT_APP_URL pins it in production; locally it follows the address in use.
 export function googleRedirectUri(request: NextRequest): string {
-  const origin = (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, "");
+  const origin = (process.env.NEXT_APP_URL || request.nextUrl.origin).replace(/\/$/, "");
   return `${origin}/api/auth/google/callback`;
 }
 
