@@ -1093,7 +1093,7 @@ export default function PagamentosPage() {
           ESTILOS DE IMPRESSÃO
       ====================================================== */}
 
-      <style jsx global>{`
+      <style>{`
         @media print {
           body * {
             visibility: hidden !important;

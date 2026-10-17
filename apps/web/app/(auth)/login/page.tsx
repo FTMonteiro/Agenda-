@@ -575,7 +575,7 @@ export default function LoginPage() {
         </section>
       </div>
 
-      <style jsx global>{`
+      <style>{`
         @keyframes loginEnter {
           from {
             opacity: 0;
