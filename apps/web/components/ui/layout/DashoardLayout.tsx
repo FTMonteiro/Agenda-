@@ -22,7 +22,8 @@ export function DashboardLayout({
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)]">
+    // dashboard-shell: o modo escuro das páginas antigas (globals.css) aplica-se só aqui.
+    <div className="dashboard-shell flex min-h-screen bg-[var(--background)]">
       {/* MENU LATERAL */}
       <Sidebar
         open={isDrawerOpen}

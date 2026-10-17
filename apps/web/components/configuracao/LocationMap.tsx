@@ -123,9 +123,15 @@ export function LocationMap({ value, onChange }: LocationMapProps) {
         latitude: round(position.lat),
         longitude: round(position.lng),
       });
-    } catch (error) {
-      restorePin();
-      setMessage(error instanceof Error ? error.message : "Não foi possível obter a morada desse ponto.");
+    } catch {
+      // The point itself is right (it is where the pin is): keep it, so the app still
+      // shows the space exactly there. Only the address lines wait for another try.
+      latest.current.onChange({
+        ...latest.current.value,
+        latitude: round(position.lat),
+        longitude: round(position.lng),
+      });
+      setMessage("Ponto marcado. A morada não foi obtida agora: arraste o pin ou clique de novo para a atualizar.");
     } finally {
       setBusy(null);
     }

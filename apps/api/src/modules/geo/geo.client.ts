@@ -57,7 +57,41 @@ export async function nominatim<T>(path: string, params: Record<string, string>)
     const value = await result;
     remember(key, value);
     return value as T;
-  } catch {
+  } catch (error) {
+    // Why it failed (403 from a blocked address, 429, timeout) only shows up in the log.
+    console.error("Nominatim falhou:", error instanceof Error ? error.message : error);
+    throw new AppError("GEO_UNAVAILABLE", "O serviço de mapas não respondeu. Tente outra vez dentro de momentos.", 502);
+  }
+}
+
+// Photon (komoot) — the same OpenStreetMap data, served by another host. Used only when
+// Nominatim fails: the public Nominatim server often turns away requests from cloud
+// providers' addresses, which left the settings map with no search and no address.
+const PHOTON_URL = "https://photon.komoot.io";
+
+export interface PhotonFeature {
+  geometry: { coordinates: [number, number] };
+  properties: Record<string, string | undefined>;
+}
+
+export async function photon(path: "/api" | "/reverse", params: Record<string, string>): Promise<PhotonFeature[]> {
+  const key = `photon:${path}?${new URLSearchParams(params).toString()}`;
+  const cached = cache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.value as PhotonFeature[];
+
+  try {
+    const url = new URL(path, PHOTON_URL);
+    url.search = new URLSearchParams(params).toString();
+    const response = await fetch(url, {
+      headers: { "User-Agent": env.NOMINATIM_USER_AGENT },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!response.ok) throw new Error(`Photon respondeu ${response.status}`);
+    const features = ((await response.json()) as { features?: PhotonFeature[] }).features ?? [];
+    remember(key, features);
+    return features;
+  } catch (error) {
+    console.error("Photon falhou:", error instanceof Error ? error.message : error);
     throw new AppError("GEO_UNAVAILABLE", "O serviço de mapas não respondeu. Tente outra vez dentro de momentos.", 502);
   }
 }
