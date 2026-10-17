@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 1500));
 
     try {
-      const businessResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api/v1"}/businesses`, {
+      const businessResponse = await fetch(`${process.env.NEXT_API_URL ?? "http://localhost:3000/api/v1"}/businesses`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ name: company, category: businessCategory }),

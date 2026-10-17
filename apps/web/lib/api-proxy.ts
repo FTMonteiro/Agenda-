@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api/v1";
+const API_URL = process.env.NEXT_API_URL ?? "http://localhost:3000/api/v1";
 export const SESSION_COOKIE = "slotix_session";
 
 export interface SessionTokens {
