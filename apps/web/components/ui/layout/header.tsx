@@ -307,9 +307,11 @@ export function Header({
       .charAt(0)
       .toUpperCase();
 
+  // An owner is shown as their business: its logo wins over their own profile photo.
   const profileImage =
-    user?.avatar ||
-    user?.logo ||
+    (user?.role === "OWNER"
+      ? user?.logo || user?.avatar
+      : user?.avatar || user?.logo) ||
     null;
 
   function formatRole(

@@ -169,10 +169,18 @@ export async function PUT(request: Request) {
               rua: text(body.rua) || null,
             }
           : {}),
-        // Only a hosted image can be stored: the API has no upload for the business logo.
         ...(/^https?:\/\//.test(logo) ? { imageUrl: logo } : {}),
       }),
     );
+    // A logo just picked arrives as a data URL; the API stores the file and makes it the
+    // business's imageUrl.
+    if (logo.startsWith("data:image/")) {
+      const image = await (await fetch(logo)).blob();
+      const upload = new FormData();
+      upload.append("file", image, `logo.${image.type.split("/")[1] ?? "jpg"}`);
+
+      await apiCall<BusinessDTO>(`/businesses/${owner.businessId}/logo`, { method: "POST", body: upload });
+    }
     await apiCall(`/businesses/${owner.businessId}/hours`, jsonBody("PUT", { hours }));
 
     return Response.json(await businessPayload(owner.businessId));

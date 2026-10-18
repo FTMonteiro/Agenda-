@@ -4,6 +4,7 @@ import { usersRepository } from "../users/users.repository";
 import { AuthorizationError, NotFoundError, ValidationError } from "../../shared/errors";
 import { haversineDistanceKm } from "../../shared/utils/geo";
 import { compareNearest, compareRecommended, compareTopRated, weightedRating } from "../../shared/utils/ranking";
+import { uploadGalleryImage } from "../gallery/gallery.storage";
 import { businessesRepository } from "./businesses.repository";
 import type { CreateBusinessInput, ListBusinessesQuery, SetBusinessHoursInput, UpdateBusinessInput } from "./businesses.schema";
 
@@ -82,6 +83,8 @@ export async function getBusinessOrThrow(businessId: string) {
   if (!business) throw new NotFoundError("Negócio não encontrado.", "BUSINESS_NOT_FOUND");
   return business;
 }
+
+const LOGO_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export function assertBusinessOwner(business: { ownerId: string }, userId: string): void {
   if (business.ownerId !== userId) {
@@ -201,6 +204,21 @@ export const businessesService = {
     const business = await getBusinessOrThrow(id);
     assertBusinessOwner(business, ownerId);
     const updated = await businessesRepository.update(id, input);
+    return toBusinessDTO(updated);
+  },
+
+  // The logo picked in the dashboard's Configurações: stored like a gallery image, but it
+  // only becomes the business's imageUrl — it isn't added to the gallery.
+  async uploadLogo(id: string, ownerId: string, file: { buffer: Buffer; mimetype: string }): Promise<BusinessDTO> {
+    const business = await getBusinessOrThrow(id);
+    assertBusinessOwner(business, ownerId);
+
+    if (!LOGO_MIME_TYPES.has(file.mimetype)) {
+      throw new ValidationError("Formato de imagem não suportado (use JPEG, PNG ou WEBP).", "BUSINESS_LOGO_INVALID_FILE_TYPE");
+    }
+
+    const { url } = await uploadGalleryImage(id, file);
+    const updated = await businessesRepository.update(id, { imageUrl: url });
     return toBusinessDTO(updated);
   },
 

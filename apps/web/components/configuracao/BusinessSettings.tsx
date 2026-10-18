@@ -2,6 +2,7 @@
 
 import { ImagePlus } from "lucide-react";
 import { categoryExamples } from "@/lib/category-examples";
+import { shrinkImage } from "@/lib/shrink-image";
 import { CategoryPicker } from "./CategoryPicker";
 
 import { LocationMap } from "./LocationMap";
@@ -36,11 +37,15 @@ export function BusinessSettings({ business, setBusiness }: BusinessSettingsProp
     }));
   };
 
-  const handleLogo = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  // Reduced first, then kept as a data URL for the preview; saving uploads it (see
+  // /api/business), and from then on the logo is a hosted image.
+  const handleLogo = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = event.target.files?.[0];
+    event.target.value = "";
 
-    if (!file) return;
+    if (!picked) return;
 
+    const file = await shrinkImage(picked).catch(() => picked);
     const reader = new FileReader();
 
     reader.onload = () => {

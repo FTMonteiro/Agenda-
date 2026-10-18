@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { ValidationError } from "../../shared/errors";
 import { sendListSuccess, sendSuccess } from "../../shared/utils/apiResponse";
 import { withStoredLocation } from "../users/viewerLocation";
 import { businessesService } from "./businesses.service";
@@ -34,6 +35,15 @@ export const businessesController = {
 
   async update(req: Request<{ id: string }>, res: Response) {
     const business = await businessesService.update(req.params.id, req.user!.id, req.body as UpdateBusinessInput);
+    sendSuccess(res, business);
+  },
+
+  async uploadLogo(req: Request<{ id: string }>, res: Response) {
+    if (!req.file) {
+      throw new ValidationError("Nenhum ficheiro enviado (campo \"file\").", "BUSINESS_LOGO_FILE_REQUIRED");
+    }
+
+    const business = await businessesService.uploadLogo(req.params.id, req.user!.id, req.file);
     sendSuccess(res, business);
   },
 

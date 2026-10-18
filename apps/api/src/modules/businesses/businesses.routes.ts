@@ -1,4 +1,5 @@
 import { Router } from "express";
+import multer from "multer";
 import { authenticate, optionalAuthenticate } from "../../shared/middleware/authenticate";
 import { authorize } from "../../shared/middleware/authorize";
 import { validate, validateQuery } from "../../shared/middleware/validate";
@@ -6,6 +7,9 @@ import { businessesController } from "./businesses.controller";
 import { createBusinessSchema, getBusinessQuerySchema, listBusinessesQuerySchema, setBusinessHoursSchema, updateBusinessSchema } from "./businesses.schema";
 
 export const businessesRoutes = Router();
+
+// In memory, same as the gallery: the file goes straight on to Supabase Storage.
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Public, but a signed-in user without coordinates on the request gets distances from
 // their last saved position (see withStoredLocation).
@@ -20,5 +24,6 @@ businessesRoutes.get("/:id/hours", businessesController.getHours);
 // an OWNER (see businessesService.create) — gating it behind OWNER would be circular.
 businessesRoutes.post("/", authenticate, validate(createBusinessSchema), businessesController.create);
 businessesRoutes.patch("/:id", authenticate, authorize("OWNER"), validate(updateBusinessSchema), businessesController.update);
+businessesRoutes.post("/:id/logo", authenticate, authorize("OWNER"), upload.single("file"), businessesController.uploadLogo);
 businessesRoutes.put("/:id/hours", authenticate, authorize("OWNER"), validate(setBusinessHoursSchema), businessesController.setHours);
 businessesRoutes.delete("/:id", authenticate, authorize("OWNER"), businessesController.remove);
