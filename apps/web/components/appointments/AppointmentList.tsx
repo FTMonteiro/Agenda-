@@ -73,6 +73,10 @@ export function AppointmentList({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [confirmingId, setConfirmingId] = useState<string | null>(
+    null
+  );
+
   const [validationError, setValidationError] = useState("");
 
   const [loadingReceipt, setLoadingReceipt] = useState<string | null>(
@@ -668,7 +672,120 @@ export function AppointmentList({
     }
   }
 
-  /* 
+  /*
+     CONFIRMAR RÁPIDO
+
+     Confirma direto do card, sem abrir o menu
+     nem o modal de edição.
+   */
+
+  function isPendingStatus(
+    status: Appointment["status"]
+  ): boolean {
+    return ![
+      "confirmed",
+      "completed",
+      "cancelled",
+      "no_show",
+    ].includes(String(status ?? "").toLowerCase());
+  }
+
+  async function confirmAppointment(
+    appointment: AppointmentWithPayment
+  ) {
+    try {
+      setConfirmingId(appointment.id);
+
+      const response = await fetch(
+        `/api/appointments/${appointment.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            date: appointment.date,
+            time: appointment.time,
+            status: "confirmed",
+          }),
+        }
+      );
+
+      const text = await response.text();
+
+      let data: {
+        appointment?: AppointmentWithPayment;
+        error?: string;
+      } = {};
+
+      if (text.trim()) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error(
+            "A API retornou uma resposta inválida."
+          );
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Não foi possível confirmar o agendamento."
+        );
+      }
+
+      const savedAppointment =
+        data.appointment ?? {
+          ...appointment,
+          status: "confirmed" as Appointment["status"],
+        };
+
+      setAppointments((current) =>
+        current.map((item) =>
+          item.id === savedAppointment.id
+            ? savedAppointment
+            : item
+        )
+      );
+
+      window.dispatchEvent(
+        new Event("appointments:changed")
+      );
+
+      onEdit?.(savedAppointment);
+
+      notify({
+        kind: "updated",
+        title: "Agendamento confirmado",
+        description:
+          `${savedAppointment.client} — ` +
+          `${formatDate(
+            savedAppointment.date
+          )} às ${savedAppointment.time}`,
+      });
+
+      toast.success(
+        "Agendamento confirmado."
+      );
+    } catch (error) {
+      console.error(
+        "Erro ao confirmar:",
+        error
+      );
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erro ao confirmar agendamento."
+      );
+    } finally {
+      setConfirmingId(null);
+    }
+  }
+
+  /*
      STATUS
    */
 
@@ -953,9 +1070,37 @@ export function AppointmentList({
                       </div>
                     </div>
 
+                    {/* AÇÕES */}
+
+                    <div className="flex shrink-0 items-center gap-2">
+                    {canEdit &&
+                      isPendingStatus(
+                        appointment.status
+                      ) && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            confirmAppointment(
+                              appointment
+                            )
+                          }
+                          disabled={
+                            confirmingId ===
+                            appointment.id
+                          }
+                          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 lg:flex-none"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          {confirmingId ===
+                          appointment.id
+                            ? "Confirmando..."
+                            : "Confirmar"}
+                        </button>
+                      )}
+
                     {/* MENU */}
 
-                    <div className="relative shrink-0">
+                    <div className="relative ml-auto shrink-0">
                       <button
                         type="button"
                         onClick={() =>
@@ -1020,6 +1165,7 @@ export function AppointmentList({
                           </button>
                         </div>
                       )}
+                    </div>
                     </div>
                   </div>
                 </div>
