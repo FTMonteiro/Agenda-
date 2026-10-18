@@ -280,12 +280,13 @@ const SpaceScreen = () => {
     }, [businessId]),
   );
 
+  // A logo do espaço vem sempre primeiro, seguida das fotos da galeria.
   const photos = useMemo(() => {
-    if (gallery.length > 0) {
-      return [...gallery].sort((a, b) => a.position - b.position).map((image) => image.url);
-    }
+    const galleryPhotos = [...gallery].sort((a, b) => a.position - b.position).map((image) => image.url);
+    const fallback = galleryPhotos.length > 0 ? galleryPhotos : business?.imageUrl ? [business.imageUrl] : [];
+    const logo = business?.logoUrl;
 
-    return business?.imageUrl ? [business.imageUrl] : [];
+    return logo ? [logo, ...fallback.filter((url) => url !== logo)] : fallback;
   }, [gallery, business]);
 
   const handleReserve = () => {

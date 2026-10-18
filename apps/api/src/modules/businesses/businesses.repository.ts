@@ -169,6 +169,7 @@ export const businessesRepository = {
       phone?: string;
       category?: string;
       imageUrl?: string;
+      logoUrl?: string;
       latitude?: number;
       longitude?: number;
       provincia?: string | null;

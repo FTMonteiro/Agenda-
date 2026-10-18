@@ -250,8 +250,8 @@ export default function MapScreen() {
           // As informações do espaço tocado; o mapa continua a mexer-se por trás.
           <View style={[styles.card, styles.shadow, { backgroundColor: colors.card }]}>
             <View style={styles.cardHeader}>
-              {selected.imageUrl ? (
-                <Image source={{ uri: selected.imageUrl }} style={styles.logo} contentFit="cover" />
+              {selected.logoUrl || selected.imageUrl ? (
+                <Image source={{ uri: selected.logoUrl ?? selected.imageUrl ?? undefined }} style={styles.logo} contentFit="cover" />
               ) : (
                 <View style={[styles.logo, styles.logoEmpty, { backgroundColor: colors.input }]}>
                   <Ionicons name="storefront-outline" size={24} color={colors.textSecondary} />

@@ -89,7 +89,11 @@ model Business {
   address     String?
   phone       String?
   category    String?
+  // The gallery cover (what the app's lists show when there is no logo).
   imageUrl    String?
+  // The logo picked in the dashboard's Configurações. Separate from imageUrl so gallery
+  // changes never replace it.
+  logoUrl     String?
   latitude    Float?
   longitude   Float?
   // The region the pin falls in, as OpenStreetMap names it — stored when the owner marks

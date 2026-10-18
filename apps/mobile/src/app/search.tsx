@@ -136,8 +136,8 @@ function ResultRow({
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={business.name}>
       {({ pressed }) => (
         <View style={[styles.resultRow, pressed && { backgroundColor: colors.backgroundSelected }]}>
-          {business.imageUrl ? (
-            <Image source={{ uri: business.imageUrl }} style={styles.thumbnail} />
+          {business.logoUrl || business.imageUrl ? (
+            <Image source={{ uri: business.logoUrl ?? business.imageUrl ?? undefined }} style={styles.thumbnail} />
           ) : (
             <View style={[styles.thumbnail, styles.thumbnailEmpty, { backgroundColor: colors.input }]}>
               <Ionicons name="storefront-outline" size={22} color={colors.textSecondary} />

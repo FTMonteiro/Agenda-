@@ -50,6 +50,7 @@ export const businessSchema = registry.register(
     phone: z.string().nullable(),
     category: z.string().nullable(),
     imageUrl: z.string().nullable(),
+    logoUrl: z.string().nullable().openapi({ description: "Logo escolhida nas Configurações do painel." }),
     latitude: z.number().nullable(),
     longitude: z.number().nullable(),
     provincia: z.string().nullable().openapi({ description: "Região do ponto, segundo o OpenStreetMap." }),

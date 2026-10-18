@@ -72,7 +72,7 @@ async function businessPayload(businessId: string) {
       rua: business.rua ?? "",
       latitude: business.latitude,
       longitude: business.longitude,
-      logo: business.imageUrl ?? "",
+      logo: business.logoUrl ?? "",
       ...hoursForm,
       createdAt: business.createdAt,
       updatedAt: business.updatedAt,
@@ -169,12 +169,12 @@ export async function PUT(request: Request) {
               rua: text(body.rua) || null,
             }
           : {}),
-        ...(/^https?:\/\//.test(logo) ? { imageUrl: logo } : {}),
       }),
     );
     // A logo just picked arrives as a data URL; the API stores the file and makes it the
-    // business's imageUrl.
-    if (logo.startsWith("data:image/")) {
+    // business's logoUrl. One already saved comes back as is and isn't sent again.
+    const previous = await apiCall<BusinessDTO>(`/businesses/${owner.businessId}`);
+    if (logo.startsWith("data:image/") && logo !== previous.logoUrl) {
       const image = await (await fetch(logo)).blob();
       const upload = new FormData();
       upload.append("file", image, `logo.${image.type.split("/")[1] ?? "jpg"}`);

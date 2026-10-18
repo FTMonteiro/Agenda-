@@ -145,8 +145,8 @@ const SpaceCard = memo(({ space, favorite, onToggleFavorite, onPress }: SpaceCar
     >
       <Pressable onPressIn={animatePressIn} onPressOut={animatePressOut} onPress={handlePress}>
         <View style={styles.imageContainer}>
-          {space.imageUrl ? (
-            <Image source={{ uri: space.imageUrl }} style={styles.cardImage} contentFit="cover" transition={250} />
+          {space.logoUrl || space.imageUrl ? (
+            <Image source={{ uri: space.logoUrl ?? space.imageUrl ?? undefined }} style={styles.cardImage} contentFit="cover" transition={250} />
           ) : (
             <View style={[styles.cardImage, styles.imageFallback]}>
               <Ionicons name="storefront-outline" size={26} color={tc.fg("rgba(0,0,0,0.20)")} />

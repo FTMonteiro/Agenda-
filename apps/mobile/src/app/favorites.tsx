@@ -57,9 +57,9 @@ function FavoriteCard({
     >
       <Animated.View style={{ width, transform: [{ scale }] }}>
         <View style={[styles.cardImage, { height: width * 1.15, backgroundColor: colors.backgroundSelected }]}>
-          {space.imageUrl ? (
+          {space.logoUrl || space.imageUrl ? (
             <Image
-              source={{ uri: space.imageUrl }}
+              source={{ uri: space.logoUrl ?? space.imageUrl ?? undefined }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
               transition={250}

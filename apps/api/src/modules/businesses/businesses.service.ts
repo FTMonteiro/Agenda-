@@ -32,6 +32,7 @@ export function toBusinessDTO(
     phone: string | null;
     category: string | null;
     imageUrl: string | null;
+    logoUrl: string | null;
     latitude: number | null;
     longitude: number | null;
     provincia: string | null;
@@ -62,6 +63,7 @@ export function toBusinessDTO(
     phone: business.phone,
     category: business.category,
     imageUrl: business.imageUrl,
+    logoUrl: business.logoUrl,
     latitude: business.latitude,
     longitude: business.longitude,
     provincia: business.provincia,
@@ -214,7 +216,8 @@ export const businessesService = {
   },
 
   // The logo picked in the dashboard's Configurações: stored like a gallery image, but it
-  // only becomes the business's imageUrl — it isn't added to the gallery.
+  // only becomes the business's logoUrl — it isn't added to the gallery, and gallery
+  // changes (which move imageUrl) never touch it.
   async uploadLogo(id: string, ownerId: string, file: { buffer: Buffer; mimetype: string }): Promise<BusinessDTO> {
     const business = await getBusinessOrThrow(id);
     assertBusinessOwner(business, ownerId);
@@ -224,7 +227,7 @@ export const businessesService = {
     }
 
     const { url } = await uploadGalleryImage(id, file);
-    const updated = await businessesRepository.update(id, { imageUrl: url });
+    const updated = await businessesRepository.update(id, { logoUrl: url });
     return toBusinessDTO(updated);
   },
 

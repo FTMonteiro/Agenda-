@@ -36,7 +36,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     const bizResponse = await apiProxyFetch("/businesses/mine");
     const bizJson = await bizResponse.json();
     businessId = bizJson.success ? (bizJson.data[0]?.id ?? null) : null;
-    logo = bizJson.success ? (bizJson.data[0]?.imageUrl ?? null) : null;
+    logo = bizJson.success ? (bizJson.data[0]?.logoUrl ?? null) : null;
   } else {
     const profResponse = await apiProxyFetch("/professionals/me");
     const profJson = await profResponse.json();

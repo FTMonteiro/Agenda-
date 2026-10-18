@@ -28,8 +28,8 @@ function SpaceImage({ space, size }: { space: BusinessDTO; size: number }) {
   const colors = useIOSColors();
   return (
     <View style={[styles.image, { width: size, height: size, backgroundColor: colors.backgroundSelected }]}>
-      {space.imageUrl ? (
-        <Image source={{ uri: space.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+      {space.logoUrl || space.imageUrl ? (
+        <Image source={{ uri: space.logoUrl ?? space.imageUrl ?? undefined }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
       ) : (
         <Ionicons name="storefront-outline" size={size * 0.36} color={colors.textTertiary} />
       )}

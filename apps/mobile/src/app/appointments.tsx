@@ -265,8 +265,8 @@ function DetailsSheet({
             {({ pressed }) => (
               <View style={[styles.spaceRow, { backgroundColor: pressed ? colors.backgroundSelected : colors.card }]}>
                 <View style={[styles.spaceImage, { backgroundColor: colors.input }]}>
-                  {item.business?.imageUrl ? (
-                    <Image source={{ uri: item.business.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                  {item.business?.logoUrl || item.business?.imageUrl ? (
+                    <Image source={{ uri: item.business.logoUrl ?? item.business.imageUrl ?? undefined }} style={StyleSheet.absoluteFill} contentFit="cover" />
                   ) : (
                     <Ionicons name="storefront-outline" size={22} color={colors.textSecondary} />
                   )}

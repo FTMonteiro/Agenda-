@@ -79,7 +79,10 @@ export interface BusinessDTO {
   address: string | null;
   phone: string | null;
   category: string | null;
+  // The gallery cover.
   imageUrl: string | null;
+  // The logo set in the dashboard; apps show it ahead of imageUrl.
+  logoUrl: string | null;
   latitude: number | null;
   longitude: number | null;
   // The region the pin falls in, as OpenStreetMap names it. All null until the owner
