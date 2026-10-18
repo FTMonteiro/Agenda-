@@ -24,6 +24,8 @@ import {
   CheckCircle2,
   Receipt,
   ExternalLink,
+  UserX,
+  XCircle,
 } from "lucide-react";
 
 /*TYPES*/
@@ -44,6 +46,32 @@ type AppointmentWithPayment = Appointment & {
   paymentData?: {
     receiptUrl?: string | null;
   } | null;
+};
+
+type QuickStatus =
+  | "confirmed"
+  | "cancelled"
+  | "no_show";
+
+const QUICK_STATUS_TEXT: Record<
+  QuickStatus,
+  { title: string; done: string; error: string }
+> = {
+  confirmed: {
+    title: "Agendamento confirmado",
+    done: "Agendamento confirmado.",
+    error: "Não foi possível confirmar o agendamento.",
+  },
+  cancelled: {
+    title: "Agendamento cancelado",
+    done: "Agendamento cancelado.",
+    error: "Não foi possível cancelar o agendamento.",
+  },
+  no_show: {
+    title: "Cliente não compareceu",
+    done: "Marcado como não compareceu.",
+    error: "Não foi possível marcar a falta.",
+  },
 };
 
 /*COMPONENT*/
@@ -73,9 +101,10 @@ export function AppointmentList({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [confirmingId, setConfirmingId] = useState<string | null>(
-    null
-  );
+  const [changingStatus, setChangingStatus] = useState<{
+    id: string;
+    status: QuickStatus;
+  } | null>(null);
 
   const [validationError, setValidationError] = useState("");
 
@@ -673,10 +702,10 @@ export function AppointmentList({
   }
 
   /*
-     CONFIRMAR RÁPIDO
+     MUDAR STATUS RÁPIDO
 
-     Confirma direto do card, sem abrir o menu
-     nem o modal de edição.
+     Confirmar, cancelar ou marcar falta direto
+     do card ou dos detalhes, sem abrir o editar.
    */
 
   function isPendingStatus(
@@ -690,11 +719,34 @@ export function AppointmentList({
     ].includes(String(status ?? "").toLowerCase());
   }
 
-  async function confirmAppointment(
-    appointment: AppointmentWithPayment
+  function isOpenStatus(
+    status: Appointment["status"]
+  ): boolean {
+    return ["", "pending", "confirmed"].includes(
+      String(status ?? "").toLowerCase()
+    );
+  }
+
+  async function changeStatus(
+    appointment: AppointmentWithPayment,
+    status: QuickStatus
   ) {
+    if (
+      status === "cancelled" &&
+      !window.confirm(
+        `Cancelar o agendamento de ${appointment.client}?`
+      )
+    ) {
+      return;
+    }
+
+    const messages = QUICK_STATUS_TEXT[status];
+
     try {
-      setConfirmingId(appointment.id);
+      setChangingStatus({
+        id: appointment.id,
+        status,
+      });
 
       const response = await fetch(
         `/api/appointments/${appointment.id}`,
@@ -707,7 +759,7 @@ export function AppointmentList({
           body: JSON.stringify({
             date: appointment.date,
             time: appointment.time,
-            status: "confirmed",
+            status,
           }),
         }
       );
@@ -731,15 +783,14 @@ export function AppointmentList({
 
       if (!response.ok) {
         throw new Error(
-          data.error ??
-            "Não foi possível confirmar o agendamento."
+          data.error ?? messages.error
         );
       }
 
       const savedAppointment =
         data.appointment ?? {
           ...appointment,
-          status: "confirmed" as Appointment["status"],
+          status: status as Appointment["status"],
         };
 
       setAppointments((current) =>
@@ -750,6 +801,12 @@ export function AppointmentList({
         )
       );
 
+      setSelectedAppointment((current) =>
+        current?.id === savedAppointment.id
+          ? savedAppointment
+          : current
+      );
+
       window.dispatchEvent(
         new Event("appointments:changed")
       );
@@ -758,7 +815,7 @@ export function AppointmentList({
 
       notify({
         kind: "updated",
-        title: "Agendamento confirmado",
+        title: messages.title,
         description:
           `${savedAppointment.client} — ` +
           `${formatDate(
@@ -766,22 +823,20 @@ export function AppointmentList({
           )} às ${savedAppointment.time}`,
       });
 
-      toast.success(
-        "Agendamento confirmado."
-      );
+      toast.success(messages.done);
     } catch (error) {
       console.error(
-        "Erro ao confirmar:",
+        "Erro ao mudar status:",
         error
       );
 
       toast.error(
         error instanceof Error
           ? error.message
-          : "Erro ao confirmar agendamento."
+          : messages.error
       );
     } finally {
-      setConfirmingId(null);
+      setChangingStatus(null);
     }
   }
 
@@ -997,7 +1052,27 @@ export function AppointmentList({
                   className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-gray-200 hover:shadow-md sm:p-5"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0 flex-1">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() =>
+                        setSelectedAppointment(
+                          appointment
+                        )
+                      }
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter" ||
+                          event.key === " "
+                        ) {
+                          event.preventDefault();
+                          setSelectedAppointment(
+                            appointment
+                          );
+                        }
+                      }}
+                      className="min-w-0 flex-1 cursor-pointer"
+                    >
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="truncate text-base font-semibold text-gray-950">
                           {appointment.client}
@@ -1080,18 +1155,19 @@ export function AppointmentList({
                         <button
                           type="button"
                           onClick={() =>
-                            confirmAppointment(
-                              appointment
+                            changeStatus(
+                              appointment,
+                              "confirmed"
                             )
                           }
                           disabled={
-                            confirmingId ===
+                            changingStatus?.id ===
                             appointment.id
                           }
                           className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 lg:flex-none"
                         >
                           <CheckCircle2 className="h-4 w-4" />
-                          {confirmingId ===
+                          {changingStatus?.id ===
                           appointment.id
                             ? "Confirmando..."
                             : "Confirmar"}
@@ -1416,6 +1492,104 @@ export function AppointmentList({
               </div>
             </div>
 
+            {/* STATUS */}
+
+            {canEditAppointment(
+              selectedAppointment
+            ) &&
+              isOpenStatus(
+                selectedAppointment.status
+              ) && (
+                <div className="shrink-0 border-t border-gray-100 px-6 py-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Status:{" "}
+                    <span className="text-gray-700">
+                      {getStatusLabel(
+                        selectedAppointment.status
+                      )}
+                    </span>
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {isPendingStatus(
+                      selectedAppointment.status
+                    ) && (
+                      <StatusButton
+                        label="Confirmar"
+                        busyLabel="Confirmando..."
+                        icon={
+                          <CheckCircle2 className="h-4 w-4" />
+                        }
+                        className="bg-blue-600 text-white hover:bg-blue-700"
+                        busy={
+                          changingStatus?.id ===
+                            selectedAppointment.id &&
+                          changingStatus.status ===
+                            "confirmed"
+                        }
+                        disabled={
+                          changingStatus !== null
+                        }
+                        onClick={() =>
+                          changeStatus(
+                            selectedAppointment,
+                            "confirmed"
+                          )
+                        }
+                      />
+                    )}
+
+                    <StatusButton
+                      label="Não compareceu"
+                      busyLabel="Salvando..."
+                      icon={
+                        <UserX className="h-4 w-4" />
+                      }
+                      className="border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      busy={
+                        changingStatus?.id ===
+                          selectedAppointment.id &&
+                        changingStatus.status ===
+                          "no_show"
+                      }
+                      disabled={
+                        changingStatus !== null
+                      }
+                      onClick={() =>
+                        changeStatus(
+                          selectedAppointment,
+                          "no_show"
+                        )
+                      }
+                    />
+
+                    <StatusButton
+                      label="Cancelar"
+                      busyLabel="Cancelando..."
+                      icon={
+                        <XCircle className="h-4 w-4" />
+                      }
+                      className="border border-red-200 bg-white text-red-600 hover:bg-red-50"
+                      busy={
+                        changingStatus?.id ===
+                          selectedAppointment.id &&
+                        changingStatus.status ===
+                          "cancelled"
+                      }
+                      disabled={
+                        changingStatus !== null
+                      }
+                      onClick={() =>
+                        changeStatus(
+                          selectedAppointment,
+                          "cancelled"
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
             {/* RODAPÉ */}
 
             <div className="shrink-0 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
@@ -1600,76 +1774,6 @@ export function AppointmentList({
                       );
                     }}
                   />
-                </div>
-
-                {/* STATUS */}
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-800">
-                    Status
-                  </label>
-
-                  <select
-                    value={
-                      editingAppointment.status
-                    }
-                    onChange={(event) => {
-                      const newStatus =
-                        event.target
-                          .value as Appointment["status"];
-
-                      if (
-                        String(
-                          newStatus
-                        ).toLowerCase() ===
-                        "completed"
-                      ) {
-                        setValidationError(
-                          "O agendamento só é concluído automaticamente quando o pagamento é recebido."
-                        );
-
-                        return;
-                      }
-
-                      setValidationError("");
-
-                      setEditingAppointment(
-                        (current) =>
-                          current
-                            ? {
-                                ...current,
-                                status:
-                                  newStatus,
-                              }
-                            : null
-                      );
-                    }}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                  >
-                    <option value="pending">
-                      Aguardando
-                    </option>
-
-                    <option value="confirmed">
-                      Confirmado
-                    </option>
-
-                    <option
-                      value="completed"
-                      disabled
-                    >
-                      Concluído —
-                      automático
-                    </option>
-
-                    <option value="cancelled">
-                      Cancelado
-                    </option>
-
-                    <option value="no_show">
-                      Não compareceu
-                    </option>
-                  </select>
                 </div>
 
                 {/* PREÇO */}
@@ -1933,6 +2037,42 @@ function isOpeningReceipt(
 }
 
 /* DETAIL */
+
+/*BOTÃO DE STATUS*/
+
+function StatusButton({
+  label,
+  busyLabel,
+  icon,
+  className,
+  busy,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  busyLabel: string;
+  icon: React.ReactNode;
+  className: string;
+  busy: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+    >
+      {busy ? (
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      ) : (
+        icon
+      )}
+      {busy ? busyLabel : label}
+    </button>
+  );
+}
 
 function Detail({
   icon,

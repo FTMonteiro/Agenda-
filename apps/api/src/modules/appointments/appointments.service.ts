@@ -228,6 +228,18 @@ export const appointmentsService = {
     return toAppointmentDTO(updated);
   },
 
+  async markNoShow(id: string, requesterId: string): Promise<AppointmentDTO> {
+    const appointment = await getAppointmentOrThrow(id);
+    await assertStaffOfBusiness(appointment.businessId, requesterId);
+
+    if (!OPEN_STATUSES.has(appointment.status)) {
+      throw new ConflictError("Este agendamento não pode ser marcado como falta.", "APPOINTMENT_NOT_NO_SHOWABLE");
+    }
+
+    const updated = await appointmentsRepository.update(id, { status: "NO_SHOW" });
+    return toAppointmentDTO(updated);
+  },
+
   async reschedule(id: string, requesterId: string, requesterRole: RequesterRole, input: RescheduleAppointmentInput): Promise<AppointmentDTO> {
     const appointment = await getAppointmentOrThrow(id);
     await assertCanManage(appointment, requesterId, requesterRole);

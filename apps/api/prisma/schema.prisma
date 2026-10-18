@@ -197,8 +197,8 @@ model ProfessionalBlock {
   id             String       @id @default(uuid())
   professionalId String
   professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
-  startAt        DateTime
-  endAt          DateTime
+  startAt        DateTime @db.Timestamptz(3)
+  endAt          DateTime @db.Timestamptz(3)
   reason         String?
   createdAt      DateTime     @default(now())
 
@@ -241,7 +241,7 @@ model Appointment {
   service         Service           @relation(fields: [serviceId], references: [id])
   professionalId  String
   professional    Professional      @relation(fields: [professionalId], references: [id])
-  scheduledAt     DateTime
+  scheduledAt     DateTime @db.Timestamptz(3)
   durationMinutes Int
   price           Decimal           @db.Decimal(10, 2)
   status          AppointmentStatus @default(PENDING)
@@ -309,7 +309,7 @@ model Payment {
   currency       String        @default("AOA")
   method         PaymentMethod
   status         PaymentStatus @default(PENDING)
-  paidAt         DateTime?
+  paidAt         DateTime? @db.Timestamptz(3)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

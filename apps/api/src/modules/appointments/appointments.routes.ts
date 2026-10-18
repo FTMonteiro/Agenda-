@@ -21,4 +21,5 @@ appointmentsRoutes.get("/:id", appointmentsController.getById);
 appointmentsRoutes.patch("/:id/cancel", appointmentsController.cancel);
 appointmentsRoutes.patch("/:id/confirm", authorize("OWNER", "EMPLOYEE"), appointmentsController.confirm);
 appointmentsRoutes.patch("/:id/complete", authorize("OWNER", "EMPLOYEE"), appointmentsController.complete);
+appointmentsRoutes.patch("/:id/no-show", authorize("OWNER", "EMPLOYEE"), appointmentsController.markNoShow);
 appointmentsRoutes.patch("/:id/reschedule", validate(rescheduleAppointmentSchema), appointmentsController.reschedule);

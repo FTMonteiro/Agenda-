@@ -48,6 +48,11 @@ export const appointmentsController = {
     sendSuccess(res, appointment);
   },
 
+  async markNoShow(req: Request<{ id: string }>, res: Response) {
+    const appointment = await appointmentsService.markNoShow(req.params.id, req.user!.id);
+    sendSuccess(res, appointment);
+  },
+
   async reschedule(req: Request<{ id: string }>, res: Response) {
     const appointment = await appointmentsService.reschedule(
       req.params.id,

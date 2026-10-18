@@ -53,9 +53,9 @@ export async function PUT(request: Request, { params }: Context) {
     if (!scheduledAt) return errorJson("Data ou hora inválida.", 400);
 
     const status = text(body.status).toUpperCase() || current.status;
-    const action = { CONFIRMED: "confirm", COMPLETED: "complete", CANCELLED: "cancel" }[status];
+    const action = { CONFIRMED: "confirm", COMPLETED: "complete", CANCELLED: "cancel", NO_SHOW: "no-show" }[status];
     if (status !== current.status && !action) {
-      return errorJson("Só é possível confirmar, concluir ou cancelar um agendamento.", 400);
+      return errorJson("Só é possível confirmar, concluir, cancelar ou marcar falta num agendamento.", 400);
     }
 
     let updated = current;
