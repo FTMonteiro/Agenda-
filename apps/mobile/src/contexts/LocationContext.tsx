@@ -11,8 +11,9 @@ import { useAuth } from "./AuthContext";
 import { usePreferences } from "./PreferencesContext";
 import { useT } from "@/i18n";
 
-// "Perto de si" mostra os espaços até esta distância da pessoa.
-export const NEAR_ME_RADIUS_KM = 15;
+// "Perto de si" mostra só os espaços até esta distância de onde a pessoa está agora
+// (a Home, o Explorar e o filtro de localização usam todos o mesmo raio).
+export const NEAR_ME_RADIUS_KM = 5;
 
 const STORAGE_KEY = "slotix.location";
 
@@ -120,9 +121,44 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     }
 
     void getCoordinatesIfAllowed().then((current) => {
-      if (current) setCoordinates((known) => known ?? current);
+      if (current) setCoordinates(current);
     });
   }, [preferencesLoaded, locationAllowed]);
+
+  // Depois de autorizada, a posição acompanha a pessoa: o GPS avisa a cada ~50 m que ela
+  // se desloca, e "Perto de ti" passa a mostrar os espaços à volta do sítio onde está agora.
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  useEffect(() => {
+    if (!preferencesLoaded || !locationAllowed) {
+      setPermissionGranted(false);
+      return;
+    }
+    void Location.getForegroundPermissionsAsync()
+      .then(({ status }) => setPermissionGranted(status === "granted"))
+      .catch(() => setPermissionGranted(false));
+  }, [preferencesLoaded, locationAllowed]);
+
+  useEffect(() => {
+    if (!permissionGranted) return;
+
+    let subscription: Location.LocationSubscription | null = null;
+    let cancelled = false;
+    Location.watchPositionAsync({ accuracy: Location.Accuracy.High, distanceInterval: 50, timeInterval: 10000 }, (position) =>
+      setCoordinates({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
+    )
+      .then((watch) => {
+        if (cancelled) watch.remove();
+        else subscription = watch;
+      })
+      .catch(() => {
+        // sem GPS disponível: fica a última posição conhecida
+      });
+
+    return () => {
+      cancelled = true;
+      subscription?.remove();
+    };
+  }, [permissionGranted]);
 
   // O nome do sítio onde a pessoa está (bairro ou município, e província), para o Perfil
   // mostrar a localização real. Só volta a perguntar quando a pessoa mudou de sítio
@@ -178,9 +214,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") return null;
 
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       const current = { latitude: position.coords.latitude, longitude: position.coords.longitude };
       setCoordinates(current);
+      setPermissionGranted(true);
       return current;
     } catch {
       return null;

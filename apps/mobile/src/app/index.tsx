@@ -23,12 +23,12 @@ import { HeroSpaceCard, RowGroup, SectionTitle, SpaceRow, SpaceTile } from "@/co
 import { CATEGORIES } from "@/constants/categories";
 import { Typography } from "@/constants/theme";
 import { useFavorites } from "../contexts/FavoritesContext";
-import { useSelectedLocation } from "../contexts/LocationContext";
+import { NEAR_ME_RADIUS_KM, useSelectedLocation } from "../contexts/LocationContext";
 import { listBusinesses } from "../services/businesses";
 import { useT } from "@/i18n";
 
-// A secção "Perto de ti" mostra os espaços até esta distância da pessoa.
-const NEARBY_RADIUS_KM = 25;
+// A secção "Perto de ti" mostra só os espaços até esta distância de onde a pessoa está agora.
+const NEARBY_RADIUS_KM = NEAR_ME_RADIUS_KM;
 
 // Cada categoria "salta" para o lugar, uma a seguir à outra, e fica a flutuar devagar.
 function PopIn({ index, children }: { index: number; children: React.ReactNode }) {
@@ -97,7 +97,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { coordinates: myPosition, requestPosition } = useSelectedLocation();
+  const { coordinates: myPosition, requestPosition, chooseNearMe } = useSelectedLocation();
 
   const [featured, setFeatured] = useState<BusinessDTO[]>([]);
   const [topRated, setTopRated] = useState<BusinessDTO[]>([]);
@@ -114,10 +114,18 @@ export default function HomeScreen() {
   const heroWidth = Math.min(width - 32, 560);
   const heroGap = 12;
 
+  // A posição arredondada (~1 km para as outras secções, ~100 m para "Perto de ti"): evita
+  // repetir pedidos a cada pequena leitura do GPS.
+  const aroundLatitude = myPosition ? Number(myPosition.latitude.toFixed(2)) : null;
+  const aroundLongitude = myPosition ? Number(myPosition.longitude.toFixed(2)) : null;
+  const nearLatitude = myPosition ? Number(myPosition.latitude.toFixed(3)) : null;
+  const nearLongitude = myPosition ? Number(myPosition.longitude.toFixed(3)) : null;
+
   const load = useCallback(async () => {
     try {
       // Com a posição da pessoa, cada espaço vem com a distância até lá.
-      const around = myPosition ? { latitude: myPosition.latitude, longitude: myPosition.longitude } : {};
+      const around =
+        aroundLatitude !== null && aroundLongitude !== null ? { latitude: aroundLatitude, longitude: aroundLongitude } : {};
       const [featuredResult, topResult] = await Promise.all([
         listBusinesses({ sortBy: "recommended", limit: 12, ...around }),
         // "Mais bem avaliados" são os espaços que muitas pessoas puseram nos favoritos: só
@@ -126,34 +134,52 @@ export default function HomeScreen() {
       ]);
       setFeatured(featuredResult.data);
       setTopRated(topResult.data);
-
-      // Pede a localização ao telemóvel (uma vez); a posição fica no contexto, e é com ela
-      // que os outros ecrãs calculam distâncias. Recusar não impede nada: só não há "perto".
-      const coordinates = myPosition ?? (await requestPosition());
-      if (coordinates) {
-        const nearbyResult = await listBusinesses({
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-          radiusKm: NEARBY_RADIUS_KM,
-          sortBy: "nearest",
-          limit: 12,
-        });
-        setNearby(nearbyResult.data);
-      }
     } catch {
       // Cada secção mostra o que conseguiu carregar; uma secção vazia simplesmente não aparece.
     } finally {
       setLoading(false);
     }
-  }, [myPosition, requestPosition]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aroundLatitude, aroundLongitude]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  // Pede a localização ao telemóvel (uma vez); depois o contexto segue a pessoa e é com essa
+  // posição que os outros ecrãs calculam distâncias. Recusar não impede nada: só não há "perto".
+  useEffect(() => {
+    if (!myPosition) void requestPosition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // "Perto de ti" volta a ser pedido sempre que a pessoa se desloca (~100 m).
+  const loadNearby = useCallback(async () => {
+    if (nearLatitude === null || nearLongitude === null) {
+      setNearby([]);
+      return;
+    }
+    try {
+      const nearbyResult = await listBusinesses({
+        latitude: nearLatitude,
+        longitude: nearLongitude,
+        radiusKm: NEARBY_RADIUS_KM,
+        sortBy: "nearest",
+        limit: 12,
+      });
+      setNearby(nearbyResult.data);
+    } catch {
+      // fica a lista anterior
+    }
+  }, [nearLatitude, nearLongitude]);
+
+  useEffect(() => {
+    void loadNearby();
+  }, [loadNearby]);
+
   const refresh = async () => {
     setRefreshing(true);
-    await load();
+    await Promise.all([load(), loadNearby()]);
     setRefreshing(false);
   };
 
@@ -161,7 +187,10 @@ export default function HomeScreen() {
   const heroSpaces = useMemo(() => featured.filter((space) => space.favoriteCount > 0).slice(0, 5), [featured]);
   // "Perto de ti" é sempre à volta da pessoa, seja qual for a província escolhida no topo;
   // só entram espaços com o ponto marcado (sem ele não há distância para comparar).
-  const nearbySpaces = useMemo(() => nearby.filter((space) => space.distanceKm !== null), [nearby]);
+  const nearbySpaces = useMemo(
+    () => nearby.filter((space) => space.distanceKm !== null && space.distanceKm <= NEARBY_RADIUS_KM),
+    [nearby],
+  );
   const bestSpaces = useMemo(() => topRated.slice(0, 5), [topRated]);
 
   // O carrossel avança sozinho a cada 5 s, exceto enquanto a pessoa o está a arrastar.
@@ -289,7 +318,11 @@ export default function HomeScreen() {
               <SectionTitle
                 title={t("Perto de ti")}
                 action={nearbySpaces.length > 0 ? t("Ver tudo") : undefined}
-                onAction={() => router.replace("/explore" as never)}
+                onAction={async () => {
+                  // "Ver tudo" abre o Explorar já em "Perto": só os espaços à volta da pessoa.
+                  await chooseNearMe();
+                  router.replace({ pathname: "/explore", params: { sort: "nearest" } } as never);
+                }}
               />
               {nearbySpaces.length > 0 ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tiles}>

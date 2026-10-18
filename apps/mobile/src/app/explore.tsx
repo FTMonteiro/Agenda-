@@ -23,9 +23,8 @@ import { HeroSpaceCard, RowGroup, SectionTitle, SpaceRow, SpaceTile } from "@/co
 import { CATEGORY_FILTERS as CATEGORIES } from "@/constants/categories";
 import { Typography } from "@/constants/theme";
 import { useFavorites } from "../contexts/FavoritesContext";
-import { useSelectedLocation } from "../contexts/LocationContext";
+import { NEAR_ME_RADIUS_KM, useSelectedLocation } from "../contexts/LocationContext";
 import { listBusinesses } from "../services/businesses";
-import { getCurrentCoordinates, type Coordinates } from "../services/location";
 import { useT } from "@/i18n";
 
 type SortMode = Extract<BusinessSortBy, "recommended" | "nearest" | "mostFavorited">;
@@ -91,16 +90,15 @@ export default function ExploreScreen() {
   const colors = useIOSColors();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const params = useLocalSearchParams<{ category?: string }>();
+  const params = useLocalSearchParams<{ category?: string; sort?: string }>();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { coordinates: myPosition } = useSelectedLocation();
+  const { coordinates: myPosition, requestPosition } = useSelectedLocation();
 
   // Uma categoria escolhida na Home chega como parâmetro, e já conta no primeiro pedido.
   const [category, setCategory] = useState(() =>
     params.category && CATEGORIES.some((item) => item.name === params.category) ? params.category : "Todos",
   );
-  const [sortMode, setSortMode] = useState<SortMode>("recommended");
-  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [sortMode, setSortMode] = useState<SortMode>(() => (params.sort === "nearest" ? "nearest" : "recommended"));
   const [results, setResults] = useState<BusinessDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -115,22 +113,32 @@ export default function ExploreScreen() {
     if (params.category && CATEGORIES.some((item) => item.name === params.category)) setCategory(params.category);
   }, [params.category]);
 
-  const ensureCoordinates = useCallback(async () => {
-    if (coordinates) return coordinates;
-    const current = await getCurrentCoordinates();
-    setCoordinates(current);
-    return current;
-  }, [coordinates]);
+  useEffect(() => {
+    if (params.sort === "nearest") setSortMode("nearest");
+  }, [params.sort]);
+
+  // A posição vem do contexto, que segue a pessoa enquanto se desloca. Arredondada (~100 m)
+  // para não repetir o pedido a cada pequena leitura do GPS.
+  const latitude = myPosition ? Number(myPosition.latitude.toFixed(3)) : null;
+  const longitude = myPosition ? Number(myPosition.longitude.toFixed(3)) : null;
+  const nearest = sortMode === "nearest";
 
   const load = useCallback(async () => {
-    // A posição já conhecida da pessoa dá a distância até cada espaço em qualquer filtro.
-    const position = coordinates ?? myPosition;
     const request = ++latestRequest.current;
+    // "Perto" sem posição não tem espaços para mostrar.
+    if (nearest && (latitude === null || longitude === null)) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
     try {
+      // A posição da pessoa dá a distância até cada espaço em qualquer filtro; em "Perto"
+      // ficam só os espaços até NEAR_ME_RADIUS_KM de onde ela está, dos mais próximos primeiro.
       const data = await listBusinesses({
         category: category !== "Todos" ? category : undefined,
-        latitude: position?.latitude,
-        longitude: position?.longitude,
+        latitude: latitude ?? undefined,
+        longitude: longitude ?? undefined,
+        radiusKm: nearest ? NEAR_ME_RADIUS_KM : undefined,
         sortBy: sortMode,
         limit: 50,
       });
@@ -140,7 +148,7 @@ export default function ExploreScreen() {
     } finally {
       if (request === latestRequest.current) setLoading(false);
     }
-  }, [category, coordinates, myPosition, sortMode]);
+  }, [category, latitude, longitude, nearest, sortMode]);
 
   useEffect(() => {
     setLoading(true);
@@ -154,11 +162,14 @@ export default function ExploreScreen() {
   };
 
   const selectSort = async (mode: SortMode) => {
-    if (mode === "nearest" && !(await ensureCoordinates())) return;
+    if (mode === "nearest" && !myPosition && !(await requestPosition())) return;
     setSortMode(mode);
   };
 
-  const spaces = results;
+  // Um espaço sem ponto marcado no mapa não tem distância: não entra em "Perto".
+  const spaces = nearest
+    ? results.filter((space) => space.distanceKm !== null && space.distanceKm <= NEAR_ME_RADIUS_KM)
+    : results;
   const browsing = category === "Todos" && sortMode === "recommended";
   // "Escolha do dia" e "Em alta" são só espaços que alguém pôs nos favoritos — a API já os
   // devolve primeiro, dos mais favoritos para os menos. Sem favoritos, ficam só na lista.
@@ -257,7 +268,11 @@ export default function ExploreScreen() {
             <Ionicons name="compass-outline" size={48} color={colors.textTertiary} />
             <Text style={[styles.stateTitle, { color: colors.text }]}>{t("Nenhum espaço encontrado")}</Text>
             <Text style={[styles.stateText, { color: colors.textSecondary }]}>
-              {t("Experimente outra categoria.")}
+              {nearest
+                ? myPosition
+                  ? t("Ainda não há espaços a menos de {0} km de si.", [NEAR_ME_RADIUS_KM])
+                  : t("Ative a localização para ver os espaços perto de si.")
+                : t("Experimente outra categoria.")}
             </Text>
           </View>
         ) : (

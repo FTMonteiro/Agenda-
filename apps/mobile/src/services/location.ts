@@ -6,7 +6,7 @@ export interface Coordinates {
 }
 
 async function readPosition(): Promise<Coordinates | null> {
-  const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+  const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
   return { latitude: position.coords.latitude, longitude: position.coords.longitude };
 }
 

@@ -227,6 +227,8 @@ export const en: Record<string, string> = {
   "Ver tudo": "See all",
   "Perto de ti": "Near you",
   "Ainda não há espaços a menos de {0} km de ti.": "There are no spaces within {0} km of you yet.",
+  "Ainda não há espaços a menos de {0} km de si.": "There are no spaces within {0} km of you yet.",
+  "Ative a localização para ver os espaços perto de si.": "Turn on location to see spaces near you.",
   "Ativa a localização para veres os espaços perto de ti.": "Turn on location to see the spaces near you.",
   "Ativar": "Turn on",
   "Mais bem avaliados": "Top rated",
