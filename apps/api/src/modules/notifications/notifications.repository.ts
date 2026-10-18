@@ -29,6 +29,36 @@ export const notificationsRepository = {
     });
   },
 
+  // Who to tell about an appointment on the business side, and what to tell them.
+  findAppointmentForNotice(id: string) {
+    return prisma.appointment.findUnique({
+      where: { id },
+      select: {
+        scheduledAt: true,
+        client: { select: { name: true } },
+        service: { select: { name: true } },
+        professional: { select: { userId: true } },
+        business: { select: { name: true, ownerId: true } },
+      },
+    });
+  },
+
+  savePushToken(userId: string, token: string) {
+    return prisma.pushToken.upsert({ where: { token }, create: { userId, token }, update: { userId } });
+  },
+
+  deletePushToken(userId: string, token: string) {
+    return prisma.pushToken.deleteMany({ where: { userId, token } });
+  },
+
+  deletePushTokens(tokens: string[]) {
+    return prisma.pushToken.deleteMany({ where: { token: { in: tokens } } });
+  },
+
+  findPushTokens(userId: string) {
+    return prisma.pushToken.findMany({ where: { userId }, select: { token: true } }).then((rows) => rows.map((row) => row.token));
+  },
+
   findByUser(userId: string) {
     return prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
   },

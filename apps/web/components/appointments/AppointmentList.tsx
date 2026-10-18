@@ -1051,7 +1051,7 @@ export function AppointmentList({
                   key={appointment.id}
                   className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-gray-200 hover:shadow-md sm:p-5"
                 >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex items-start justify-between gap-3">
                     <div
                       role="button"
                       tabIndex={0}
@@ -1145,9 +1145,9 @@ export function AppointmentList({
                       </div>
                     </div>
 
-                    {/* AÇÕES */}
+                    {/* AÇÕES: confirmar em cima, três pontinhos em baixo */}
 
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex shrink-0 flex-col items-end gap-2">
                     {canEdit &&
                       isPendingStatus(
                         appointment.status
@@ -1164,19 +1164,26 @@ export function AppointmentList({
                             changingStatus?.id ===
                             appointment.id
                           }
-                          className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 lg:flex-none"
+                          className="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <CheckCircle2 className="h-4 w-4" />
                           {changingStatus?.id ===
-                          appointment.id
-                            ? "Confirmando..."
-                            : "Confirmar"}
+                          appointment.id ? (
+                            "Confirmando..."
+                          ) : (
+                            <>
+                              Confirmar
+                              <span className="hidden sm:inline">
+                                {" "}agendamento
+                              </span>
+                            </>
+                          )}
                         </button>
                       )}
 
                     {/* MENU */}
 
-                    <div className="relative ml-auto shrink-0">
+                    <div className="relative shrink-0">
                       <button
                         type="button"
                         onClick={() =>
@@ -1194,7 +1201,36 @@ export function AppointmentList({
 
                       {openMenu ===
                         appointment.id && (
-                        <div className="absolute right-0 top-11 z-50 w-48 overflow-hidden rounded-xl border border-gray-100 bg-white py-1 shadow-xl">
+                        <div className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-xl border border-gray-100 bg-white py-1 shadow-xl">
+                          {canEdit &&
+                            isPendingStatus(
+                              appointment.status
+                            ) && (
+                              <div className="border-b border-gray-100 px-2 pb-2 pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenu(
+                                      null
+                                    );
+
+                                    changeStatus(
+                                      appointment,
+                                      "confirmed"
+                                    );
+                                  }}
+                                  disabled={
+                                    changingStatus !==
+                                    null
+                                  }
+                                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  Confirmar agendamento
+                                </button>
+                              </div>
+                            )}
+
                           <button
                             type="button"
                             onClick={() => {

@@ -3,7 +3,9 @@ import type { AppointmentDTO, PaymentDTO } from "@slotix/types";
 
 export interface DomainEvents {
   AppointmentCreated: AppointmentDTO;
-  AppointmentCancelled: AppointmentDTO;
+  // byClient: cancelled by the client in the app (the business is told), not by staff.
+  AppointmentCancelled: AppointmentDTO & { byClient: boolean };
+  AppointmentConfirmed: AppointmentDTO;
   PaymentCreated: PaymentDTO;
   PaymentPaid: PaymentDTO;
   PaymentFailed: PaymentDTO;

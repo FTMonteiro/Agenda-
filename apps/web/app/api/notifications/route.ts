@@ -1,13 +1,13 @@
-import { randomUUID } from "node:crypto";
 import type { NotificationDTO } from "@slotix/types";
 import { requireAuth } from "@/lib/auth";
-import { apiCall, errorJson, errorResponse } from "@/lib/dashboard-api";
+import { apiCall, errorJson, errorResponse, jsonBody } from "@/lib/dashboard-api";
 
 // The API's types are event names (APPOINTMENT_CREATED, PAYMENT_PAID, ...); the bell only
 // knows these severities.
-function toSeverity(type: string): "INFO" | "SUCCESS" | "WARNING" {
-  if (/CANCEL|FAIL|REFUND|EXPIRED/.test(type)) return "WARNING";
-  if (/PAID|CONFIRMED|COMPLETED/.test(type)) return "SUCCESS";
+function toSeverity(type: string): "INFO" | "SUCCESS" | "WARNING" | "ERROR" {
+  if (type === "ERROR") return "ERROR";
+  if (/CANCEL|FAIL|REFUND|EXPIRED|WARNING/.test(type)) return "WARNING";
+  if (/PAID|CONFIRMED|COMPLETED|SUCCESS/.test(type)) return "SUCCESS";
   return "INFO";
 }
 
@@ -37,9 +37,8 @@ export async function GET() {
   }
 }
 
-// The pages post a notification after their own actions ("Cliente criado", ...). In the
-// API notifications are only ever raised by the server from domain events, so there is
-// nowhere to store these: the page gets it echoed back for the current session only.
+// The pages post a notification after their own actions ("Cliente criado", ...). It is
+// stored in the API like any other, so it stays in the bell after a reload.
 export async function POST(request: Request) {
   try {
     await requireAuth();
@@ -50,19 +49,23 @@ export async function POST(request: Request) {
     if (!title || !message) return errorJson("O título e a mensagem são obrigatórios.", 400);
 
     const type = typeof body?.type === "string" ? body.type.toUpperCase() : "INFO";
+    const notification = await apiCall<NotificationDTO>(
+      "/notifications",
+      jsonBody("POST", { title, message, type: ["INFO", "SUCCESS", "WARNING", "ERROR"].includes(type) ? type : "INFO" }),
+    );
 
     return Response.json(
       {
         success: true,
         notification: {
-          id: `local-${randomUUID()}`,
-          title,
-          message,
-          type: ["INFO", "SUCCESS", "WARNING", "ERROR"].includes(type) ? type : "INFO",
-          read: false,
+          id: notification.id,
+          title: notification.title,
+          message: notification.message,
+          type: toSeverity(notification.type),
+          read: notification.read,
           resourceId: typeof body?.resourceId === "string" ? body.resourceId : null,
           resourceType: typeof body?.resourceType === "string" ? body.resourceType : null,
-          createdAt: new Date().toISOString(),
+          createdAt: notification.createdAt,
           readAt: null,
         },
       },

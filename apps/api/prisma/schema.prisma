@@ -62,6 +62,7 @@ model User {
   favorites           Favorite[]
   reviews             Review[]
   notifications       Notification[]
+  pushTokens          PushToken[]
   payments            Payment[]
 
   @@map("users")
@@ -334,4 +335,18 @@ model Notification {
 
   @@index([userId, read])
   @@map("notifications")
+}
+
+// The Expo push token of each phone where the user is signed in to the app: every
+// notification is also sent there, with sound.
+model PushToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("push_tokens")
 }

@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { toast } from "sonner";
 
 import {
   getServerSnapshot,
@@ -176,6 +177,16 @@ function playNotificationSound() {
 }
 
 /*
+  NOTIFICAÇÕES DESTA SESSÃO
+
+  As que o próprio painel acabou de criar (a página já mostrou a mensagem): vão para o
+  sininho, mas sem som nem mensagem repetida.
+*/
+
+const ownNotificationIds =
+  new Set<string>();
+
+/*
 | PROVIDER
 
 */
@@ -267,16 +278,30 @@ export function NotificationsProvider({
           if (
             !firstLoad.current
           ) {
-            const hasNew =
-              incoming.some(
+            const fresh =
+              incoming.filter(
                 (item) =>
+                  !item.read &&
+                  !ownNotificationIds.has(
+                    item.id,
+                  ) &&
                   !previousIds.current.has(
                     item.id,
                   ),
               );
 
-            if (hasNew) {
+            if (fresh.length > 0) {
               playNotificationSound();
+
+              /* MENSAGEM NA TELA (ex.: novo agendamento feito pela app) */
+
+              for (const item of fresh.slice(0, 3)) {
+                toast(item.title, {
+                  description:
+                    item.message,
+                  duration: 8000,
+                });
+              }
             }
           }
 
@@ -435,6 +460,10 @@ export function useNotifications() {
           ) {
             return null;
           }
+
+          ownNotificationIds.add(
+            data.notification.id,
+          );
 
           /* ACTUALIZAR STORE*/
 

@@ -200,7 +200,7 @@ export const appointmentsService = {
     }
 
     const updated = await appointmentsRepository.update(id, { status: "CANCELLED" });
-    domainEvents.emitEvent("AppointmentCancelled", toAppointmentDTO(updated));
+    domainEvents.emitEvent("AppointmentCancelled", { ...toAppointmentDTO(updated), byClient: requesterRole === "CUSTOMER" });
     return toAppointmentDTO(updated);
   },
 
@@ -213,6 +213,7 @@ export const appointmentsService = {
     }
 
     const updated = await appointmentsRepository.update(id, { status: "CONFIRMED" });
+    domainEvents.emitEvent("AppointmentConfirmed", toAppointmentDTO(updated));
     return toAppointmentDTO(updated);
   },
 

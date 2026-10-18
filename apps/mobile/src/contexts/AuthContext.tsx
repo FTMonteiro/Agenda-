@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { UserDTO } from "@slotix/types";
 import { ApiRequestError, loadStoredAccessToken, setAccessToken } from "../services/api-client";
+import { registerForPush, unregisterFromPush } from "../services/push";
 import { getMe } from "../services/users";
 import { useT } from "@/i18n";
 
@@ -52,7 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, [refresh]);
 
+  // Com sessão iniciada, o telemóvel fica ligado à conta para os avisos com som.
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (userId) void registerForPush();
+  }, [userId]);
+
   const logout = useCallback(async () => {
+    // Antes de apagar o token de sessão: o pedido para desligar o telemóvel precisa dele.
+    await unregisterFromPush();
     await setAccessToken(null);
     setUser(null);
   }, []);
