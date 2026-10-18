@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -35,7 +34,6 @@ import {
 import { useFavorites } from "../contexts/FavoritesContext";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { SpaceMap } from "@/components/SpaceMap";
-import { openDirections } from "../services/maps";
 import { getCoordinatesIfAllowed } from "../services/location";
 import { useSelectedLocation } from "../contexts/LocationContext";
 import { usePreferences } from "../contexts/PreferencesContext";
@@ -342,10 +340,19 @@ const SpaceScreen = () => {
       ? { latitude: business.latitude, longitude: business.longitude }
       : null;
 
-  const handleDirections = async () => {
+  // O caminho abre dentro da app, com o ícone da agenda+ no destino; de lá a pessoa pode
+  // seguir para a aplicação de mapas do telemóvel.
+  const handleDirections = () => {
     if (!coordinates) return;
-    const opened = await openDirections(coordinates, business.name);
-    if (!opened) Alert.alert(t("Não foi possível abrir o mapa"), t("Não encontrámos uma aplicação de mapas neste telemóvel."));
+    router.push({
+      pathname: "/rota",
+      params: {
+        name: business.name,
+        address: business.address ?? "",
+        latitude: String(coordinates.latitude),
+        longitude: String(coordinates.longitude),
+      },
+    } as never);
   };
 
   // Pede a localização ao telemóvel e volta a ler o espaço, agora com a distância.

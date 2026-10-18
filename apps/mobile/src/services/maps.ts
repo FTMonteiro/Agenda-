@@ -28,3 +28,42 @@ export async function openDirections({ latitude, longitude }: Coordinates, name:
   }
   return false;
 }
+
+export interface Route {
+  // O caminho pelas ruas, ponto a ponto, como [latitude, longitude].
+  path: [number, number][];
+  distanceKm: number;
+  durationMin: number;
+}
+
+/**
+ * O caminho de carro entre dois pontos, pedido ao OSRM (o serviço de rotas sobre o
+ * OpenStreetMap, os mesmos mapas que a app mostra). Devolve null sem ligação ou sem
+ * caminho possível: quem chama mostra só o destino.
+ */
+export async function fetchRoute(from: Coordinates, to: Coordinates): Promise<Route | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const url =
+      `https://router.project-osrm.org/route/v1/driving/` +
+      `${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson`;
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) return null;
+    const body = (await response.json()) as {
+      code?: string;
+      routes?: { distance: number; duration: number; geometry: { coordinates: [number, number][] } }[];
+    };
+    const route = body.code === "Ok" ? body.routes?.[0] : undefined;
+    if (!route) return null;
+    return {
+      path: route.geometry.coordinates.map(([longitude, latitude]) => [latitude, longitude]),
+      distanceKm: route.distance / 1000,
+      durationMin: Math.max(1, Math.round(route.duration / 60)),
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
