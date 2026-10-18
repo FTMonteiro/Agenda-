@@ -160,9 +160,12 @@ export default function ExploreScreen() {
 
   const spaces = results;
   const browsing = category === "Todos" && sortMode === "recommended";
-  const featured = browsing ? spaces[0] : undefined;
-  const trending = browsing ? spaces.slice(1, 7) : [];
-  const list = browsing ? spaces.slice(trending.length + 1) : spaces;
+  // "Escolha do dia" e "Em alta" são só espaços que alguém pôs nos favoritos — a API já os
+  // devolve primeiro, dos mais favoritos para os menos. Sem favoritos, ficam só na lista.
+  const favorited = browsing ? spaces.filter((space) => space.favoriteCount > 0) : [];
+  const featured = favorited[0];
+  const trending = favorited.slice(1, 7);
+  const list = browsing ? spaces.filter((space) => space !== featured && !trending.includes(space)) : spaces;
 
   const openSpace = (space: BusinessDTO) =>
     router.push({ pathname: "/space", params: { businessId: space.id } } as never);

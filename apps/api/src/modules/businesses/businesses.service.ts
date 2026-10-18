@@ -166,9 +166,15 @@ export const businessesService = {
       const comparator = query.sortBy === "nearest" ? compareNearest : query.sortBy === "topRated" ? compareTopRated : compareRecommended;
       // "mostFavorited" is popularity, not rating: the favorite count decides, and the
       // rating only breaks ties between businesses with the same number of favorites.
+      // "recommended" is driven by favorites too — the more customers favorited a
+      // business, the more it's recommended; the usual comparator only breaks ties.
       filtered = scored
         .sort((a, b) =>
-          query.sortBy === "mostFavorited" ? b.dto.favoriteCount - a.dto.favoriteCount || compareTopRated(a, b) : comparator(a, b),
+          query.sortBy === "mostFavorited"
+            ? b.dto.favoriteCount - a.dto.favoriteCount || compareTopRated(a, b)
+            : query.sortBy === "recommended"
+              ? b.dto.favoriteCount - a.dto.favoriteCount || comparator(a, b)
+              : comparator(a, b),
         )
         .map((entry) => entry.dto);
     }

@@ -157,7 +157,8 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const heroSpaces = useMemo(() => featured.slice(0, 5), [featured]);
+  // "Em destaque"/"Recomendado": só os espaços com favoritos, os mais favoritos primeiro.
+  const heroSpaces = useMemo(() => featured.filter((space) => space.favoriteCount > 0).slice(0, 5), [featured]);
   // "Perto de ti" é sempre à volta da pessoa, seja qual for a província escolhida no topo;
   // só entram espaços com o ponto marcado (sem ele não há distância para comparar).
   const nearbySpaces = useMemo(() => nearby.filter((space) => space.distanceKm !== null), [nearby]);
