@@ -5,22 +5,27 @@ import {
   ReactNode,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import { toast } from "sonner";
 
 import {
+  AlertCircle,
   Banknote,
   CalendarDays,
   Check,
   CheckCircle2,
-  ChevronDown,
+  Clock,
   CreditCard,
+  Inbox,
   Landmark,
-  Scissors,
+  RefreshCw,
+  Search,
   Smartphone,
   UserRound,
+  Wallet,
   X,
 } from "lucide-react";
 
@@ -61,6 +66,46 @@ interface ReceivePaymentProps {
   onPaymentCreated?: () => void;
 }
 
+/*
+ * As cores usam as variáveis do tema (--surface, --border, ...)
+ * em vez de bg-white / text-gray-*: o globals.css força essas
+ * classes dentro de modais no modo escuro com !important.
+ */
+
+const PAYMENT_METHODS: {
+  value: PaymentMethod;
+  label: string;
+  description: string;
+  icon: ReactNode;
+}[] = [
+  {
+    value: "CASH",
+    label: "Dinheiro",
+    description: "Em espécie",
+    icon: <Banknote className="h-5 w-5" />,
+  },
+  {
+    value: "CARD",
+    label: "Cartão",
+    description: "TPA / bancário",
+    icon: <CreditCard className="h-5 w-5" />,
+  },
+  {
+    value: "TRANSFER",
+    label: "Transferência",
+    description: "Bancária",
+    icon: <Landmark className="h-5 w-5" />,
+  },
+  {
+    value: "MOBILE_MONEY",
+    label: "Multicaixa Express",
+    description: "Pagamento móvel",
+    icon: <Smartphone className="h-5 w-5" />,
+  },
+];
+
+const ANIMATION_MS = 200;
+
 function getNumericPrice(
   value: number | string | null | undefined,
 ): number {
@@ -91,31 +136,22 @@ function formatPrice(
 }
 
 function formatDate(value: string): string {
-  if (!value) {
-    return "-";
-  }
-
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!value || Number.isNaN(date.getTime())) {
     return "-";
   }
 
   return new Intl.DateTimeFormat("pt-AO", {
     day: "2-digit",
-    month: "long",
-    year: "numeric",
+    month: "short",
   }).format(date);
 }
 
 function formatTime(value: string): string {
-  if (!value) {
-    return "-";
-  }
-
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!value || Number.isNaN(date.getTime())) {
     return "-";
   }
 
@@ -125,52 +161,32 @@ function formatTime(value: string): string {
   }).format(date);
 }
 
-function getPaymentMethodLabel(
-  method?: string | null,
-): string {
-  switch (method) {
-    case "CASH":
-      return "Dinheiro";
-
-    case "CARD":
-      return "Cartão";
-
-    case "TRANSFER":
-      return "Transferência";
-
-    case "MOBILE_MONEY":
-      return "Multicaixa Express";
-
-    default:
-      return method || "—";
-  }
+function getInitials(name: string): string {
+  return (
+    name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "?"
+  );
 }
 
-function getPaymentMethodIcon(
-  method: PaymentMethod,
-): ReactNode {
-  switch (method) {
-    case "CASH":
-      return <Banknote className="h-5 w-5" />;
-
-    case "CARD":
-      return <CreditCard className="h-5 w-5" />;
-
-    case "TRANSFER":
-      return <Landmark className="h-5 w-5" />;
-
-    case "MOBILE_MONEY":
-      return <Smartphone className="h-5 w-5" />;
-
-    default:
-      return <CreditCard className="h-5 w-5" />;
-  }
+function normalize(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
 }
 
 export function ReceivePayment({
   onPaymentCreated,
 }: ReceivePaymentProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  /* Controla a animação de entrada/saída. */
+  const [isVisible, setIsVisible] =
+    useState(false);
 
   const [appointments, setAppointments] =
     useState<PaymentAppointment[]>([]);
@@ -183,6 +199,12 @@ export function ReceivePayment({
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("CASH");
 
+  const [search, setSearch] = useState("");
+
+  /* Valor entregue pelo cliente (só para dinheiro). */
+  const [amountGiven, setAmountGiven] =
+    useState("");
+
   const [isLoading, setIsLoading] =
     useState(false);
 
@@ -191,10 +213,12 @@ export function ReceivePayment({
 
   const [error, setError] = useState("");
 
-  const [success, setSuccess] =
-    useState("");
+  const [isSuccess, setIsSuccess] =
+    useState(false);
 
-  /* CARREGAR AGENDAMENTOS*/
+  const closeTimer = useRef<number | undefined>(undefined);
+
+  /* CARREGAR AGENDAMENTOS */
 
   async function loadAppointments() {
     try {
@@ -218,13 +242,11 @@ export function ReceivePayment({
         );
       }
 
-      const list = Array.isArray(
-        data?.appointments,
-      )
-        ? data.appointments
-        : [];
-
-      setAppointments(list);
+      setAppointments(
+        Array.isArray(data?.appointments)
+          ? data.appointments
+          : [],
+      );
     } catch (err) {
       console.error(
         "Erro ao carregar pagamentos:",
@@ -241,111 +263,149 @@ export function ReceivePayment({
     }
   }
 
-  /* ABRIR MODAL*/
-
-  function handleOpen() {
+  function resetForm() {
     setError("");
-    setSuccess("");
-
+    setIsSuccess(false);
+    setSearch("");
+    setAmountGiven("");
     setSelectedAppointmentId("");
     setPaymentMethod("CASH");
+  }
 
+  /* ABRIR / FECHAR */
+
+  function handleOpen() {
+    window.clearTimeout(closeTimer.current);
+
+    resetForm();
     setIsOpen(true);
 
     loadAppointments();
   }
-
-  /* FECHAR MODAL*/
 
   function handleClose() {
     if (isSubmitting) {
       return;
     }
 
-    setIsOpen(false);
+    setIsVisible(false);
 
-    setError("");
-    setSuccess("");
-
-    setSelectedAppointmentId("");
-    setPaymentMethod("CASH");
+    closeTimer.current = window.setTimeout(() => {
+      setIsOpen(false);
+      resetForm();
+    }, ANIMATION_MS);
   }
 
-  /*
-   AGENDAMENTO SELECIONADO
-   */
+  /* Animação de entrada, Esc para fechar e bloqueio do scroll. */
 
-  const selectedAppointment = useMemo(() => {
-    return (
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() =>
+      setIsVisible(true),
+    );
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        handleClose();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      document.body.style.overflow =
+        previousOverflow;
+      window.removeEventListener(
+        "keydown",
+        onKeyDown,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, isSubmitting]);
+
+  useEffect(
+    () => () =>
+      window.clearTimeout(closeTimer.current),
+    [],
+  );
+
+  /* DADOS DERIVADOS */
+
+  const filteredAppointments = useMemo(() => {
+    const term = normalize(search.trim());
+
+    if (!term) {
+      return appointments;
+    }
+
+    return appointments.filter((appointment) =>
+      normalize(
+        `${appointment.client.name} ${appointment.service.name} ${appointment.professional.name}`,
+      ).includes(term),
+    );
+  }, [appointments, search]);
+
+  const selectedAppointment = useMemo(
+    () =>
       appointments.find(
         (appointment) =>
           appointment.id ===
           selectedAppointmentId,
-      ) ?? null
-    );
-  }, [
-    appointments,
-    selectedAppointmentId,
-  ]);
+      ) ?? null,
+    [appointments, selectedAppointmentId],
+  );
 
-  /* PREÇO*/
+  const selectedPrice = getNumericPrice(
+    selectedAppointment?.service?.price,
+  );
 
-  const selectedPrice = useMemo(() => {
-    if (!selectedAppointment) {
-      return 0;
-    }
+  const givenValue = Number(amountGiven) || 0;
 
-    return getNumericPrice(
-      selectedAppointment.service?.price,
-    );
-  }, [selectedAppointment]);
+  const change = givenValue - selectedPrice;
 
-  /*
-   
-    ALTERAR AGENDAMENTO
-   
-   */
+  const isCashShort =
+    paymentMethod === "CASH" &&
+    givenValue > 0 &&
+    change < 0;
+
+  const canSubmit =
+    !isSubmitting &&
+    !!selectedAppointment &&
+    selectedPrice > 0 &&
+    !isCashShort;
+
+  /* ALTERAÇÕES */
 
   function handleAppointmentChange(
     appointmentId: string,
   ) {
-    setSelectedAppointmentId(
-      appointmentId,
-    );
-
+    setSelectedAppointmentId(appointmentId);
+    setAmountGiven("");
     setError("");
-    setSuccess("");
   }
-
-  /*
-    ALTERAR MÉTODO DE PAGAMENTO
-   
-   */
 
   function handlePaymentMethodChange(
     method: PaymentMethod,
   ) {
     setPaymentMethod(method);
-
+    setAmountGiven("");
     setError("");
-    setSuccess("");
   }
 
   /*
-   
-    REGISTRAR PAGAMENTO
-   
-   IMPORTANTE:
-   
-   NÃO abre:
-   - nova aba
-   - nova janela
-   - outro navegador
-   - recibo automaticamente
-   - outra página
-  
-   Apenas faz POST para a API.
-   
+   * REGISTRAR PAGAMENTO
+   *
+   * Apenas faz POST para a API: não abre nova aba,
+   * janela, recibo ou outra página.
    */
 
   async function handleSubmit(
@@ -354,24 +414,23 @@ export function ReceivePayment({
     event.preventDefault();
 
     setError("");
-    setSuccess("");
 
     if (!selectedAppointment) {
-      setError(
-        "Selecione um agendamento.",
-      );
-
+      setError("Selecione um agendamento.");
       return;
     }
 
-    if (
-      !selectedPrice ||
-      selectedPrice <= 0
-    ) {
+    if (selectedPrice <= 0) {
       setError(
         `O serviço "${selectedAppointment.service.name}" está sem preço. Defina o preço em Serviços antes de receber o pagamento.`,
       );
+      return;
+    }
 
+    if (isCashShort) {
+      setError(
+        "O valor entregue é inferior ao total a receber.",
+      );
       return;
     }
 
@@ -385,10 +444,7 @@ export function ReceivePayment({
         selectedAppointment.id,
       );
 
-      formData.append(
-        "method",
-        paymentMethod,
-      );
+      formData.append("method", paymentMethod);
 
       const response = await fetch(
         "/api/appointments/payments",
@@ -407,27 +463,7 @@ export function ReceivePayment({
         );
       }
 
-      /* PAGAMENTO REGISTRADO
-      
-       
-       Aqui NÃO existe:
-       
-       window.open()
-       window.location.href
-       window.location.assign()
-       window.location.replace()
-       target="_blank"
-       iframe
-       
-       Portanto o pagamento é processado
-       somente dentro desta aplicação.
-       */
-
-      setSuccess(
-        "Pagamento registrado com sucesso.",
-      );
-
-      /* Remover o agendamento da lista*/
+      setIsSuccess(true);
 
       setAppointments((current) =>
         current.filter(
@@ -437,18 +473,11 @@ export function ReceivePayment({
         ),
       );
 
-      /* Notificação
-       */
-
       toast.success(
         `Pagamento de ${formatPrice(
           selectedPrice,
         )} recebido com sucesso.`,
       );
-
-      /*
-       * Atualizar outras partes do sistema
-       */
 
       onPaymentCreated?.();
 
@@ -456,17 +485,20 @@ export function ReceivePayment({
         new Event("appointments:changed"),
       );
 
-      /*Limpar formulário*/
+      closeTimer.current = window.setTimeout(
+        () => {
+          setIsVisible(false);
 
-      setSelectedAppointmentId("");
-      setPaymentMethod("CASH");
-
-      /* Fechar modal depois da confirmação*/
-
-      window.setTimeout(() => {
-        setIsOpen(false);
-        setSuccess("");
-      }, 900);
+          closeTimer.current = window.setTimeout(
+            () => {
+              setIsOpen(false);
+              resetForm();
+            },
+            ANIMATION_MS,
+          );
+        },
+        1200,
+      );
     } catch (err) {
       console.error(
         "Erro ao registrar pagamento:",
@@ -483,890 +515,343 @@ export function ReceivePayment({
     }
   }
 
-  /* CARREGAR QUANDO O MODAL ABRIR */
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    loadAppointments();
-  }, [isOpen]);
-
-  /* INTERFACE*/
+  /* INTERFACE */
 
   return (
     <>
       <button
         type="button"
         onClick={handleOpen}
-        className="
-          group
-          inline-flex
-          w-full
-          items-center
-          justify-center
-          gap-3
-          rounded-xl
-          border
-          border-gray-200
-          bg-white
-          px-5
-          py-3
-          text-sm
-          font-semibold
-          text-gray-950
-          shadow-sm
-          transition-all
-          duration-200
-          hover:-translate-y-0.5
-          hover:border-gray-300
-          hover:shadow-md
-          active:translate-y-0
-          dark:border-gray-800
-          dark:bg-gray-900
-          dark:text-white
-          sm:w-auto
-        "
+        className="group inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:translate-y-0 sm:w-auto"
       >
-        <span
-          className="
-            flex
-            h-8
-            w-8
-            items-center
-            justify-center
-            rounded-lg
-            bg-gray-950
-            text-white
-            transition
-            group-hover:scale-105
-            dark:bg-white
-            dark:text-gray-950
-          "
-        >
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white transition group-hover:scale-105">
           <CreditCard className="h-4 w-4" />
         </span>
-
         Receber Pagamento
       </button>
 
       {isOpen && (
         <div
-          className="
-            fixed
-            inset-0
-            z-[9999]
-            flex
-            items-center
-            justify-center
-            bg-black/60
-            p-4
-            backdrop-blur-md
-          "
+          className={`fixed inset-0 z-[9999] flex items-end justify-center bg-black/55 backdrop-blur-sm transition-opacity duration-200 sm:items-center sm:p-4 ${
+            isVisible ? "opacity-100" : "opacity-0"
+          }`}
           onMouseDown={(event) => {
-            if (
-              event.target ===
-                event.currentTarget &&
-              !isSubmitting
-            ) {
+            if (event.target === event.currentTarget) {
               handleClose();
             }
           }}
         >
           <div
-            className="
-              flex
-              max-h-[94vh]
-              w-full
-              max-w-2xl
-              flex-col
-              overflow-hidden
-              rounded-[28px]
-              border
-              border-gray-200
-              bg-white
-              shadow-[0_30px_100px_rgba(0,0,0,0.22)]
-              dark:border-gray-800
-              dark:bg-gray-950
-            "
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="receive-payment-title"
+            className={`flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-t-3xl border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-[0_30px_100px_rgba(0,0,0,0.25)] transition-all duration-200 ease-out sm:rounded-3xl ${
+              isVisible
+                ? "translate-y-0 scale-100 opacity-100"
+                : "translate-y-6 scale-[0.98] opacity-0"
+            }`}
           >
-            {/* HEADER */}
-
-            <div
-              className="
-                flex
-                shrink-0
-                items-center
-                justify-between
-                border-b
-                border-gray-100
-                px-6
-                py-5
-                dark:border-gray-800
-              "
-            >
-              <div className="flex items-center gap-3.5">
-                <div
-                  className="
-                    flex
-                    h-11
-                    w-11
-                    items-center
-                    justify-center
-                    rounded-2xl
-                    bg-gray-950
-                    text-white
-                    shadow-sm
-                    dark:bg-white
-                    dark:text-gray-950
-                  "
-                >
-                  <CreditCard className="h-5 w-5" />
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold tracking-tight text-gray-950 dark:text-white">
-                      Receber pagamento
-                    </h2>
-
-                    <span
-                      className="
-                        rounded-full
-                        bg-gray-100
-                        px-2
-                        py-0.5
-                        text-[9px]
-                        font-semibold
-                        uppercase
-                        tracking-wider
-                        text-gray-500
-                        dark:bg-gray-900
-                        dark:text-gray-400
-                      "
-                    >
-                      Caixa
-                    </span>
-                  </div>
-
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Registe o pagamento do atendimento.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isSubmitting}
-                aria-label="Fechar"
-                className="
-                  flex
-                  h-9
-                  w-9
-                  items-center
-                  justify-center
-                  rounded-xl
-                  border
-                  border-transparent
-                  text-gray-400
-                  transition
-                  hover:border-gray-200
-                  hover:bg-gray-50
-                  hover:text-gray-900
-                  dark:hover:border-gray-800
-                  dark:hover:bg-gray-900
-                  dark:hover:text-white
-                "
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* CONTEÚDO */}
-
-            <div
-              className="
-                min-h-0
-                flex-1
-                overflow-y-auto
-              "
-            >
+            {isSuccess ? (
+              <SuccessView
+                amount={formatPrice(selectedPrice)}
+                method={
+                  PAYMENT_METHODS.find(
+                    (item) =>
+                      item.value === paymentMethod,
+                  )?.label ?? ""
+                }
+                change={
+                  paymentMethod === "CASH" &&
+                  change > 0
+                    ? formatPrice(change)
+                    : null
+                }
+              />
+            ) : (
               <form
                 onSubmit={handleSubmit}
-                className="space-y-6 p-6"
+                className="flex min-h-0 flex-1 flex-col"
               >
-                {/* ERRO */}
+                {/* HEADER */}
 
-                {error && (
-                  <div
-                    className="
-                      flex
-                      items-start
-                      gap-3
-                      rounded-2xl
-                      border
-                      border-red-200
-                      bg-red-50
-                      px-4
-                      py-3.5
-                      text-sm
-                      text-red-700
-                      dark:border-red-900/50
-                      dark:bg-red-950/30
-                      dark:text-red-300
-                    "
-                  >
-                    <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                <header className="flex shrink-0 items-start justify-between gap-4 px-6 pb-4 pt-6">
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <Wallet className="h-5 w-5" />
+                    </div>
 
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                {/* SUCESSO */}
-
-                {success && (
-                  <div
-                    className="
-                      flex
-                      items-center
-                      gap-3
-                      rounded-2xl
-                      border
-                      border-gray-200
-                      bg-gray-50
-                      px-4
-                      py-3.5
-                      text-sm
-                      font-medium
-                      text-gray-900
-                      dark:border-gray-800
-                      dark:bg-gray-900
-                      dark:text-white
-                    "
-                  >
-                    <CheckCircle2 className="h-5 w-5 shrink-0" />
-
-                    {success}
-                  </div>
-                )}
-
-                {/* ATENDIMENTO */}
-
-                <section>
-                  <div className="mb-3 flex items-end justify-between">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="
-                            flex
-                            h-5
-                            w-5
-                            items-center
-                            justify-center
-                            rounded-md
-                            bg-gray-950
-                            text-[10px]
-                            font-bold
-                            text-white
-                            dark:bg-white
-                            dark:text-gray-950
-                          "
-                        >
-                          1
-                        </span>
-
-                        <h3 className="text-sm font-semibold text-gray-950 dark:text-white">
-                          Atendimento
-                        </h3>
-                      </div>
-
-                      <p className="mt-1 pl-7 text-xs text-gray-500 dark:text-gray-400">
-                        Selecione o atendimento que será liquidado.
-                      </p>
-                    </div>
-
-                    {!isLoading &&
-                      appointments.length > 0 && (
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
-                          {appointments.length}{" "}
-                          disponível
-                          {appointments.length !==
-                          1
-                            ? "s"
-                            : ""}
-                        </span>
-                      )}
-                  </div>
-
-                  <div className="relative">
-                    <select
-                      value={
-                        selectedAppointmentId
-                      }
-                      onChange={(event) =>
-                        handleAppointmentChange(
-                          event.target.value,
-                        )
-                      }
-                      disabled={
-                        isLoading ||
-                        isSubmitting
-                      }
-                      required
-                      className="
-                        w-full
-                        appearance-none
-                        rounded-2xl
-                        border
-                        border-gray-200
-                        bg-white
-                        px-4
-                        py-3.5
-                        pr-11
-                        text-sm
-                        font-medium
-                        text-gray-900
-                        outline-none
-                        transition
-                        hover:border-gray-300
-                        focus:border-gray-400
-                        focus:ring-4
-                        focus:ring-gray-950/5
-                        disabled:cursor-not-allowed
-                        disabled:bg-gray-50
-                        dark:border-gray-800
-                        dark:bg-gray-900
-                        dark:text-white
-                      "
-                    >
-                      <option value="">
-                        {isLoading
-                          ? "A carregar agendamentos..."
-                          : appointments.length ===
-                              0
-                            ? "Nenhum agendamento disponível"
-                            : "Selecione um agendamento"}
-                      </option>
-
-                      {appointments.map(
-                        (appointment) => (
-                          <option
-                            key={
-                              appointment.id
-                            }
-                            value={
-                              appointment.id
-                            }
-                          >
-                            {
-                              appointment
-                                .client
-                                .name
-                            }{" "}
-                            —{" "}
-                            {
-                              appointment
-                                .service
-                                .name
-                            }{" "}
-                            —{" "}
-                            {formatPrice(
-                              appointment
-                                .service
-                                .price,
-                            )}
-                          </option>
-                        ),
-                      )}
-                    </select>
-
-                    <ChevronDown
-                      className="
-                        pointer-events-none
-                        absolute
-                        right-4
-                        top-1/2
-                        h-4
-                        w-4
-                        -translate-y-1/2
-                        text-gray-400
-                      "
-                    />
-                  </div>
-
-                  {!isLoading &&
-                    appointments.length ===
-                      0 && (
-                      <p className="mt-2.5 text-xs text-gray-500 dark:text-gray-400">
-                        Apenas atendimentos confirmados e ainda não pagos aparecem nesta lista.
-                      </p>
-                    )}
-                </section>
-
-                {/* RESUMO */}
-
-                {selectedAppointment && (
-                  <section
-                    className="
-                      overflow-hidden
-                      rounded-2xl
-                      border
-                      border-gray-200
-                      dark:border-gray-800
-                    "
-                  >
-                    <div
-                      className="
-                        border-b
-                        border-gray-100
-                        bg-gray-50/70
-                        px-5
-                        py-3
-                        dark:border-gray-800
-                        dark:bg-gray-900/60
-                      "
-                    >
-                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
-                        Resumo do atendimento
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2">
-                      <InfoItem
-                        icon={
-                          <UserRound className="h-4 w-4" />
-                        }
-                        label="Cliente"
-                        value={
-                          selectedAppointment
-                            .client
-                            .name
-                        }
-                      />
-
-                      <InfoItem
-                        icon={
-                          <Scissors className="h-4 w-4" />
-                        }
-                        label="Serviço"
-                        value={
-                          selectedAppointment
-                            .service
-                            .name
-                        }
-                      />
-
-                      <InfoItem
-                        icon={
-                          <CalendarDays className="h-4 w-4" />
-                        }
-                        label="Data"
-                        value={formatDate(
-                          selectedAppointment.date,
-                        )}
-                      />
-
-                      <InfoItem
-                        icon={
-                          <CalendarDays className="h-4 w-4" />
-                        }
-                        label="Hora"
-                        value={formatTime(
-                          selectedAppointment.date,
-                        )}
-                      />
-
-                      <InfoItem
-                        icon={
-                          <UserRound className="h-4 w-4" />
-                        }
-                        label="Profissional"
-                        value={
-                          selectedAppointment
-                            .professional
-                            .name
-                        }
-                      />
-
-                      <InfoItem
-                        icon={
-                          <Scissors className="h-4 w-4" />
-                        }
-                        label="Duração"
-                        value={`${selectedAppointment.service.duration || 0} min`}
-                      />
-                    </div>
-                  </section>
-                )}
-
-                {/* VALOR */}
-
-                <section>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span
-                      className="
-                        flex
-                        h-5
-                        w-5
-                        items-center
-                        justify-center
-                        rounded-md
-                        bg-gray-950
-                        text-[10px]
-                        font-bold
-                        text-white
-                        dark:bg-white
-                        dark:text-gray-950
-                      "
-                    >
-                      2
-                    </span>
-
-                    <h3 className="text-sm font-semibold text-gray-950 dark:text-white">
-                      Valor do pagamento
-                    </h3>
-                  </div>
-
-                  <div
-                    className="
-                      relative
-                      overflow-hidden
-                      rounded-2xl
-                      border
-                      border-gray-200
-                      bg-gray-950
-                      px-5
-                      py-5
-                      text-white
-                      dark:border-gray-800
-                    "
-                  >
-                    <div className="relative flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/45">
-                          Total a receber
-                        </p>
-
-                        <p className="mt-2 text-3xl font-bold tracking-tight">
-                          {selectedAppointment
-                            ? formatPrice(
-                                selectedPrice,
-                              )
-                            : "—"}
-                        </p>
-
-                        {selectedAppointment && (
-                          <p className="mt-1 text-xs text-white/45">
-                            {
-                              selectedAppointment
-                                .service
-                                .name
-                            }
-                          </p>
-                        )}
-                      </div>
-
-                      <div
-                        className="
-                          flex
-                          h-12
-                          w-12
-                          items-center
-                          justify-center
-                          rounded-2xl
-                          border
-                          border-white/10
-                          bg-white/10
-                        "
+                      <h2
+                        id="receive-payment-title"
+                        className="text-lg font-semibold tracking-tight"
                       >
-                        <Banknote className="h-5 w-5" />
-                      </div>
+                        Receber pagamento
+                      </h2>
+                      <p className="mt-0.5 text-xs text-[var(--muted)]">
+                        Selecione o atendimento e o
+                        método de pagamento.
+                      </p>
                     </div>
                   </div>
-                </section>
 
-                {/* MÉTODO */}
-
-                <section>
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="
-                          flex
-                          h-5
-                          w-5
-                          items-center
-                          justify-center
-                          rounded-md
-                          bg-gray-950
-                          text-[10px]
-                          font-bold
-                          text-white
-                          dark:bg-white
-                          dark:text-gray-950
-                        "
-                      >
-                        3
-                      </span>
-
-                      <h3 className="text-sm font-semibold text-gray-950 dark:text-white">
-                        Método de pagamento
-                      </h3>
-                    </div>
-
-                    <p className="mt-1 pl-7 text-xs text-gray-500 dark:text-gray-400">
-                      Como o cliente efetuou o pagamento?
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <PaymentMethodCard
-                      selected={
-                        paymentMethod ===
-                        "CASH"
-                      }
-                      disabled={isSubmitting}
-                      onClick={() =>
-                        handlePaymentMethodChange(
-                          "CASH",
-                        )
-                      }
-                      icon={
-                        <Banknote className="h-5 w-5" />
-                      }
-                      title="Dinheiro"
-                      description="Pagamento em espécie"
-                    />
-
-                    <PaymentMethodCard
-                      selected={
-                        paymentMethod ===
-                        "CARD"
-                      }
-                      disabled={isSubmitting}
-                      onClick={() =>
-                        handlePaymentMethodChange(
-                          "CARD",
-                        )
-                      }
-                      icon={
-                        <CreditCard className="h-5 w-5" />
-                      }
-                      title="Cartão"
-                      description="Cartão bancário"
-                    />
-
-                    <PaymentMethodCard
-                      selected={
-                        paymentMethod ===
-                        "TRANSFER"
-                      }
-                      disabled={isSubmitting}
-                      onClick={() =>
-                        handlePaymentMethodChange(
-                          "TRANSFER",
-                        )
-                      }
-                      icon={
-                        <Landmark className="h-5 w-5" />
-                      }
-                      title="Transferência"
-                      description="Transferência bancária"
-                    />
-
-                    <PaymentMethodCard
-                      selected={
-                        paymentMethod ===
-                        "MOBILE_MONEY"
-                      }
-                      disabled={isSubmitting}
-                      onClick={() =>
-                        handlePaymentMethodChange(
-                          "MOBILE_MONEY",
-                        )
-                      }
-                      icon={
-                        <Smartphone className="h-5 w-5" />
-                      }
-                      title="Multicaixa Express"
-                      description="Pagamento móvel em Angola"
-                    />
-                  </div>
-                </section>
-
-                {/* TOTAL */}
-
-                {selectedAppointment &&
-                  selectedPrice > 0 && (
-                    <div
-                      className="
-                        flex
-                        items-center
-                        justify-between
-                        rounded-2xl
-                        border
-                        border-gray-200
-                        bg-gray-50
-                        px-5
-                        py-4
-                        dark:border-gray-800
-                        dark:bg-gray-900
-                      "
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="
-                            flex
-                            h-9
-                            w-9
-                            items-center
-                            justify-center
-                            rounded-xl
-                            bg-white
-                            text-gray-700
-                            shadow-sm
-                            dark:bg-gray-800
-                            dark:text-gray-300
-                          "
-                        >
-                          {getPaymentMethodIcon(
-                            paymentMethod,
-                          )}
-                        </div>
-
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wider text-gray-400">
-                            Método selecionado
-                          </p>
-
-                          <p className="mt-0.5 text-sm font-semibold text-gray-950 dark:text-white">
-                            {getPaymentMethodLabel(
-                              paymentMethod,
-                            )}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-wider text-gray-400">
-                          Total
-                        </p>
-
-                        <p className="mt-0.5 text-base font-bold text-gray-950 dark:text-white">
-                          {formatPrice(
-                            selectedPrice,
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                {/* BOTÕES */}
-
-                <div
-                  className="
-                    flex
-                    flex-col-reverse
-                    gap-3
-                    border-t
-                    border-gray-100
-                    pt-5
-                    dark:border-gray-800
-                    sm:flex-row
-                    sm:justify-end
-                  "
-                >
                   <button
                     type="button"
                     onClick={handleClose}
                     disabled={isSubmitting}
-                    className="
-                      w-full
-                      rounded-xl
-                      border
-                      border-gray-200
-                      bg-white
-                      px-5
-                      py-3
-                      text-sm
-                      font-semibold
-                      text-gray-700
-                      transition
-                      hover:bg-gray-50
-                      dark:border-gray-800
-                      dark:bg-gray-950
-                      dark:text-gray-300
-                      sm:w-auto
-                    "
+                    aria-label="Fechar"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] disabled:opacity-40"
                   >
-                    Cancelar
+                    <X className="h-4 w-4" />
                   </button>
+                </header>
 
-                  <button
-                    type="submit"
-                    disabled={
-                      isSubmitting ||
-                      !selectedAppointmentId ||
-                      selectedPrice <= 0
-                    }
-                    className="
-                      inline-flex
-                      w-full
-                      items-center
-                      justify-center
-                      gap-2
-                      rounded-xl
-                      bg-gray-950
-                      px-6
-                      py-3
-                      text-sm
-                      font-semibold
-                      text-white
-                      shadow-sm
-                      transition-all
-                      hover:-translate-y-0.5
-                      hover:bg-gray-800
-                      hover:shadow-lg
-                      active:translate-y-0
-                      dark:bg-white
-                      dark:text-gray-950
-                      dark:hover:bg-gray-100
-                      disabled:cursor-not-allowed
-                      disabled:opacity-40
-                      sm:w-auto
-                    "
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <span
-                          className="
-                            h-4
-                            w-4
-                            animate-spin
-                            rounded-full
-                            border-2
-                            border-white/30
-                            border-t-white
-                            dark:border-gray-400/30
-                            dark:border-t-gray-900
-                          "
+                {/* CONTEÚDO */}
+
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 pb-6">
+                  {error && (
+                    <div className="flex items-start gap-3 rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span className="flex-1">
+                        {error}
+                      </span>
+                      {appointments.length === 0 &&
+                        !isLoading && (
+                          <button
+                            type="button"
+                            onClick={loadAppointments}
+                            className="inline-flex items-center gap-1 text-xs font-semibold underline-offset-2 hover:underline"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Tentar novamente
+                          </button>
+                        )}
+                    </div>
+                  )}
+
+                  {/* ATENDIMENTO */}
+
+                  <section>
+                    <SectionTitle
+                      title="Atendimento"
+                      aside={
+                        !isLoading &&
+                        appointments.length > 0
+                          ? `${appointments.length} por pagar`
+                          : undefined
+                      }
+                    />
+
+                    {appointments.length > 3 && (
+                      <FieldShell
+                        icon={
+                          <Search className="h-4 w-4" />
+                        }
+                        className="mb-3"
+                      >
+                        <input
+                          type="search"
+                          value={search}
+                          onChange={(event) =>
+                            setSearch(
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Procurar cliente, serviço ou profissional"
+                          className="h-11 w-full bg-transparent pl-10 pr-4 text-sm outline-none placeholder:text-[var(--muted)]"
+                        />
+                      </FieldShell>
+                    )}
+
+                    <div
+                      role="radiogroup"
+                      aria-label="Atendimento"
+                      className="max-h-64 space-y-2 overflow-y-auto pr-0.5"
+                    >
+                      {isLoading ? (
+                        Array.from({ length: 3 }).map(
+                          (_, index) => (
+                            <div
+                              key={index}
+                              className="h-[68px] animate-pulse rounded-2xl bg-[var(--surface-secondary)]"
+                            />
+                          ),
+                        )
+                      ) : filteredAppointments.length ===
+                        0 ? (
+                        <EmptyState
+                          searching={!!search.trim()}
+                        />
+                      ) : (
+                        filteredAppointments.map(
+                          (appointment) => (
+                            <AppointmentOption
+                              key={appointment.id}
+                              appointment={appointment}
+                              selected={
+                                appointment.id ===
+                                selectedAppointmentId
+                              }
+                              disabled={isSubmitting}
+                              onSelect={() =>
+                                handleAppointmentChange(
+                                  appointment.id,
+                                )
+                              }
+                            />
+                          ),
+                        )
+                      )}
+                    </div>
+                  </section>
+
+                  {/* MÉTODO */}
+
+                  <section>
+                    <SectionTitle title="Método de pagamento" />
+
+                    <div
+                      role="radiogroup"
+                      aria-label="Método de pagamento"
+                      className="grid grid-cols-2 gap-2.5 sm:grid-cols-4"
+                    >
+                      {PAYMENT_METHODS.map(
+                        (method) => (
+                          <PaymentMethodCard
+                            key={method.value}
+                            selected={
+                              paymentMethod ===
+                              method.value
+                            }
+                            disabled={isSubmitting}
+                            onClick={() =>
+                              handlePaymentMethodChange(
+                                method.value,
+                              )
+                            }
+                            icon={method.icon}
+                            title={method.label}
+                            description={
+                              method.description
+                            }
+                          />
+                        ),
+                      )}
+                    </div>
+                  </section>
+
+                  {/* TROCO (DINHEIRO) */}
+
+                  {paymentMethod === "CASH" &&
+                    selectedPrice > 0 && (
+                      <section className="animate-[fadeUp_0.25s_ease-out]">
+                        <SectionTitle
+                          title="Valor entregue"
+                          aside="Opcional"
                         />
 
-                        A registar...
-                      </>
-                    ) : (
-                      <>
-                        <Check className="h-4 w-4" />
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <FieldShell
+                            icon={
+                              <span className="text-[11px] font-semibold">
+                                Kz
+                              </span>
+                            }
+                            invalid={isCashShort}
+                          >
+                            <input
+                              inputMode="numeric"
+                              value={amountGiven}
+                              onChange={(event) =>
+                                setAmountGiven(
+                                  event.target.value.replace(
+                                    /\D/g,
+                                    "",
+                                  ),
+                                )
+                              }
+                              placeholder={String(
+                                selectedPrice,
+                              )}
+                              disabled={isSubmitting}
+                              className="h-11 w-full bg-transparent pl-10 pr-4 text-sm font-medium tabular-nums outline-none placeholder:text-[var(--muted)]"
+                            />
+                          </FieldShell>
 
-                        Confirmar pagamento
-                      </>
+                          <div
+                            className={`flex h-11 items-center justify-between rounded-xl px-4 text-sm transition-colors ${
+                              isCashShort
+                                ? "bg-red-500/10 text-red-600 dark:text-red-300"
+                                : "bg-[var(--surface-secondary)]"
+                            }`}
+                          >
+                            <span className="text-[var(--muted)]">
+                              {isCashShort
+                                ? "Em falta"
+                                : "Troco"}
+                            </span>
+                            <span className="font-semibold tabular-nums">
+                              {givenValue > 0
+                                ? formatPrice(
+                                    Math.abs(change),
+                                  )
+                                : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </section>
                     )}
-                  </button>
                 </div>
+
+                {/* RODAPÉ */}
+
+                <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--surface-secondary)]/60 px-6 py-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                        Total a receber
+                      </p>
+                      <p
+                        key={selectedPrice}
+                        className="animate-[fadeUp_0.25s_ease-out] text-2xl font-bold tabular-nums tracking-tight"
+                      >
+                        {selectedAppointment
+                          ? formatPrice(selectedPrice)
+                          : "—"}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2.5">
+                      <button
+                        type="button"
+                        onClick={handleClose}
+                        disabled={isSubmitting}
+                        className="h-11 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5 text-sm font-semibold transition hover:bg-[var(--surface-secondary)] disabled:opacity-50 sm:flex-none"
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={!canSubmit}
+                        className="inline-flex h-11 flex-[2] items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition-all hover:-translate-y-0.5 hover:brightness-110 hover:shadow-md active:translate-y-0 disabled:pointer-events-none disabled:opacity-40 sm:flex-none"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                            A registar...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4" />
+                            Confirmar
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </footer>
               </form>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -1374,64 +859,181 @@ export function ReceivePayment({
   );
 }
 
-/* INFO ITEM*/
+/* TÍTULO DE SECÇÃO */
 
-interface InfoItemProps {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}
-
-function InfoItem({
-  icon,
-  label,
-  value,
-}: InfoItemProps) {
+function SectionTitle({
+  title,
+  aside,
+}: {
+  title: string;
+  aside?: string;
+}) {
   return (
-    <div
-      className="
-        flex
-        min-w-0
-        items-center
-        gap-3
-        border-b
-        border-gray-100
-        p-4
-        dark:border-gray-800
-      "
-    >
-      <div
-        className="
-          flex
-          h-9
-          w-9
-          shrink-0
-          items-center
-          justify-center
-          rounded-xl
-          bg-gray-50
-          text-gray-600
-          dark:bg-gray-900
-          dark:text-gray-300
-        "
-      >
-        {icon}
-      </div>
+    <div className="mb-3 flex items-center justify-between">
+      <h3 className="text-sm font-semibold">
+        {title}
+      </h3>
 
-      <div className="min-w-0">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
-          {label}
-        </p>
-
-        <p className="mt-0.5 truncate text-sm font-semibold text-gray-900 dark:text-white">
-          {value}
-        </p>
-      </div>
+      {aside && (
+        <span className="rounded-full bg-[var(--surface-secondary)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--muted)]">
+          {aside}
+        </span>
+      )}
     </div>
   );
 }
 
-/*PAYMENT METHOD CARD*/
+/* CAMPO COM ÍCONE */
+
+function FieldShell({
+  icon,
+  invalid = false,
+  className = "",
+  children,
+}: {
+  icon: ReactNode;
+  invalid?: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`relative flex items-center rounded-xl border bg-[var(--surface)] transition focus-within:ring-4 ${
+        invalid
+          ? "border-red-500/60 focus-within:ring-red-500/10"
+          : "border-[var(--border)] hover:border-primary/40 focus-within:border-primary focus-within:ring-primary/10"
+      } ${className}`}
+    >
+      <span className="pointer-events-none absolute left-3.5 top-1/2 flex -translate-y-1/2 items-center text-[var(--muted)]">
+        {icon}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+/* OPÇÃO DE ATENDIMENTO */
+
+function AppointmentOption({
+  appointment,
+  selected,
+  disabled,
+  onSelect,
+}: {
+  appointment: PaymentAppointment;
+  selected: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+}) {
+  const price = getNumericPrice(
+    appointment.service.price,
+  );
+
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      disabled={disabled}
+      onClick={onSelect}
+      className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
+        selected
+          ? "border-primary bg-primary/[0.06] ring-4 ring-primary/10"
+          : "border-[var(--border)] hover:border-primary/40 hover:bg-[var(--surface-secondary)]"
+      }`}
+    >
+      <span
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-semibold transition-colors ${
+          selected
+            ? "bg-primary text-white"
+            : "bg-[var(--surface-secondary)] text-[var(--muted)]"
+        }`}
+      >
+        {getInitials(appointment.client.name)}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold">
+          {appointment.client.name}
+        </span>
+
+        <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[var(--muted)]">
+          <span className="truncate">
+            {appointment.service.name}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <CalendarDays className="h-3 w-3" />
+            {formatDate(appointment.date)}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {formatTime(appointment.date)}
+          </span>
+          <span className="hidden items-center gap-1 sm:inline-flex">
+            <UserRound className="h-3 w-3" />
+            {appointment.professional.name}
+          </span>
+        </span>
+      </span>
+
+      <span className="flex shrink-0 flex-col items-end gap-1">
+        <span
+          className={`text-sm font-semibold tabular-nums ${
+            price <= 0
+              ? "text-amber-600 dark:text-amber-400"
+              : ""
+          }`}
+        >
+          {price > 0
+            ? formatPrice(price)
+            : "Sem preço"}
+        </span>
+
+        <span
+          className={`flex h-4 w-4 items-center justify-center rounded-full border transition-all ${
+            selected
+              ? "border-primary bg-primary text-white"
+              : "border-[var(--border)]"
+          }`}
+        >
+          {selected && (
+            <Check className="h-2.5 w-2.5" strokeWidth={3} />
+          )}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/* ESTADO VAZIO */
+
+function EmptyState({
+  searching,
+}: {
+  searching: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl border border-dashed border-[var(--border)] px-6 py-8 text-center">
+      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--surface-secondary)] text-[var(--muted)]">
+        <Inbox className="h-5 w-5" />
+      </span>
+
+      <p className="mt-3 text-sm font-semibold">
+        {searching
+          ? "Nenhum resultado"
+          : "Nada por receber"}
+      </p>
+
+      <p className="mt-1 max-w-xs text-xs text-[var(--muted)]">
+        {searching
+          ? "Tente procurar por outro nome ou serviço."
+          : "Apenas atendimentos confirmados e ainda não pagos aparecem aqui."}
+      </p>
+    </div>
+  );
+}
+
+/* MÉTODO DE PAGAMENTO */
 
 interface PaymentMethodCardProps {
   selected: boolean;
@@ -1453,111 +1055,80 @@ function PaymentMethodCard({
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={selected}
       onClick={onClick}
       disabled={disabled}
-      aria-pressed={selected}
-      className={`
-        group
-        relative
-        min-h-[118px]
-        rounded-2xl
-        border
-        p-4
-        text-left
-        transition-all
-        duration-200
-
-        ${
-          selected
-            ? `
-              border-gray-950
-              bg-gray-950
-              text-white
-              shadow-lg
-              shadow-gray-950/10
-              dark:border-white
-              dark:bg-white
-              dark:text-gray-950
-            `
-            : `
-              border-gray-200
-              bg-white
-              text-gray-900
-              hover:-translate-y-0.5
-              hover:border-gray-300
-              hover:shadow-md
-              dark:border-gray-800
-              dark:bg-gray-900
-              dark:text-white
-              dark:hover:border-gray-700
-            `
-        }
-
-        disabled:cursor-not-allowed
-        disabled:opacity-50
-      `}
+      className={`relative flex flex-col items-start rounded-2xl border p-3.5 text-left transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${
+        selected
+          ? "border-primary bg-primary/[0.06] ring-4 ring-primary/10"
+          : "border-[var(--border)] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"
+      }`}
     >
-      <div
-        className={`
-          absolute
-          right-3
-          top-3
-          flex
-          h-5
-          w-5
-          items-center
-          justify-center
-          rounded-full
-
-          ${
-            selected
-              ? "bg-white text-gray-950 dark:bg-gray-950 dark:text-white"
-              : "scale-75 bg-transparent opacity-0"
-          }
-        `}
+      <span
+        className={`absolute right-2.5 top-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white transition-all duration-150 ${
+          selected
+            ? "scale-100 opacity-100"
+            : "scale-50 opacity-0"
+        }`}
       >
-        <Check className="h-3 w-3" />
-      </div>
+        <Check className="h-2.5 w-2.5" strokeWidth={3} />
+      </span>
 
-      <div
-        className={`
-          mb-4
-          flex
-          h-10
-          w-10
-          items-center
-          justify-center
-          rounded-xl
-
-          ${
-            selected
-              ? "bg-white/10 dark:bg-gray-950/10"
-              : "bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-          }
-        `}
+      <span
+        className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
+          selected
+            ? "bg-primary text-white"
+            : "bg-[var(--surface-secondary)] text-[var(--muted)]"
+        }`}
       >
         {icon}
-      </div>
+      </span>
 
-      <p className="pr-6 text-sm font-semibold">
+      <span className="text-[13px] font-semibold leading-tight">
         {title}
-      </p>
+      </span>
 
-      <p
-        className={`
-          mt-1
-          text-[11px]
-          leading-4
-
-          ${
-            selected
-              ? "text-white/55 dark:text-gray-500"
-              : "text-gray-500 dark:text-gray-400"
-          }
-        `}
-      >
+      <span className="mt-0.5 text-[11px] text-[var(--muted)]">
         {description}
-      </p>
+      </span>
     </button>
+  );
+}
+
+/* SUCESSO */
+
+function SuccessView({
+  amount,
+  method,
+  change,
+}: {
+  amount: string;
+  method: string;
+  change: string | null;
+}) {
+  return (
+    <div className="flex flex-col items-center px-6 py-12 text-center">
+      <span className="flex h-16 w-16 animate-[iconPop_0.4s_ease-out] items-center justify-center rounded-full bg-primary/10 text-primary">
+        <CheckCircle2 className="h-8 w-8" />
+      </span>
+
+      <h2 className="mt-5 text-lg font-semibold">
+        Pagamento registado
+      </h2>
+
+      <p className="mt-1 text-sm text-[var(--muted)]">
+        {amount} · {method}
+      </p>
+
+      {change && (
+        <p className="mt-4 rounded-full bg-[var(--surface-secondary)] px-4 py-1.5 text-sm">
+          Troco a devolver:{" "}
+          <span className="font-semibold">
+            {change}
+          </span>
+        </p>
+      )}
+    </div>
   );
 }
