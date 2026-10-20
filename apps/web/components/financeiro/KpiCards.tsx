@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -11,38 +10,8 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { useCountUp } from "@/lib/use-count-up";
 import { formatCurrency, percentChange } from "./finance-utils";
-
-// Anima o número do valor anterior até ao novo; sem animação se o sistema pedir movimento reduzido.
-function useCountUp(target: number, duration = 700) {
-  const [value, setValue] = useState(target);
-  const fromRef = useRef(target);
-
-  useEffect(() => {
-    const from = fromRef.current;
-    fromRef.current = target;
-
-    if (from === target || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setValue(target);
-      return;
-    }
-
-    let frame = 0;
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(from + (target - from) * eased);
-      if (progress < 1) frame = requestAnimationFrame(tick);
-    };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
-
-  return value;
-}
 
 function Trend({ change, label, inverted }: { change: number | null; label: string; inverted?: boolean }) {
   const text = inverted ? "text-white/80" : "text-[var(--muted)]";
@@ -93,7 +62,7 @@ function KpiCard({ title, value, format, icon: Icon, change, note, loading, high
     <div
       className={`group relative overflow-hidden rounded-2xl border p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${
         highlight
-          ? "border-transparent bg-gradient-to-br from-[#009685] to-[#00695e] text-white"
+          ? "border-transparent bg-gradient-to-br from-primary to-primary-deep text-white"
           : "border-[var(--border)] bg-[var(--surface)]"
       }`}
     >

@@ -2,6 +2,7 @@ import type { NotificationDTO } from "@slotix/types";
 import { AuthorizationError, NotFoundError, ValidationError } from "../../shared/errors";
 import { notificationsRepository } from "./notifications.repository";
 import { sendPush } from "./pushNotifications";
+import { realtimeHub } from "../realtime/realtime.hub";
 
 function toNotificationDTO(notification: {
   id: string;
@@ -22,9 +23,11 @@ function toNotificationDTO(notification: {
 }
 
 export const notificationsService = {
-  // Stored for the bell and also pushed, with sound, to the user's phones.
+  // Stored for the bell, delivered at once to the user's open dashboard/app (realtime),
+  // and also pushed, with sound, to the user's phones.
   async notify(userId: string, type: string, title: string, message: string): Promise<void> {
-    await notificationsRepository.create({ userId, type, title, message });
+    const notification = await notificationsRepository.create({ userId, type, title, message });
+    realtimeHub.send([userId], { type: "notification", data: toNotificationDTO(notification) });
     await sendPush(userId, title, message);
   },
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useCallback, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./header";
 
@@ -11,6 +12,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
+  const pathname = usePathname();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const closeDrawer = useCallback(() => {
@@ -37,7 +39,10 @@ export function DashboardLayout({
 
         {/* CONTEÚDO */}
         <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-          {children}
+          {/* A chave por rota repete a entrada suave (globals.css: .page-enter) em cada página. */}
+          <div key={pathname} className="page-enter">
+            {children}
+          </div>
         </main>
       </div>
     </div>

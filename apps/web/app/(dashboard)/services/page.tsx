@@ -408,7 +408,7 @@ export default function ServicesPage() {
   */
 
   return (
-    <main className="space-y-8 p-6">
+    <main className="mx-auto max-w-[1600px] space-y-6">
       <ServicesHeader
         onServiceCreated={
           handleServiceCreated

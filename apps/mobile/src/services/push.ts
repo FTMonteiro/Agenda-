@@ -10,15 +10,42 @@ import { translate } from "@/i18n";
 // dá som e o aviso por cima do ecrã.
 const CHANNEL = "agendamentos";
 
+// Com a ligação em tempo real aberta (realtime.ts), os avisos chegam por ela e são
+// mostrados na hora como notificação local; o push do mesmo aviso, que chega uns segundos
+// depois, fica então só na lista do sistema, para não tocar duas vezes.
+let realtimeActive = false;
+
+export function setRealtimeActive(active: boolean): void {
+  realtimeActive = active;
+}
+
 // Com a app aberta o aviso também aparece e toca, em vez de ficar só na lista do sistema.
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    const trigger = notification.request.trigger;
+    const duplicate = realtimeActive && trigger !== null && "type" in trigger && trigger.type === "push";
+    return {
+      shouldPlaySound: !duplicate,
+      shouldSetBadge: false,
+      shouldShowBanner: !duplicate,
+      shouldShowList: true,
+    };
+  },
 });
+
+/**
+ * Mostra já, por cima do ecrã e com som, um aviso que chegou pela ligação em tempo real.
+ */
+export async function showLocalNotification(title: string, body: string): Promise<void> {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: { title, body, sound: "default" },
+      trigger: Platform.OS === "android" ? { channelId: CHANNEL } : null,
+    });
+  } catch {
+    // Sem autorização de notificações: o aviso continua na lista de notificações da app.
+  }
+}
 
 let registeredToken: string | null = null;
 

@@ -17,6 +17,7 @@ import {
 
 import type { NotificationDTO } from "@slotix/types";
 import { listNotifications, markAllNotificationsRead, markNotificationRead } from "../../services/notifications";
+import { onRealtime } from "../../services/realtime";
 import { useThemed, type ThemeRoles } from "@/theme/roles";
 import { useT, translate, dateLocale } from "@/i18n";
 
@@ -102,6 +103,23 @@ export default function NotificationsScreen() {
 
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Um aviso novo entra no topo da lista no instante em que chega; ao religar, a lista é
+  // relida para apanhar o que chegou enquanto a ligação esteve em baixo.
+  useEffect(() => {
+    const offNotification = onRealtime("notification", (incoming) => {
+      setNotifications((current) => (current.some((item) => item.id === incoming.id) ? current : [incoming, ...current]));
+    });
+    const offResync = onRealtime("resync", () => {
+      listNotifications()
+        .then(setNotifications)
+        .catch(() => undefined);
+    });
+    return () => {
+      offNotification();
+      offResync();
     };
   }, []);
 

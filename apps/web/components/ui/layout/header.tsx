@@ -519,10 +519,10 @@ export function Header({
                       <img
                         src={profileImage}
                         alt={`Foto de ${userName}`}
-                        className="h-9 w-9 shrink-0 rounded-full object-cover shadow-sm"
+                        className="h-9 w-9 shrink-0 rounded-full object-cover shadow-sm ring-2 ring-primary/15"
                       />
                     ) : (
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white shadow-sm">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-deep text-sm font-semibold text-white shadow-sm ring-2 ring-primary/15">
                         {avatarLetter}
                       </div>
                     )}
@@ -550,9 +550,9 @@ export function Header({
                   </button>
 
                   {openProfile && (
-                    <div className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl">
+                    <div className="finance-fade-up absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl">
 
-                      <div className="border-b border-[var(--border)] p-4">
+                      <div className="border-b border-[var(--border)] bg-gradient-to-br from-primary/[0.06] to-transparent p-4">
                         <div className="flex items-center gap-3">
 
                           {profileImage ? (
@@ -564,7 +564,7 @@ export function Header({
                               className="h-11 w-11 shrink-0 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-deep text-sm font-bold text-white">
                               {
                                 avatarLetter
                               }
@@ -585,7 +585,7 @@ export function Header({
                               }
                             </p>
 
-                            <p className="mt-1 text-xs font-medium text-blue-600">
+                            <p className="mt-1.5 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                               {formatRole(
                                 user?.role,
                               )}

@@ -1,15 +1,17 @@
+import type { Prisma } from "@prisma/client";
 import type { AppointmentDTO } from "@slotix/types";
 import type { CreateAppointmentInput, RescheduleAppointmentInput } from "@slotix/validation";
 import type { CreateWalkInAppointmentInput } from "./appointments.schema";
 import { AuthorizationError, ConflictError, NotFoundError, ValidationError } from "../../shared/errors";
-import { domainEvents } from "../../shared/events/domainEvents";
-import { isSlotAvailable, resolveDayHours, type TimeWindow } from "../../shared/utils/scheduling";
+import { domainEvents, type AppointmentChange } from "../../shared/events/domainEvents";
+import { isFreeOfConflicts, isSlotAvailable, resolveDayHours, type TimeWindow } from "../../shared/utils/scheduling";
 import { businessesRepository, getBusinessOrThrow } from "../businesses";
 import { getServiceOrThrow } from "../services";
 import { getProfessionalOrThrow, professionalsRepository } from "../professionals";
 import { getWalkInClientOrThrow } from "../clients";
 import { assertStaffOfBusiness } from "../../shared/authz";
 import { appointmentsRepository } from "./appointments.repository";
+import { paymentsRepository } from "../payments/payments.repository";
 
 type RequesterRole = "CUSTOMER" | "OWNER" | "EMPLOYEE" | "ADMIN";
 
@@ -48,8 +50,16 @@ function toAppointmentDTO(appointment: {
 // Checks business hours + professional time-off blocks + existing bookings together —
 // the same three ingredients `availability`'s slot computation uses (see
 // shared/utils/scheduling.ts), so a slot this accepts is exactly one `/availability`
-// would have listed as free.
-async function assertSlotAvailable(businessId: string, professionalId: string, scheduledAt: Date, durationMinutes: number, excludeId?: string) {
+// would have listed as free. Must run inside `withProfessionalLock` (passing its `db`)
+// so the check and the following write are atomic per professional.
+async function assertSlotAvailable(
+  db: Prisma.TransactionClient,
+  businessId: string,
+  professionalId: string,
+  scheduledAt: Date,
+  durationMinutes: number,
+  excludeId?: string,
+) {
   const start = scheduledAt;
   const end = new Date(start.getTime() + durationMinutes * 60_000);
   // 24h lookback safely covers any realistically-sized service duration ending after `start`.
@@ -57,20 +67,38 @@ async function assertSlotAvailable(businessId: string, professionalId: string, s
 
   const [allHours, existingAppointments, blocks] = await Promise.all([
     businessesRepository.findHours(businessId),
-    appointmentsRepository.findActiveInWindow(professionalId, windowStart, end, excludeId),
+    appointmentsRepository.findActiveInWindow(professionalId, windowStart, end, excludeId, db),
     professionalsRepository.findBlocksInRange(professionalId, windowStart, end),
   ]);
 
+  const slot = { start, end };
+  const booked: TimeWindow[] = existingAppointments.map((a) => ({
+    start: a.scheduledAt,
+    end: new Date(a.scheduledAt.getTime() + a.durationMinutes * 60_000),
+  }));
+
+  if (!isFreeOfConflicts(slot, booked)) {
+    throw new ConflictError("Este profissional já tem um agendamento neste horário. Escolha outro horário ou profissional.", "PROFESSIONAL_ALREADY_BOOKED");
+  }
+
   const dayHours = resolveDayHours(allHours, start.getDay());
+  const busy: TimeWindow[] = blocks.map((b) => ({ start: b.startAt, end: b.endAt }));
 
-  const busy: TimeWindow[] = [
-    ...existingAppointments.map((a) => ({ start: a.scheduledAt, end: new Date(a.scheduledAt.getTime() + a.durationMinutes * 60_000) })),
-    ...blocks.map((b) => ({ start: b.startAt, end: b.endAt })),
-  ];
-
-  if (!isSlotAvailable({ start, end }, dayHours, busy)) {
+  if (!isSlotAvailable(slot, dayHours, busy)) {
     throw new ConflictError("Este horário não está disponível.", "APPOINTMENT_NOT_AVAILABLE");
   }
+}
+
+function announce(appointment: AppointmentDTO, change: AppointmentChange): AppointmentDTO {
+  domainEvents.emitEvent("AppointmentChanged", { appointment, change });
+  return appointment;
+}
+
+// For changes made outside this module (a payment received completes the appointment):
+// tells the live views (dashboard agenda/home, the client's app) right away.
+export async function announceAppointmentChange(id: string, change: AppointmentChange): Promise<void> {
+  const appointment = await appointmentsRepository.findById(id);
+  if (appointment) announce(toAppointmentDTO(appointment), change);
 }
 
 export async function getAppointmentOrThrow(id: string) {
@@ -127,21 +155,26 @@ export const appointmentsService = {
       throw new ValidationError("A data do agendamento tem de ser no futuro.", "APPOINTMENT_IN_PAST");
     }
 
-    await assertSlotAvailable(input.businessId, input.professionalId, scheduledAt, service.duration);
+    const appointment = await appointmentsRepository.withProfessionalLock(input.professionalId, async (db) => {
+      await assertSlotAvailable(db, input.businessId, input.professionalId, scheduledAt, service.duration);
 
-    const appointment = await appointmentsRepository.create({
-      businessId: input.businessId,
-      clientId,
-      serviceId: input.serviceId,
-      professionalId: input.professionalId,
-      scheduledAt,
-      durationMinutes: service.duration,
-      price: service.price,
-      notes: input.notes,
+      return appointmentsRepository.create(
+        {
+          businessId: input.businessId,
+          clientId,
+          serviceId: input.serviceId,
+          professionalId: input.professionalId,
+          scheduledAt,
+          durationMinutes: service.duration,
+          price: service.price,
+          notes: input.notes,
+        },
+        db,
+      );
     });
 
     domainEvents.emitEvent("AppointmentCreated", toAppointmentDTO(appointment));
-    return toAppointmentDTO(appointment);
+    return announce(toAppointmentDTO(appointment), "created");
   },
 
   // Booked by the business (OWNER/EMPLOYEE) on behalf of someone with no account —
@@ -157,20 +190,25 @@ export const appointmentsService = {
       throw new ValidationError("A data do agendamento tem de ser no futuro.", "APPOINTMENT_IN_PAST");
     }
 
-    await assertSlotAvailable(input.businessId, input.professionalId, scheduledAt, service.duration);
+    const appointment = await appointmentsRepository.withProfessionalLock(input.professionalId, async (db) => {
+      await assertSlotAvailable(db, input.businessId, input.professionalId, scheduledAt, service.duration);
 
-    const appointment = await appointmentsRepository.create({
-      businessId: input.businessId,
-      walkInClientId: input.walkInClientId,
-      serviceId: input.serviceId,
-      professionalId: input.professionalId,
-      scheduledAt,
-      durationMinutes: service.duration,
-      price: service.price,
-      notes: input.notes,
+      return appointmentsRepository.create(
+        {
+          businessId: input.businessId,
+          walkInClientId: input.walkInClientId,
+          serviceId: input.serviceId,
+          professionalId: input.professionalId,
+          scheduledAt,
+          durationMinutes: service.duration,
+          price: service.price,
+          notes: input.notes,
+        },
+        db,
+      );
     });
 
-    return toAppointmentDTO(appointment);
+    return announce(toAppointmentDTO(appointment), "created");
   },
 
   async listMineAsClient(clientId: string): Promise<AppointmentDTO[]> {
@@ -201,7 +239,7 @@ export const appointmentsService = {
 
     const updated = await appointmentsRepository.update(id, { status: "CANCELLED" });
     domainEvents.emitEvent("AppointmentCancelled", { ...toAppointmentDTO(updated), byClient: requesterRole === "CUSTOMER" });
-    return toAppointmentDTO(updated);
+    return announce(toAppointmentDTO(updated), "cancelled");
   },
 
   async confirm(id: string, requesterId: string): Promise<AppointmentDTO> {
@@ -214,7 +252,7 @@ export const appointmentsService = {
 
     const updated = await appointmentsRepository.update(id, { status: "CONFIRMED" });
     domainEvents.emitEvent("AppointmentConfirmed", toAppointmentDTO(updated));
-    return toAppointmentDTO(updated);
+    return announce(toAppointmentDTO(updated), "confirmed");
   },
 
   async complete(id: string, requesterId: string): Promise<AppointmentDTO> {
@@ -225,8 +263,15 @@ export const appointmentsService = {
       throw new ConflictError("Este agendamento não pode ser concluído.", "APPOINTMENT_NOT_COMPLETABLE");
     }
 
+    // Regra do negócio: um agendamento só fica concluído quando é pago. Registar o
+    // pagamento (payments) já o conclui sozinho; aqui só passa se já houver um pago.
+    const payment = await paymentsRepository.findByAppointmentId(id);
+    if (payment?.status !== "PAID") {
+      throw new ConflictError("O agendamento só fica concluído depois de o pagamento ser registado.", "APPOINTMENT_NOT_PAID");
+    }
+
     const updated = await appointmentsRepository.update(id, { status: "COMPLETED" });
-    return toAppointmentDTO(updated);
+    return announce(toAppointmentDTO(updated), "completed");
   },
 
   async markNoShow(id: string, requesterId: string): Promise<AppointmentDTO> {
@@ -238,7 +283,7 @@ export const appointmentsService = {
     }
 
     const updated = await appointmentsRepository.update(id, { status: "NO_SHOW" });
-    return toAppointmentDTO(updated);
+    return announce(toAppointmentDTO(updated), "no_show");
   },
 
   async reschedule(id: string, requesterId: string, requesterRole: RequesterRole, input: RescheduleAppointmentInput): Promise<AppointmentDTO> {
@@ -254,9 +299,10 @@ export const appointmentsService = {
       throw new ValidationError("A data do agendamento tem de ser no futuro.", "APPOINTMENT_IN_PAST");
     }
 
-    await assertSlotAvailable(appointment.businessId, appointment.professionalId, scheduledAt, appointment.durationMinutes, id);
-
-    const updated = await appointmentsRepository.update(id, { scheduledAt });
-    return toAppointmentDTO(updated);
+    const updated = await appointmentsRepository.withProfessionalLock(appointment.professionalId, async (db) => {
+      await assertSlotAvailable(db, appointment.businessId, appointment.professionalId, scheduledAt, appointment.durationMinutes, id);
+      return appointmentsRepository.update(id, { scheduledAt }, db);
+    });
+    return announce(toAppointmentDTO(updated), "rescheduled");
   },
 };

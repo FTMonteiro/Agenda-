@@ -15,9 +15,9 @@ export function Button({
     <button
       className={cn(
         "h-10 px-4 rounded-lg font-medium transition-all duration-200",
-        "focus:outline-none focus:ring-4 focus:ring-blue-500/20",
+        "focus:outline-none focus:ring-4 focus:ring-primary/20",
         {
-          "bg-black text-white hover:bg-gray-800":
+          "bg-primary text-white hover:bg-primary-hover":
             variant === "primary",
 
           "bg-white border border-gray-200 text-gray-900 hover:bg-gray-50":

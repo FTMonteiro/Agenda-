@@ -23,7 +23,10 @@ import type { AppointmentDTO, AppointmentStatus, BusinessDTO, ProfessionalDTO, S
 import { useIOSColors } from "@/components/ios";
 import { Typography } from "@/constants/theme";
 import { cancelAppointment, listMyAppointments } from "../services/appointments";
+import { clearHistory, getHistoryClearedAt, withoutClearedHistory } from "../services/appointment-history";
+import { useAuth } from "../contexts/AuthContext";
 import { syncReminders } from "../services/reminders";
+import { onRealtime } from "../services/realtime";
 import { usePreferences } from "../contexts/PreferencesContext";
 import { getBusiness, getBusinessProfessionals, getBusinessServices } from "../services/businesses";
 import { useT, translate, dateLocale } from "@/i18n";
@@ -328,6 +331,10 @@ function DetailsSheet({
 export default function AppointmentsScreen() {
   const t = useT();
   const { preferences } = usePreferences();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  // Data do último "Apagar histórico" neste telemóvel (appointment-history.ts).
+  const historyClearedAt = useRef<number | null>(null);
   const router = useRouter();
   const colors = useIOSColors();
   const insets = useSafeAreaInsets();
@@ -349,7 +356,8 @@ export default function AppointmentsScreen() {
   // vez por espaço; nas atualizações seguintes só se volta a pedir a lista de marcações.
   const load = useCallback(async () => {
     try {
-      const data = await listMyAppointments();
+      if (userId) historyClearedAt.current = await getHistoryClearedAt(userId);
+      const data = withoutClearedHistory(await listMyAppointments(), historyClearedAt.current);
       setAppointments(data);
 
       const missing = [...new Set(data.map((appointment) => appointment.businessId))].filter(
@@ -380,14 +388,21 @@ export default function AppointmentsScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
-  // Atualiza ao entrar no ecrã e depois de 15 em 15 segundos enquanto estiver aberto.
+  // Atualiza ao entrar no ecrã, na hora em que o espaço muda um agendamento (confirma,
+  // cancela...) — pela ligação em tempo real — e, de reserva, de 15 em 15 segundos.
   useFocusEffect(
     useCallback(() => {
       void load();
       const timer = setInterval(() => void load(), REFRESH_INTERVAL_MS);
-      return () => clearInterval(timer);
+      const offAppointment = onRealtime("appointment", () => void load());
+      const offResync = onRealtime("resync", () => void load());
+      return () => {
+        clearInterval(timer);
+        offAppointment();
+        offResync();
+      };
     }, [load]),
   );
 
@@ -465,6 +480,40 @@ export default function AppointmentsScreen() {
     ]);
   };
 
+  // Concluídas, canceladas e faltas: o que "Apagar histórico" tira da lista.
+  const historyCount = counts.COMPLETED + counts.CANCELLED;
+  const [clearingHistory, setClearingHistory] = useState(false);
+
+  const confirmClearHistory = () => {
+    Alert.alert(
+      t("Apagar histórico?"),
+      t("As marcações concluídas e canceladas deixam de aparecer aqui. As pendentes e confirmadas ficam."),
+      [
+        { text: t("Manter"), style: "cancel" },
+        {
+          text: t("Apagar histórico"),
+          style: "destructive",
+          onPress: async () => {
+            setClearingHistory(true);
+            try {
+              if (!userId) throw new Error("sem sessão");
+              historyClearedAt.current = await clearHistory(userId);
+              setAppointments((current) => current.filter((appointment) => {
+                const group = tabOf(appointment.status);
+                return group === "PENDING" || group === "CONFIRMED";
+              }));
+              setTab(counts.PENDING > 0 || counts.CONFIRMED === 0 ? "PENDING" : "CONFIRMED");
+            } catch {
+              Alert.alert(t("Não foi possível apagar o histórico"), t("Tente novamente dentro de momentos."));
+            } finally {
+              setClearingHistory(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const openSpace = (businessId: string) => {
     setSelectedId(null);
     router.push({ pathname: "/space", params: { businessId } } as never);
@@ -540,6 +589,23 @@ export default function AppointmentsScreen() {
         ) : null}
 
         <Segmented value={tab} counts={counts} onChange={setTab} />
+
+        {(tab === "COMPLETED" || tab === "CANCELLED") && historyCount > 0 ? (
+          <Pressable
+            onPress={confirmClearHistory}
+            disabled={clearingHistory}
+            accessibilityRole="button"
+            accessibilityLabel={t("Apagar histórico")}
+            style={({ pressed }) => [styles.clearHistory, { backgroundColor: colors.errorBackground, opacity: pressed || clearingHistory ? 0.7 : 1 }]}
+          >
+            {clearingHistory ? (
+              <ActivityIndicator size="small" color={colors.error} />
+            ) : (
+              <Ionicons name="trash-outline" size={17} color={colors.error} />
+            )}
+            <Text style={[styles.clearHistoryText, { color: colors.error }]}>{t("Apagar histórico")}</Text>
+          </Pressable>
+        ) : null}
 
         {loading ? (
           <View style={styles.state}>
@@ -692,6 +758,20 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 12,
+  },
+  clearHistory: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 44,
+    borderRadius: 12,
+    borderCurve: "continuous",
+    marginBottom: 14,
+  },
+  clearHistoryText: {
+    ...Typography.subheadline,
+    fontWeight: "600",
   },
   card: {
     borderRadius: 16,

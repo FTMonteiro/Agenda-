@@ -152,9 +152,11 @@ export function AppointmentList({
      CARREGAR AGENDAMENTOS
   */
 
-  async function loadAppointments() {
+  // silent: atualização em segundo plano (tempo real, ações noutras páginas) — a lista
+  // troca no lugar, sem voltar ao indicador de carregamento.
+  async function loadAppointments(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const response = await fetch("/api/appointments", {
         method: "GET",
@@ -191,11 +193,13 @@ export function AppointmentList({
         error
       );
 
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erro ao carregar agendamentos."
-      );
+      if (!silent) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Erro ao carregar agendamentos."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -215,7 +219,7 @@ export function AppointmentList({
 
   useEffect(() => {
     function handleAppointmentsChanged() {
-      loadAppointments();
+      loadAppointments(true);
     }
 
     window.addEventListener(
@@ -1164,7 +1168,7 @@ export function AppointmentList({
                             changingStatus?.id ===
                             appointment.id
                           }
-                          className="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                          className="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <CheckCircle2 className="h-4 w-4" />
                           {changingStatus?.id ===
@@ -1223,7 +1227,7 @@ export function AppointmentList({
                                     changingStatus !==
                                     null
                                   }
-                                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   <CheckCircle2 className="h-4 w-4" />
                                   Confirmar agendamento
@@ -1485,7 +1489,7 @@ export function AppointmentList({
                             selectedAppointment
                           )
                         }
-                        className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isOpeningReceipt(
                           loadingReceipt,
@@ -1556,7 +1560,7 @@ export function AppointmentList({
                         icon={
                           <CheckCircle2 className="h-4 w-4" />
                         }
-                        className="bg-blue-600 text-white hover:bg-blue-700"
+                        className="bg-primary text-white hover:bg-primary-hover"
                         busy={
                           changingStatus?.id ===
                             selectedAppointment.id &&
@@ -1634,7 +1638,7 @@ export function AppointmentList({
                 onClick={() =>
                   setSelectedAppointment(null)
                 }
-                className="w-full rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                className="w-full rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-hover"
               >
                 Fechar
               </button>
@@ -1930,7 +1934,7 @@ export function AppointmentList({
                 type="button"
                 disabled={isSaving}
                 onClick={saveEdit}
-                className="flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60"
               >
                 <Save className="h-4 w-4" />
 

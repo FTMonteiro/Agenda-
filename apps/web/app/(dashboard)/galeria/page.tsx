@@ -30,6 +30,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { PageActions } from "@/components/ui/PageActions";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/confirm-action";
 import { shrinkImage } from "@/lib/shrink-image";
@@ -393,34 +394,24 @@ export default function GaleriaPage() {
 
   /* RENDER*/
   return (
-    <main className="min-h-screen bg-[var(--background)] px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-full">
       <div className="mx-auto max-w-7xl">
 
-        {/* HEADER */}
-        <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-             <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-              Galeria do espaço
-            </h1>
-
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-              Mostre o ambiente, os serviços e a
-              experiência do seu espaço através de
-              imagens profissionais.
-            </p>
+        {/* AÇÕES */}
+        {images.length > 0 && (
+          <div className="mb-8">
+            <PageActions>
+              <button
+                type="button"
+                onClick={clearGallery}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
+              >
+                <Trash2 size={16} />
+                Limpar galeria
+              </button>
+            </PageActions>
           </div>
-
-          {images.length > 0 && (
-            <button
-              type="button"
-              onClick={clearGallery}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
-            >
-              <Trash2 size={16} />
-              Limpar galeria
-            </button>
-          )}
-        </header>
+        )}
 
         {/* INPUT ESCONDIDO ESTE É O QUE ABRE O EXPLORADOR */}
         <input

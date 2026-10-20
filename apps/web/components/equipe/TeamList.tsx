@@ -821,7 +821,7 @@ export default function TeamList({
                 type="button"
                 onClick={handleEdit}
                 disabled={loadingId === editingMember.id}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Save size={16} />
 

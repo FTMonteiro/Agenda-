@@ -175,7 +175,7 @@ export default function EquipePage() {
   }
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="mx-auto max-w-[1600px] space-y-6">
       <TeamHeader
         onMemberCreated={
           handleMemberCreated

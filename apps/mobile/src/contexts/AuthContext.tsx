@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import type { UserDTO } from "@slotix/types";
 import { ApiRequestError, loadStoredAccessToken, setAccessToken } from "../services/api-client";
 import { registerForPush, unregisterFromPush } from "../services/push";
+import { startRealtime, stopRealtime } from "../services/realtime";
 import { getMe } from "../services/users";
 import { useT } from "@/i18n";
 
@@ -53,15 +54,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, [refresh]);
 
-  // Com sessão iniciada, o telemóvel fica ligado à conta para os avisos com som.
+  // Com sessão iniciada, o telemóvel fica ligado à conta para os avisos com som, e a app
+  // aberta recebe-os na hora (ligação em tempo real).
   const userId = user?.id ?? null;
   useEffect(() => {
-    if (userId) void registerForPush();
+    if (!userId) return;
+    void registerForPush();
+    startRealtime();
+    return () => stopRealtime();
   }, [userId]);
 
   const logout = useCallback(async () => {
     // Antes de apagar o token de sessão: o pedido para desligar o telemóvel precisa dele.
     await unregisterFromPush();
+    stopRealtime();
     await setAccessToken(null);
     setUser(null);
   }, []);

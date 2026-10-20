@@ -14,6 +14,7 @@ import {
   User,
   Wallet,
 } from "lucide-react";
+import { PageActions } from "@/components/ui/PageActions";
 import { toast } from "sonner";
 import {
   ReceiptDrawer,
@@ -315,18 +316,7 @@ export default function PagamentosPage({
           HEADER
       ====================================================== */}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
-            Pagamentos
-          </h1>
-
-          <p className="mt-1 text-sm text-zinc-500">
-            Consulte e acompanhe todos os pagamentos
-            recebidos.
-          </p>
-        </div>
-
+      <PageActions>
         <button
           type="button"
           onClick={() => loadPayments(true)}
@@ -341,7 +331,7 @@ export default function PagamentosPage({
 
           Atualizar
         </button>
-      </div>
+      </PageActions>
 
       {/* ======================================================
           CARDS

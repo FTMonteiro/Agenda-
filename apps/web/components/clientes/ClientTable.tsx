@@ -551,7 +551,7 @@ export function ClientTable() {
             <button
               type="button"
               onClick={handleOpenAddClient}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-700 px-4 text-xs font-semibold text-white transition hover:bg-blue-800"
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold text-white transition hover:bg-primary-hover"
             >
               <Plus className="h-3.5 w-3.5" />
               Novo cliente
@@ -1126,7 +1126,7 @@ export function ClientTable() {
                 type="button"
                 onClick={handleAddClient}
                 disabled={isSaving}
-                className="h-9 rounded-lg bg-gray-950 px-4 text-xs font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+                className="h-9 rounded-lg bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
               >
                 {isSaving
                   ? "A guardar..."
@@ -1284,7 +1284,7 @@ export function ClientTable() {
                     type="button"
                     onClick={handleSaveEdit}
                     disabled={isUpdating}
-                    className="h-9 rounded-lg bg-gray-950 px-4 text-xs font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+                    className="h-9 rounded-lg bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
                   >
                     {isUpdating
                       ? "A guardar..."
@@ -1453,7 +1453,7 @@ export function ClientTable() {
                   <button
                     type="button"
                     onClick={handleCloseDetails}
-                    className="h-9 rounded-lg bg-gray-950 px-4 text-xs font-semibold text-white hover:bg-gray-800"
+                    className="h-9 rounded-lg bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-hover"
                   >
                     Fechar
                   </button>

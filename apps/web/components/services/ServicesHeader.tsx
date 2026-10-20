@@ -3,7 +3,12 @@
 import { FormEvent, useState } from "react";
 import { toast } from "sonner";
 
-import { X, Plus, Loader2 } from "lucide-react";
+import {
+  X,
+  Plus,
+  Loader2,
+} from "lucide-react";
+import { PageActions, brandButton } from "@/components/ui/PageActions";
 
 import { useCategoryExamples } from "@/lib/category-examples";
 import type { Service } from "@/types/service";
@@ -116,24 +121,12 @@ export default function ServicesHeader({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="mt-1 text-2xl font-bold text-gray-950">Serviços</h1>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Gerencie os serviços oferecidos.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800"
-        >
-          <Plus size={18} />
-          Novo serviço
-        </button>
-      </div>
+      <PageActions>
+          <button type="button" onClick={() => setOpen(true)} className={brandButton}>
+            <Plus size={18} />
+            Novo serviço
+          </button>
+      </PageActions>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -248,7 +241,7 @@ export default function ServicesHeader({
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
+                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60"
                 >
                   {saving && <Loader2 size={16} className="animate-spin" />}
                   Criar serviço

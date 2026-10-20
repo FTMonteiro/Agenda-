@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Plus } from "lucide-react";
+import {
+  Search,
+  Plus,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  CircleCheckBig,
+  type LucideIcon,
+} from "lucide-react";
+import { StatCard, type StatTone } from "@/components/ui/StatCard";
+import { PageActions, brandButton } from "@/components/ui/PageActions";
 import { toast } from "sonner";
 
 import { useNotifications } from "@/components/notifications/NotificationsProvider";
@@ -96,10 +106,14 @@ export default function AppointmentsPage() {
 
   /* BUSCAR*/
 
-  async function loadAppointments() {
+  // silent: atualização em segundo plano (tempo real) — a lista troca no lugar, sem o
+  // "Carregando agendamentos..." nem apagar o que já está no ecrã se falhar.
+  async function loadAppointments(silent = false) {
     try {
-      setLoading(true);
-      setError("");
+      if (!silent) {
+        setLoading(true);
+        setError("");
+      }
 
       const response = await fetch("/api/appointments", {
         cache: "no-store",
@@ -128,16 +142,26 @@ export default function AppointmentsPage() {
     } catch (error) {
       console.error(error);
 
-      setError(
-        error instanceof Error ? error.message : "Erro ao buscar agendamentos.",
-      );
+      if (!silent) {
+        setError(
+          error instanceof Error ? error.message : "Erro ao buscar agendamentos.",
+        );
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => {
     loadAppointments();
+  }, []);
+
+  /* TEMPO REAL: agendamento novo pela app, confirmado, cancelado... aparece na hora. */
+
+  useEffect(() => {
+    const onChange = () => void loadAppointments(true);
+    window.addEventListener("appointments:changed", onChange);
+    return () => window.removeEventListener("appointments:changed", onChange);
   }, []);
 
   /* OPÇÕES DOS DROPDOWNS*/
@@ -487,53 +511,49 @@ export default function AppointmentsPage() {
   ];
 
   return (
-    <div className="min-h-full space-y-8">
+    <div className="mx-auto min-h-full max-w-[1600px] space-y-6">
       {/* HEADER */}
 
-      <section className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-950 sm:text-4xl">
-            Agenda
-          </h1>
-
-          <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">
-            Organize os seus atendimentos, acompanhe os profissionais e mantenha
-            a agenda sempre sob controlo.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={openModal}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-800"
-        >
-          <Plus className="h-4 w-4" />
-          Novo Agendamento
-        </button>
-      </section>
+      <PageActions>
+          <button type="button" onClick={openModal} className={brandButton}>
+            <Plus className="h-4 w-4" />
+            Novo agendamento
+          </button>
+      </PageActions>
 
       {/* MÉTRICAS */}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
+          index={0}
+          icon={CalendarDays}
           title="Total"
           value={appointments.length}
           description="Agendamentos registados"
         />
 
         <Metric
+          index={1}
+          icon={CheckCircle2}
+          tone="success"
           title="Confirmados"
           value={confirmedCount}
           description="Atendimentos confirmados"
         />
 
         <Metric
+          index={2}
+          icon={Clock3}
+          tone="warning"
           title="Aguardando"
           value={pendingCount}
           description="Aguardam confirmação"
         />
 
         <Metric
+          index={3}
+          icon={CircleCheckBig}
+          tone="brand"
           title="Concluídos"
           value={completedCount}
           description="Atendimentos concluídos"
@@ -542,7 +562,7 @@ export default function AppointmentsPage() {
 
       {/* FILTROS */}
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap gap-2">
             {filters.map((filter) => {
@@ -553,9 +573,9 @@ export default function AppointmentsPage() {
                   key={filter.value}
                   type="button"
                   onClick={() => setActiveFilter(filter.value)}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium ${
+                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition duration-200 ${
                     active
-                      ? "bg-gray-950 text-white"
+                      ? "bg-primary text-white shadow-[0_8px_20px_-10px_var(--brand)]"
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
@@ -799,7 +819,7 @@ export default function AppointmentsPage() {
                 type="button"
                 disabled={isCreating}
                 onClick={handleCreateAppointment}
-                className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isCreating ? "Criando..." : "Criar Agendamento"}
               </button>
@@ -821,20 +841,18 @@ function Metric({
   title,
   value,
   description,
+  icon,
+  tone,
+  index,
 }: {
   title: string;
   value: number;
   description: string;
+  icon: LucideIcon;
+  tone?: StatTone;
+  index: number;
 }) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-gray-500">{title}</p>
-
-      <p className="mt-3 text-3xl font-bold text-gray-950">{value}</p>
-
-      <p className="mt-4 text-xs text-gray-400">{description}</p>
-    </div>
-  );
+  return <StatCard index={index} label={title} value={value} description={description} icon={icon} tone={tone} />;
 }
 
 /*

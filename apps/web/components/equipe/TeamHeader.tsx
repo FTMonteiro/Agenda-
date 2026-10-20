@@ -11,6 +11,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { PageActions, brandButton } from "@/components/ui/PageActions";
 
 import { useCategoryExamples } from "@/lib/category-examples";
 import type { TeamMember } from "./TeamList";
@@ -356,27 +357,19 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
           HEADER
        */}
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="mt-1 text-2xl font-bold text-gray-950">Equipe</h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Gerencie os profissionais do seu estabelecimento.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            resetForm();
-            setOpen(true);
-          }}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-        >
-          <Plus size={18} />
-          Novo profissional
-        </button>
-      </div>
+      <PageActions>
+          <button
+            type="button"
+            onClick={() => {
+              resetForm();
+              setOpen(true);
+            }}
+            className={brandButton}
+          >
+            <Plus size={18} />
+            Novo profissional
+          </button>
+      </PageActions>
 
       {/* 
           MODAL
@@ -567,7 +560,7 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {loading ? "A cadastrar..." : "Cadastrar profissional"}
                   </button>
@@ -708,7 +701,7 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                    className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary-hover"
                   >
                     Concluir
                   </button>

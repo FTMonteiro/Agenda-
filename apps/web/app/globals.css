@@ -6,8 +6,36 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * MARCA AGENDA+
+ *
+ * O azul da logo (#1451D6) é a cor principal de todo o sistema. A escala `blue` do
+ * Tailwind é redefinida à volta dele: qualquer bg-blue-600 / text-blue-600 já usado
+ * nas páginas passa a ser exatamente o azul da marca. O verde-menta é o "+" do ícone.
+ *
+ * `primary` muda com o tema (ver --brand mais abaixo): no escuro sobe um tom para
+ * manter o contraste sobre as superfícies escuras.
+ */
 @theme {
-  --color-primary: #009685;
+  --color-blue-50: #eef4ff;
+  --color-blue-100: #dce7ff;
+  --color-blue-200: #bcd1ff;
+  --color-blue-300: #8fb2ff;
+  --color-blue-400: #5e8cf8;
+  --color-blue-500: #3469ec;
+  --color-blue-600: #1451d6;
+  --color-blue-700: #1043b3;
+  --color-blue-800: #0f388f;
+  --color-blue-900: #112f70;
+  --color-blue-950: #0b1d45;
+
+  --color-mint: #8fffc7;
+}
+
+@theme inline {
+  --color-primary: var(--brand);
+  --color-primary-hover: var(--brand-hover);
+  --color-primary-deep: var(--brand-deep);
 }
 
 /* ============================================================
@@ -26,6 +54,10 @@
 
   --surface: #ffffff;
   --surface-secondary: #f3f4f6;
+
+  --brand: #1451d6;
+  --brand-hover: #1043b3;
+  --brand-deep: #0b2a86;
 }
 
 html.light {
@@ -40,6 +72,10 @@ html.light {
 
   --surface: #ffffff;
   --surface-secondary: #f3f4f6;
+
+  --brand: #1451d6;
+  --brand-hover: #1043b3;
+  --brand-deep: #0b2a86;
 }
 
 html.dark {
@@ -54,6 +90,10 @@ html.dark {
 
   --surface: #111827;
   --surface-secondary: #1f2937;
+
+  --brand: #3d78f2;
+  --brand-hover: #5e8cf8;
+  --brand-deep: #1a3d9e;
 }
 
 /* ============================================================
@@ -690,41 +730,41 @@ html.dark {
    DARK MODE — ELEMENTOS GENÉRICOS ANTIGOS
 ============================================================ */
 
-html.dark .bg-gray-50 {
+html.dark .bg-gray-50:not([class*="dark:bg-"]) {
   background-color: var(--surface-secondary);
 }
 
-html.dark .bg-gray-100 {
+html.dark .bg-gray-100:not([class*="dark:bg-"]) {
   background-color: var(--surface-secondary);
 }
 
-html.dark .bg-gray-900,
-html.dark .bg-gray-950 {
+html.dark .bg-gray-900:not([class*="dark:bg-"]),
+html.dark .bg-gray-950:not([class*="dark:bg-"]) {
   background-color: #030712;
 }
 
-html.dark .text-gray-950,
-html.dark .text-gray-900 {
+html.dark .text-gray-950:not([class*="dark:text-"]),
+html.dark .text-gray-900:not([class*="dark:text-"]) {
   color: var(--foreground);
 }
 
-html.dark .text-gray-800,
-html.dark .text-gray-700 {
+html.dark .text-gray-800:not([class*="dark:text-"]),
+html.dark .text-gray-700:not([class*="dark:text-"]) {
   color: #e5e7eb;
 }
 
-html.dark .text-gray-600,
-html.dark .text-gray-500 {
+html.dark .text-gray-600:not([class*="dark:text-"]),
+html.dark .text-gray-500:not([class*="dark:text-"]) {
   color: var(--muted);
 }
 
-html.dark .text-gray-400,
-html.dark .text-gray-300 {
+html.dark .text-gray-400:not([class*="dark:text-"]),
+html.dark .text-gray-300:not([class*="dark:text-"]) {
   color: #6b7280;
 }
 
-html.dark .border-gray-100,
-html.dark .border-gray-200 {
+html.dark .border-gray-100:not([class*="dark:border-"]),
+html.dark .border-gray-200:not([class*="dark:border-"]) {
   border-color: var(--border);
 }
 
@@ -738,11 +778,11 @@ html.dark .ring-gray-200 {
   --tw-ring-color: var(--border);
 }
 
-html.dark .hover\:bg-gray-50:hover {
+html.dark .hover\:bg-gray-50:hover:not([class*="dark:hover:bg-"]) {
   background-color: var(--surface-secondary);
 }
 
-html.dark .hover\:bg-gray-100:hover {
+html.dark .hover\:bg-gray-100:hover:not([class*="dark:hover:bg-"]) {
   background-color: var(--surface-secondary);
 }
 
@@ -969,20 +1009,20 @@ html.dark [role="dialog"] textarea {
  */
 
 html.dark .fixed.inset-0 button[type="submit"] {
-  background-color: #009685 !important;
+  background-color: var(--brand) !important;
   color: #ffffff !important;
-  border-color: #009685 !important;
+  border-color: var(--brand) !important;
 }
 
 html.dark .fixed.inset-0 button[type="submit"]:hover {
-  background-color: #007f71 !important;
+  background-color: var(--brand-hover) !important;
   color: #ffffff !important;
 }
 
 html.dark .fixed.inset-0 button[type="submit"]:disabled {
-  background-color: #009685 !important;
+  background-color: var(--brand) !important;
   color: #ffffff !important;
-  border-color: #009685 !important;
+  border-color: var(--brand) !important;
   opacity: 0.5;
 }
 
@@ -995,25 +1035,26 @@ html.dark .fixed.inset-0 button[type="submit"]:disabled {
  *
  * Assim, dentro das modais:
  *
- * type="submit" -> verde
- * type="button" -> branco
+ * type="submit" -> cor da marca
+ * type="button" -> superfície escura secundária (um botão branco
+ *                  destoava do resto da modal escura)
+ *
+ * Botões com cor própria (bg-blue-*, bg-red-*...) ou com variante
+ * dark: ficam de fora.
  */
 
-html.dark .fixed.inset-0 button[type="button"] {
-  background-color: #ffffff !important;
-  color: #111827 !important;
-  border-color: #e5e7eb !important;
+html.dark .fixed.inset-0 button[type="button"]:not([class*="dark:bg-"]):not([class*="bg-blue-"]):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-primary"]) {
+  background-color: var(--surface-secondary) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
 }
 
-html.dark .fixed.inset-0 button[type="button"]:hover {
-  background-color: #f3f4f6 !important;
-  color: #111827 !important;
+html.dark .fixed.inset-0 button[type="button"]:not([class*="dark:bg-"]):not([class*="bg-blue-"]):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-primary"]):hover {
+  background-color: #374151 !important;
+  color: #ffffff !important;
 }
 
 html.dark .fixed.inset-0 button[type="button"]:disabled {
-  background-color: #ffffff !important;
-  color: #111827 !important;
-  border-color: #e5e7eb !important;
   opacity: 0.5;
 }
 
@@ -1055,43 +1096,43 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
 
 @media screen {
   /* Superfícies */
-  html.dark .dashboard-shell .bg-white,
-  html.dark .dashboard-shell .focus\:bg-white:focus {
+  html.dark .dashboard-shell .bg-white:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .focus\:bg-white:focus:not([class*="dark:focus:bg-"]) {
     background-color: var(--surface);
   }
 
-  html.dark .dashboard-shell .bg-gray-50,
-  html.dark .dashboard-shell .bg-gray-100,
-  html.dark .dashboard-shell .bg-zinc-50,
-  html.dark .dashboard-shell .bg-zinc-100,
-  html.dark .dashboard-shell .bg-gray-50\/40,
-  html.dark .dashboard-shell .bg-gray-50\/50,
-  html.dark .dashboard-shell .bg-gray-50\/70,
-  html.dark .dashboard-shell .bg-zinc-50\/50,
-  html.dark .dashboard-shell .bg-zinc-50\/70,
-  html.dark .dashboard-shell .disabled\:bg-gray-50:disabled,
-  html.dark .dashboard-shell .disabled\:bg-gray-100:disabled {
+  html.dark .dashboard-shell .bg-gray-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-gray-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-zinc-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-zinc-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-gray-50\/40:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-gray-50\/50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-gray-50\/70:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-zinc-50\/50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-zinc-50\/70:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .disabled\:bg-gray-50:disabled:not([class*="dark:disabled:bg-"]),
+  html.dark .dashboard-shell .disabled\:bg-gray-100:disabled:not([class*="dark:disabled:bg-"]) {
     background-color: var(--surface-secondary);
   }
 
-  html.dark .dashboard-shell .bg-gray-200,
-  html.dark .dashboard-shell .bg-zinc-200 {
+  html.dark .dashboard-shell .bg-gray-200:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-zinc-200:not([class*="dark:bg-"]) {
     background-color: #374151;
   }
 
-  html.dark .dashboard-shell .hover\:bg-gray-50:hover,
-  html.dark .dashboard-shell .hover\:bg-gray-100:hover,
-  html.dark .dashboard-shell .hover\:bg-zinc-50:hover,
-  html.dark .dashboard-shell .hover\:bg-zinc-50\/50:hover,
-  html.dark .dashboard-shell .hover\:bg-zinc-100:hover {
+  html.dark .dashboard-shell .hover\:bg-gray-50:hover:not([class*="dark:hover:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-gray-100:hover:not([class*="dark:hover:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-zinc-50:hover:not([class*="dark:hover:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-zinc-50\/50:hover:not([class*="dark:hover:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-zinc-100:hover:not([class*="dark:hover:bg-"]) {
     background-color: #273244;
   }
 
   /* Botão principal (preto no claro, claro no escuro) */
-  html.dark .dashboard-shell .bg-gray-950,
-  html.dark .dashboard-shell .bg-gray-900,
-  html.dark .dashboard-shell .bg-zinc-950,
-  html.dark .dashboard-shell .bg-black {
+  html.dark .dashboard-shell .bg-gray-950:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-gray-900:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-zinc-950:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-black:not([class*="dark:bg-"]) {
     background-color: var(--foreground);
   }
 
@@ -1100,62 +1141,62 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
     color: var(--background);
   }
 
-  html.dark .dashboard-shell .hover\:bg-gray-800:hover,
-  html.dark .dashboard-shell .hover\:bg-gray-900:hover,
-  html.dark .dashboard-shell .hover\:bg-zinc-800:hover {
+  html.dark .dashboard-shell .hover\:bg-gray-800:hover:not([class*="dark:hover:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-gray-900:hover:not([class*="dark:hover:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-zinc-800:hover:not([class*="dark:hover:bg-"]) {
     background-color: #e5e7eb;
   }
 
   /* Textos */
-  html.dark .dashboard-shell .text-black,
-  html.dark .dashboard-shell .text-gray-950,
-  html.dark .dashboard-shell .text-gray-900,
-  html.dark .dashboard-shell .text-zinc-950,
-  html.dark .dashboard-shell .text-zinc-900,
-  html.dark .dashboard-shell .text-neutral-900,
-  html.dark .dashboard-shell .hover\:text-gray-950:hover,
-  html.dark .dashboard-shell .hover\:text-gray-900:hover,
-  html.dark .dashboard-shell .hover\:text-zinc-900:hover {
+  html.dark .dashboard-shell .text-black:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-gray-950:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-gray-900:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-zinc-950:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-zinc-900:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-neutral-900:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .hover\:text-gray-950:hover:not([class*="dark:hover:text-"]),
+  html.dark .dashboard-shell .hover\:text-gray-900:hover:not([class*="dark:hover:text-"]),
+  html.dark .dashboard-shell .hover\:text-zinc-900:hover:not([class*="dark:hover:text-"]) {
     color: var(--foreground);
   }
 
-  html.dark .dashboard-shell .text-gray-800,
-  html.dark .dashboard-shell .text-gray-700,
-  html.dark .dashboard-shell .text-zinc-800,
-  html.dark .dashboard-shell .text-zinc-700,
-  html.dark .dashboard-shell .hover\:text-gray-700:hover {
+  html.dark .dashboard-shell .text-gray-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-gray-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-zinc-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-zinc-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .hover\:text-gray-700:hover:not([class*="dark:hover:text-"]) {
     color: #e5e7eb;
   }
 
-  html.dark .dashboard-shell .text-gray-600,
-  html.dark .dashboard-shell .text-gray-500,
-  html.dark .dashboard-shell .text-zinc-600,
-  html.dark .dashboard-shell .text-zinc-500,
-  html.dark .dashboard-shell .text-gray-400,
-  html.dark .dashboard-shell .text-zinc-400 {
+  html.dark .dashboard-shell .text-gray-600:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-gray-500:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-zinc-600:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-zinc-500:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-gray-400:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-zinc-400:not([class*="dark:text-"]) {
     color: var(--muted);
   }
 
-  html.dark .dashboard-shell .text-gray-300 {
+  html.dark .dashboard-shell .text-gray-300:not([class*="dark:text-"]) {
     color: #6b7280;
   }
 
   /* Bordas e anéis */
-  html.dark .dashboard-shell .border-white,
-  html.dark .dashboard-shell .border-gray-100,
-  html.dark .dashboard-shell .border-gray-200,
-  html.dark .dashboard-shell .border-gray-300,
-  html.dark .dashboard-shell .border-zinc-100,
-  html.dark .dashboard-shell .border-zinc-200,
-  html.dark .dashboard-shell .hover\:border-gray-200:hover {
+  html.dark .dashboard-shell .border-white:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-gray-100:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-gray-200:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-gray-300:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-zinc-100:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-zinc-200:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .hover\:border-gray-200:hover:not([class*="dark:hover:border-"]) {
     border-color: var(--border);
   }
 
-  html.dark .dashboard-shell .hover\:border-gray-300:hover,
-  html.dark .dashboard-shell .focus\:border-gray-400:focus,
-  html.dark .dashboard-shell .focus\:border-zinc-400:focus,
-  html.dark .dashboard-shell .focus\:border-gray-900:focus,
-  html.dark .dashboard-shell .focus\:border-gray-950:focus {
+  html.dark .dashboard-shell .hover\:border-gray-300:hover:not([class*="dark:hover:border-"]),
+  html.dark .dashboard-shell .focus\:border-gray-400:focus:not([class*="dark:focus:border-"]),
+  html.dark .dashboard-shell .focus\:border-zinc-400:focus:not([class*="dark:focus:border-"]),
+  html.dark .dashboard-shell .focus\:border-gray-900:focus:not([class*="dark:focus:border-"]),
+  html.dark .dashboard-shell .focus\:border-gray-950:focus:not([class*="dark:focus:border-"]) {
     border-color: #6b7280;
   }
 
@@ -1253,7 +1294,7 @@ select:disabled {
 
 :root,
 html.light {
-  --chart-bar: #009685;
+  --chart-bar: #1451d6;
   --method-cash: #009685;
   --method-card: #2a78d6;
   --method-transfer: #eb6834;
@@ -1262,7 +1303,7 @@ html.light {
 }
 
 html.dark {
-  --chart-bar: #00a896;
+  --chart-bar: #3d78f2;
   --method-cash: #00a896;
   --method-card: #3987e5;
   --method-transfer: #d95926;
@@ -1290,7 +1331,7 @@ html.dark {
   to { transform: scaleY(1); }
 }
 
-.finance-fade-up { animation: finance-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.finance-fade-up { animation: finance-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 .finance-slide-in { animation: finance-slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .finance-fade-in { animation: finance-fade-in 0.25s ease-out both; }
 .finance-grow { transform-origin: bottom; animation: finance-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -1311,3 +1352,259 @@ html.dark {
 .finance-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .finance-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 .finance-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* =========================================================
+   SISTEMA — ACABAMENTO GLOBAL
+   =========================================================
+ *
+ * Seleção, foco de teclado e barra de deslocamento no tom da marca, a entrada
+ * suave de cada página do painel e as superfícies azuis claras no modo escuro.
+ */
+
+::selection {
+  background: color-mix(in oklab, var(--brand) 22%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.dashboard-shell {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Entrada de página: o conteúdo sobe e aparece a cada mudança de rota. */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/*
+ * "backwards" e não "both": no fim não fica nenhum transform aplicado. Um transform
+ * num antepassado prende os modais (position: fixed) dentro dele.
+ */
+.page-enter > * {
+  animation: page-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.page-enter > :nth-child(2) { animation-delay: 60ms; }
+.page-enter > :nth-child(3) { animation-delay: 120ms; }
+.page-enter > :nth-child(4) { animation-delay: 180ms; }
+.page-enter > :nth-child(n + 5) { animation-delay: 240ms; }
+
+/* Brilho que atravessa um elemento (cartões da marca, botões principais). */
+@keyframes brand-sheen {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(220%) skewX(-18deg); }
+}
+
+.brand-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.brand-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.brand-sheen:hover::after {
+  animation: brand-sheen 0.9s ease-out;
+}
+
+/* Fundo de pontos discreto para cabeçalhos e destaques. */
+.dot-grid {
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter > * { animation: none; }
+  .brand-sheen:hover::after { animation: none; }
+}
+
+/* Superfícies azuis claras (bg-blue-50…) no modo escuro do painel. */
+@media screen {
+  html.dark .dashboard-shell .bg-blue-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-blue-50\/60:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-blue-100:not([class*="dark:bg-"]) {
+    background-color: color-mix(in oklab, var(--brand) 16%, transparent);
+  }
+
+  html.dark .dashboard-shell .border-blue-100:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-blue-200:not([class*="dark:border-"]) {
+    border-color: color-mix(in oklab, var(--brand) 35%, transparent);
+  }
+
+  html.dark .dashboard-shell .text-blue-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-blue-800:not([class*="dark:text-"]) {
+    color: #8fb2ff;
+  }
+
+  html.dark .dashboard-shell .text-blue-600:not([class*="dark:text-"]) {
+    color: #6c9bff;
+  }
+}
+
+/* =========================================================
+   PAINEL — CINZENTOS NEUTRAL/SLATE E TONS COLORIDOS NO ESCURO
+   =========================================================
+ *
+ * Etiquetas de estado, alertas e botões de perigo usam fundos claros
+ * (bg-red-50, bg-emerald-50...) e texto escuro (text-red-700...). No
+ * escuro, o fundo passa a um véu da mesma cor e o texto a um tom claro,
+ * para continuarem legíveis sobre as superfícies escuras.
+ */
+
+@media screen {
+  html.dark .dashboard-shell .bg-neutral-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-slate-50:not([class*="dark:bg-"]) {
+    background-color: var(--surface-secondary);
+  }
+
+  html.dark .dashboard-shell .bg-neutral-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-neutral-200:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-slate-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-slate-200\/50:not([class*="dark:bg-"]) {
+    background-color: #374151;
+  }
+
+  html.dark .dashboard-shell .hover\:bg-neutral-50:hover:not([class*="dark:hover:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-neutral-100:hover:not([class*="dark:hover:bg-"]) {
+    background-color: #273244;
+  }
+
+  html.dark .dashboard-shell .text-neutral-950:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-neutral-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-slate-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-slate-900:not([class*="dark:text-"]) {
+    color: var(--foreground);
+  }
+
+  html.dark .dashboard-shell .text-neutral-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-slate-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .hover\:text-neutral-700:hover:not([class*="dark:hover:text-"]) {
+    color: #e5e7eb;
+  }
+
+  html.dark .dashboard-shell .text-neutral-500:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-neutral-400:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-slate-600:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-slate-500:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-slate-400:not([class*="dark:text-"]) {
+    color: var(--muted);
+  }
+
+  html.dark .dashboard-shell .border-neutral-200:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-neutral-300:not([class*="dark:border-"]) {
+    border-color: var(--border);
+  }
+
+  html.dark .dashboard-shell .hover\:border-neutral-300:hover:not([class*="dark:hover:border-"]) {
+    border-color: #6b7280;
+  }
+
+  html.dark .dashboard-shell .bg-red-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-red-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-red-50:hover:not([class*="dark:hover:bg-"]) {
+    background-color: color-mix(in oklab, #ef4444 14%, transparent);
+  }
+
+  html.dark .dashboard-shell .border-red-100:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-red-200:not([class*="dark:border-"]) {
+    border-color: color-mix(in oklab, #ef4444 35%, transparent);
+  }
+
+  html.dark .dashboard-shell .text-red-600:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-red-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-red-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-red-900:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .hover\:text-red-700:hover:not([class*="dark:hover:text-"]) {
+    color: #fca5a5;
+  }
+
+  html.dark .dashboard-shell .bg-rose-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-rose-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-rose-50:hover:not([class*="dark:hover:bg-"]) {
+    background-color: color-mix(in oklab, #f43f5e 14%, transparent);
+  }
+
+  html.dark .dashboard-shell .border-rose-100:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-rose-200:not([class*="dark:border-"]) {
+    border-color: color-mix(in oklab, #f43f5e 35%, transparent);
+  }
+
+  html.dark .dashboard-shell .text-rose-600:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-rose-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-rose-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-rose-900:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .hover\:text-rose-700:hover:not([class*="dark:hover:text-"]) {
+    color: #fda4af;
+  }
+
+  html.dark .dashboard-shell .bg-green-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-green-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-green-50:hover:not([class*="dark:hover:bg-"]) {
+    background-color: color-mix(in oklab, #22c55e 14%, transparent);
+  }
+
+  html.dark .dashboard-shell .border-green-100:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-green-200:not([class*="dark:border-"]) {
+    border-color: color-mix(in oklab, #22c55e 35%, transparent);
+  }
+
+  html.dark .dashboard-shell .text-green-600:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-green-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-green-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-green-900:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .hover\:text-green-700:hover:not([class*="dark:hover:text-"]) {
+    color: #86efac;
+  }
+
+  html.dark .dashboard-shell .bg-emerald-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-emerald-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-emerald-50:hover:not([class*="dark:hover:bg-"]) {
+    background-color: color-mix(in oklab, #10b981 14%, transparent);
+  }
+
+  html.dark .dashboard-shell .border-emerald-100:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-emerald-200:not([class*="dark:border-"]) {
+    border-color: color-mix(in oklab, #10b981 35%, transparent);
+  }
+
+  html.dark .dashboard-shell .text-emerald-600:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-emerald-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-emerald-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-emerald-900:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .hover\:text-emerald-700:hover:not([class*="dark:hover:text-"]) {
+    color: #6ee7b7;
+  }
+
+  html.dark .dashboard-shell .bg-amber-50:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .bg-amber-100:not([class*="dark:bg-"]),
+  html.dark .dashboard-shell .hover\:bg-amber-50:hover:not([class*="dark:hover:bg-"]) {
+    background-color: color-mix(in oklab, #f59e0b 14%, transparent);
+  }
+
+  html.dark .dashboard-shell .border-amber-100:not([class*="dark:border-"]),
+  html.dark .dashboard-shell .border-amber-200:not([class*="dark:border-"]) {
+    border-color: color-mix(in oklab, #f59e0b 35%, transparent);
+  }
+
+  html.dark .dashboard-shell .text-amber-600:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-amber-700:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-amber-800:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .text-amber-900:not([class*="dark:text-"]),
+  html.dark .dashboard-shell .hover\:text-amber-700:hover:not([class*="dark:hover:text-"]) {
+    color: #fcd34d;
+  }
+}

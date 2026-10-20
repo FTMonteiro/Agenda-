@@ -14,6 +14,7 @@ import { reviewsRoutes, reviewsService } from "../modules/reviews";
 import { galleryRoutes } from "../modules/gallery";
 import { searchRoutes } from "../modules/search";
 import { geoRoutes } from "../modules/geo";
+import { realtimeRoutes } from "../modules/realtime";
 import { authenticate } from "../shared/middleware/authenticate";
 import { authorize } from "../shared/middleware/authorize";
 import { validate } from "../shared/middleware/validate";
@@ -37,6 +38,7 @@ routes.use("/favorites", favoritesRoutes);
 routes.use("/reviews", reviewsRoutes);
 routes.use("/search", searchRoutes);
 routes.use("/geo", geoRoutes);
+routes.use("/events", realtimeRoutes);
 // Gallery is business-scoped (upload/list/delete images for one business), so it's
 // mounted nested rather than as a flat top-level resource. gallery.routes.ts uses
 // Router({ mergeParams: true }) to read :businessId from this parent path.

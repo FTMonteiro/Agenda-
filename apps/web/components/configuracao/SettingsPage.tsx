@@ -600,20 +600,6 @@ export function SettingsPage() {
     <div className="text-[var(--foreground)]">
       <div className="mx-auto max-w-6xl">
 
-        {/* TÍTULO */}
-
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Configurações
-          </h1>
-
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            {isEmployee
-              ? "Gerencie os seus dados profissionais."
-              : "Gerencie as informações do seu estabelecimento."}
-          </p>
-        </div>
-
         {/* ERRO */}
 
         {error && (

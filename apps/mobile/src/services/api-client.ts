@@ -44,6 +44,14 @@ export async function loadStoredAccessToken(): Promise<string | null> {
   return accessToken;
 }
 
+export function getApiUrl(): string {
+  return API_URL;
+}
+
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
 export async function setAccessToken(token: string | null): Promise<void> {
   accessToken = token;
   await tokenStorage.set(token);

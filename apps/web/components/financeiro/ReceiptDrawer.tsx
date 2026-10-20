@@ -242,7 +242,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
               </div>
 
               {/* VALOR */}
-              <div className="mx-6 rounded-2xl bg-gradient-to-br from-[#009685] to-[#00695e] px-6 py-6 text-center text-white print:bg-none print:text-black">
+              <div className="mx-6 rounded-2xl bg-gradient-to-br from-primary to-primary-deep px-6 py-6 text-center text-white print:bg-none print:text-black">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75 print:text-black/60">
                   Total pago
                 </p>

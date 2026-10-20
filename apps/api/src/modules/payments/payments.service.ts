@@ -4,7 +4,7 @@ import { AuthorizationError, ConflictError, NotFoundError, ValidationError } fro
 import { domainEvents } from "../../shared/events/domainEvents";
 import { DEFAULT_CURRENCY } from "../../shared/constants";
 import { assertStaffOfBusiness } from "../../shared/authz";
-import { getAppointmentOrThrow } from "../appointments";
+import { announceAppointmentChange, getAppointmentOrThrow } from "../appointments";
 import { getBusinessOrThrow } from "../businesses";
 import { professionalsRepository } from "../professionals";
 import { paymentsRepository } from "./payments.repository";
@@ -169,6 +169,7 @@ export const paymentsService = {
     });
 
     domainEvents.emitEvent("PaymentPaid", toPaymentDTO(payment));
+    await announceAppointmentChange(appointment.id, "completed");
     return toPaymentDTO(payment);
   },
 

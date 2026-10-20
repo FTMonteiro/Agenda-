@@ -16,6 +16,7 @@ import {
   loadNotifications,
   subscribe,
   setNotifications,
+  addNotification,
   markAllAsRead as markNotificationsAsRead,
   clearAll as clearNotifications,
   type AppNotification,
@@ -95,85 +96,87 @@ function getNotificationType(
 }
 
 /*
-  
-  SOM DA NOTIFICAÇÃO
+  SOM DA NOTIFICAÇÃO — SINO
 
+  Duas badaladas ("ding-dong") sintetizadas: cada uma é a soma dos parciais de um sino,
+  que se apagam aos poucos. O navegador só deixa tocar som depois de a pessoa interagir
+  com a página, por isso o AudioContext é criado (ou retomado) no primeiro clique/tecla e
+  reaproveitado — assim o sino toca mesmo com o separador em segundo plano.
 */
+
+let audioContext: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+  if (audioContext) return audioContext;
+
+  const AudioContextClass =
+    window.AudioContext ||
+    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+  if (!AudioContextClass) return null;
+
+  audioContext = new AudioContextClass();
+  return audioContext;
+}
+
+function unlockAudio() {
+  const context = getAudioContext();
+  if (context?.state === "suspended") void context.resume();
+}
+
+const BELL_PARTIALS = [
+  { ratio: 1, gain: 1, decay: 1.6 },
+  { ratio: 2, gain: 0.5, decay: 1.1 },
+  { ratio: 3, gain: 0.25, decay: 0.8 },
+  { ratio: 4.2, gain: 0.15, decay: 0.5 },
+  { ratio: 5.4, gain: 0.08, decay: 0.35 },
+];
+
+function strikeBell(context: AudioContext, frequency: number, at: number, volume: number) {
+  for (const partial of BELL_PARTIALS) {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency * partial.ratio, at);
+
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(volume * partial.gain, at + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + partial.decay);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    oscillator.start(at);
+    oscillator.stop(at + partial.decay + 0.05);
+  }
+}
 
 function playNotificationSound() {
   try {
-    const AudioContextClass =
-      window.AudioContext ||
-      (
-        window as typeof window & {
-          webkitAudioContext?: typeof AudioContext;
-        }
-      ).webkitAudioContext;
+    const context = getAudioContext();
+    if (!context) return;
+    if (context.state === "suspended") void context.resume();
 
-    if (!AudioContextClass) {
-      return;
-    }
-
-    const context =
-      new AudioContextClass();
-
-    const oscillator =
-      context.createOscillator();
-
-    const gain =
-      context.createGain();
-
-    oscillator.type =
-      "sine";
-
-    oscillator.frequency.setValueAtTime(
-      880,
-      context.currentTime,
-    );
-
-    oscillator.frequency.setValueAtTime(
-      1174,
-      context.currentTime + 0.08,
-    );
-
-    gain.gain.setValueAtTime(
-      0.0001,
-      context.currentTime,
-    );
-
-    gain.gain.exponentialRampToValueAtTime(
-      0.15,
-      context.currentTime + 0.01,
-    );
-
-    gain.gain.exponentialRampToValueAtTime(
-      0.0001,
-      context.currentTime + 0.25,
-    );
-
-    oscillator.connect(gain);
-
-    gain.connect(
-      context.destination,
-    );
-
-    oscillator.start();
-
-    oscillator.stop(
-      context.currentTime + 0.25,
-    );
-
-    oscillator.addEventListener(
-      "ended",
-      () => {
-        void context.close();
-      },
-    );
+    const now = context.currentTime + 0.02;
+    strikeBell(context, 1046.5, now, 0.18);
+    strikeBell(context, 784, now + 0.32, 0.16);
   } catch {
     /*
      * O navegador pode bloquear áudio.
      */
   }
+}
+
+/*
+  TIPO DA API → GRAVIDADE DO SININHO (o mesmo que app/api/notifications/route.ts faz)
+*/
+
+function toSeverity(type: string): NotificationType {
+  if (type === "ERROR") return "ERROR";
+  if (/CANCEL|FAIL|REFUND|EXPIRED|WARNING/.test(type)) return "WARNING";
+  if (/PAID|CONFIRMED|COMPLETED|SUCCESS/.test(type)) return "SUCCESS";
+  return "INFO";
 }
 
 /*
@@ -340,8 +343,87 @@ export function NotificationsProvider({
   ]);
 
   /*
-   POLLING
-  Consulta o banco a cada 5 segundos.
+   TEMPO REAL
+
+   Ligação permanente à API (/api/events): cada notificação nova (ex.: agendamento
+   feito pela app) chega no instante em que é criada — vai para o sininho, toca o sino
+   e aparece a mensagem no ecrã. Cada alteração num agendamento avisa as páginas abertas
+   (agenda, home), que se atualizam sozinhas, sem indicador de carregamento.
+   O EventSource volta a ligar-se sozinho se a ligação cair; a cada (re)ligação as
+   notificações são relidas, para não se perder nada do tempo em que esteve em baixo.
+  */
+
+  useEffect(() => {
+    const events = new EventSource("/api/events");
+
+    const onReady = () => {
+      void refreshNotifications();
+      window.dispatchEvent(new Event("appointments:changed"));
+    };
+
+    const onNotification = (event: MessageEvent<string>) => {
+      let incoming: { id: string; type: string; title: string; message: string; read: boolean; createdAt: string };
+      try {
+        incoming = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+
+      if (previousIds.current.has(incoming.id)) return;
+      previousIds.current.add(incoming.id);
+
+      addNotification({
+        id: incoming.id,
+        title: incoming.title,
+        message: incoming.message,
+        type: toSeverity(incoming.type),
+        read: incoming.read,
+        resourceId: null,
+        resourceType: null,
+        createdAt: incoming.createdAt,
+        readAt: null,
+      });
+
+      if (incoming.read || ownNotificationIds.has(incoming.id)) return;
+
+      playNotificationSound();
+      toast(incoming.title, { description: incoming.message, duration: 8000 });
+    };
+
+    const onAppointment = () => {
+      window.dispatchEvent(new Event("appointments:changed"));
+    };
+
+    events.addEventListener("ready", onReady);
+    events.addEventListener("notification", onNotification as EventListener);
+    events.addEventListener("appointment", onAppointment);
+
+    return () => {
+      events.close();
+    };
+  }, [
+    refreshNotifications,
+  ]);
+
+  /*
+   DESBLOQUEAR O SOM no primeiro clique ou tecla (regra dos navegadores).
+  */
+
+  useEffect(() => {
+    window.addEventListener("pointerdown", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+    };
+  }, []);
+
+  /*
+   RESERVA
+
+   Se a ligação em tempo real não estiver disponível (proxy que a corta, rede instável),
+   as notificações continuam a ser consultadas de 30 em 30 segundos.
   */
 
   useEffect(() => {
@@ -350,7 +432,7 @@ export function NotificationsProvider({
         () => {
           void refreshNotifications();
         },
-        5000,
+        30000,
       );
 
     return () => {
