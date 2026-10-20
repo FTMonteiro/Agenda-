@@ -1242,3 +1242,72 @@ select:not([multiple]):not([size]):not(.appearance-none) {
 select:disabled {
   cursor: not-allowed;
 }
+
+/* =========================================================
+   FINANÇAS — CORES DOS MÉTODOS E ANIMAÇÕES
+   =========================================================
+ *
+ * Uma cor por método de pagamento, fixa (não depende da posição no gráfico).
+ * O escuro tem os seus próprios tons, validados contra a superfície escura.
+ */
+
+:root,
+html.light {
+  --chart-bar: #009685;
+  --method-cash: #009685;
+  --method-card: #2a78d6;
+  --method-transfer: #eb6834;
+  --method-mobile: #4a3aa7;
+  --method-other: #e87ba4;
+}
+
+html.dark {
+  --chart-bar: #00a896;
+  --method-cash: #00a896;
+  --method-card: #3987e5;
+  --method-transfer: #d95926;
+  --method-mobile: #9085e9;
+  --method-other: #d55181;
+}
+
+@keyframes finance-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes finance-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes finance-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes finance-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.finance-fade-up { animation: finance-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.finance-slide-in { animation: finance-slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.finance-fade-in { animation: finance-fade-in 0.25s ease-out both; }
+.finance-grow { transform-origin: bottom; animation: finance-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .finance-fade-up,
+  .finance-slide-in,
+  .finance-fade-in,
+  .finance-grow { animation: none; }
+}
+
+/* Barra de deslocamento discreta nas listas com scroll da área de finanças. */
+.finance-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.finance-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.finance-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+.finance-scroll::-webkit-scrollbar-track { background: transparent; }

@@ -1,4 +1,4 @@
-import type { AppointmentDTO } from "@slotix/types";
+import type { AppointmentDTO, BusinessDTO } from "@slotix/types";
 import { requireStaff } from "@/lib/auth";
 import { apiCall, clientOf, errorJson, errorResponse, fromApiMethod, loadLookups } from "@/lib/dashboard-api";
 
@@ -8,9 +8,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const user = await requireStaff();
     const { id } = await params;
 
-    const [appointment, lookups] = await Promise.all([
+    const [appointment, lookups, business] = await Promise.all([
       apiCall<AppointmentDTO>(`/appointments/${id}`),
       loadLookups(user.businessId),
+      // The receipt header names who issued it; without it the receipt still renders.
+      apiCall<BusinessDTO>(`/businesses/${user.businessId}`).catch(() => null),
     ]);
     if (appointment.businessId !== user.businessId) return errorJson("Agendamento não encontrado.", 404);
 
@@ -26,6 +28,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       receipt: {
         title: "Recibo do pagamento",
         type: "PAYMENT_RECEIPT",
+        // Sequential numbering doesn't exist yet; the payment id is stable and unique.
+        number: `REC-${payment.id.slice(-8).toUpperCase()}`,
+        business: business
+          ? {
+              name: business.name,
+              logoUrl: business.logoUrl,
+              address: business.address,
+              phone: business.phone,
+            }
+          : null,
         payment: {
           id: payment.id,
           reference: null,

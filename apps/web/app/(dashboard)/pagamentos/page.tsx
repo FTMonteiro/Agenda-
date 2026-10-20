@@ -1,23 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Banknote,
   CalendarDays,
   CheckCircle2,
   CreditCard,
-  Download,
   Eye,
   Loader2,
-  Mail,
   RefreshCw,
   Search,
   Smartphone,
   User,
   Wallet,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ReceiptDrawer,
+  type ReceiptPreview,
+} from "@/components/financeiro/ReceiptDrawer";
 
 // ============================================================
 // TIPOS
@@ -57,52 +58,6 @@ interface Payment {
   };
 }
 
-interface Receipt {
-  title: string;
-  type: string;
-
-  payment: {
-    id: string;
-    reference: string | null;
-    amount: number;
-    method: string;
-    status: string;
-    paidAt: string;
-    receivedById: string | null;
-  };
-
-  appointment: {
-    id: string;
-    date: string;
-    status: string;
-    notes: string | null;
-  };
-
-  client: {
-    id: string;
-    name: string;
-    email: string | null;
-    phone: string | null;
-  };
-
-  professional: {
-    id: string;
-    name: string;
-    email: string | null;
-    phone: string | null;
-    specialty: string | null;
-  };
-
-  service: {
-    id: string;
-    name: string;
-    price: number;
-    duration: number;
-  };
-
-  total: number;
-}
-
 // ============================================================
 // HELPERS
 // ============================================================
@@ -128,24 +83,6 @@ function formatDate(value: string | null) {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(date);
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) return "—";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("pt-AO", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   }).format(date);
 }
 
@@ -187,11 +124,25 @@ function getMethodIcon(method: string) {
   }
 }
 
+// O recibo aberto fica no endereço, para sobreviver a um refresh e poder ser partilhado.
+function setReceiptParam(appointmentId: string | null) {
+  const url = new URL(window.location.href);
+  if (appointmentId) url.searchParams.set("receipt", appointmentId);
+  else url.searchParams.delete("receipt");
+  window.history.replaceState(window.history.state, "", url);
+}
+
 // ============================================================
 // PÁGINA
 // ============================================================
 
-export default function PagamentosPage() {
+export default function PagamentosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ receipt?: string | string[] }>;
+}) {
+  const requestedReceipt = use(searchParams).receipt;
+
   const [payments, setPayments] = useState<Payment[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -200,12 +151,13 @@ export default function PagamentosPage() {
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("ALL");
 
-  const [selectedPayment, setSelectedPayment] =
-    useState<Payment | null>(null);
+  // Agendamento cujo recibo está aberto (também lido de ?receipt=, vindo da agenda).
+  const [receiptId, setReceiptId] = useState<string | null>(
+    typeof requestedReceipt === "string" ? requestedReceipt : null,
+  );
 
-  const [receipt, setReceipt] = useState<Receipt | null>(null);
-
-  const [loadingReceipt, setLoadingReceipt] = useState(false);
+  const [receiptPreview, setReceiptPreview] =
+    useState<ReceiptPreview | null>(null);
 
   // ==========================================================
   // CARREGAR PAGAMENTOS
@@ -323,82 +275,35 @@ export default function PagamentosPage() {
   const totalTransactions = paidPayments.length;
 
   // ==========================================================
-  // ABRIR RECIBO
+  // RECIBO
   // ==========================================================
 
-  const openReceipt = async (payment: Payment) => {
-    try {
-      setSelectedPayment(payment);
-      setReceipt(null);
-      setLoadingReceipt(true);
+  const openReceipt = (payment: Payment) => {
+    const appointmentId =
+      payment.appointmentId ||
+      payment.appointment?.id;
 
-      const appointmentId =
-        payment.appointmentId ||
-        payment.appointment?.id;
-
-      if (!appointmentId) {
-        throw new Error(
-          "Este pagamento não possui um agendamento associado.",
-        );
-      }
-
-      const response = await fetch(
-        `/api/appointments/payments/${appointmentId}/receipt`,
-        {
-          method: "GET",
-          cache: "no-store",
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data?.error ||
-            "Não foi possível carregar o recibo.",
-        );
-      }
-
-      if (!data?.receipt) {
-        throw new Error(
-          "O servidor não retornou os dados do recibo.",
-        );
-      }
-
-      setReceipt(data.receipt);
-    } catch (error) {
-      console.error(
-        "Erro ao carregar recibo:",
-        error,
-      );
-
+    if (!appointmentId) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar o recibo.",
+        "Este pagamento não possui um agendamento associado.",
       );
-    } finally {
-      setLoadingReceipt(false);
+      return;
     }
+
+    setReceiptPreview({
+      clientName: payment.appointment?.client ?? "Cliente",
+      serviceName: payment.appointment?.service ?? "Serviço",
+      amount: Number(payment.amount || 0),
+    });
+    setReceiptId(appointmentId);
+    setReceiptParam(appointmentId);
   };
 
-  // ==========================================================
-  // FECHAR RECIBO
-  // ==========================================================
-
-  const closeReceipt = () => {
-    setSelectedPayment(null);
-    setReceipt(null);
-    setLoadingReceipt(false);
-  };
-
-  // ==========================================================
-  // IMPRESSÃO
-  // ==========================================================
-
-  const printReceipt = () => {
-    window.print();
-  };
+  const closeReceipt = useCallback(() => {
+    setReceiptId(null);
+    setReceiptPreview(null);
+    setReceiptParam(null);
+  }, []);
 
   // ==========================================================
   // RENDER
@@ -766,358 +671,11 @@ export default function PagamentosPage() {
         )}
       </div>
 
-      {/* ======================================================
-          MODAL DO RECIBO
-      ====================================================== */}
-
-      {selectedPayment && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Recibo do pagamento"
-        >
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-            {/* HEADER */}
-
-            <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
-              <div>
-                <h2 className="text-lg font-semibold text-zinc-950">
-                  Recibo do pagamento
-                </h2>
-
-                <p className="mt-0.5 text-xs text-zinc-500">
-                  {selectedPayment.reference ??
-                    selectedPayment.id}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeReceipt}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
-                aria-label="Fechar recibo"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* CONTEÚDO */}
-
-            <div className="max-h-[calc(90vh-145px)] overflow-y-auto p-6">
-              {loadingReceipt ? (
-                <div className="flex min-h-[300px] items-center justify-center">
-                  <div className="flex items-center gap-3 text-sm text-zinc-500">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Carregando recibo...
-                  </div>
-                </div>
-              ) : receipt ? (
-                <div
-                  id="payment-receipt"
-                  className="space-y-6"
-                >
-                  {/* CABEÇALHO DO RECIBO */}
-
-                  <div className="flex items-start justify-between border-b border-zinc-200 pb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-950 text-white">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </div>
-
-                      <div>
-                        <h3 className="font-semibold text-zinc-950">
-                          Agenda+
-                        </h3>
-
-                        <p className="text-xs text-zinc-500">
-                          Recibo de pagamento
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                      PAGO
-                    </span>
-                  </div>
-
-                  {/* TOTAL */}
-
-                  <div className="rounded-2xl bg-zinc-50 p-5">
-                    <p className="text-sm text-zinc-500">
-                      Total pago
-                    </p>
-
-                    <p className="mt-1 text-3xl font-bold tracking-tight text-zinc-950">
-                      {formatCurrency(
-                        Number(receipt.total || 0),
-                      )}
-                    </p>
-
-                    <p className="mt-2 text-xs text-zinc-500">
-                      {formatDateTime(
-                        receipt.payment?.paidAt ??
-                          null,
-                      )}
-                    </p>
-                  </div>
-
-                  {/* CLIENTE */}
-
-                  <div>
-                    <h4 className="mb-3 text-sm font-semibold text-zinc-950">
-                      Cliente
-                    </h4>
-
-                    <div className="rounded-xl border border-zinc-200 p-4">
-                      <p className="font-medium text-zinc-900">
-                        {receipt.client?.name ??
-                          "Cliente"}
-                      </p>
-
-                      {receipt.client?.email && (
-                        <div className="mt-2 flex items-center gap-2 text-sm text-zinc-500">
-                          <Mail className="h-4 w-4 shrink-0" />
-
-                          <span>
-                            {receipt.client.email}
-                          </span>
-                        </div>
-                      )}
-
-                      {receipt.client?.phone && (
-                        <p className="mt-1 text-sm text-zinc-500">
-                          {receipt.client.phone}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* SERVIÇO */}
-
-                  <div>
-                    <h4 className="mb-3 text-sm font-semibold text-zinc-950">
-                      Serviço
-                    </h4>
-
-                    <div className="rounded-xl border border-zinc-200 p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <p className="font-medium text-zinc-900">
-                            {receipt.service?.name ??
-                              "Serviço"}
-                          </p>
-
-                          <p className="mt-1 text-sm text-zinc-500">
-                            {receipt.service?.duration ??
-                              0}{" "}
-                            minutos
-                          </p>
-                        </div>
-
-                        <p className="font-semibold text-zinc-950">
-                          {formatCurrency(
-                            Number(
-                              receipt.service
-                                ?.price || 0,
-                            ),
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* PAGAMENTO */}
-
-                  <div>
-                    <h4 className="mb-3 text-sm font-semibold text-zinc-950">
-                      Pagamento
-                    </h4>
-
-                    <div className="space-y-3 rounded-xl border border-zinc-200 p-4">
-                      <div className="flex justify-between gap-4 text-sm">
-                        <span className="text-zinc-500">
-                          Método
-                        </span>
-
-                        <span className="font-medium text-zinc-900">
-                          {getMethodLabel(
-                            receipt.payment
-                              ?.method ?? "",
-                          )}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between gap-4 text-sm">
-                        <span className="text-zinc-500">
-                          Referência
-                        </span>
-
-                        <span className="max-w-[60%] truncate text-right font-medium text-zinc-900">
-                          {receipt.payment
-                            ?.reference ?? "—"}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between gap-4 text-sm">
-                        <span className="text-zinc-500">
-                          Estado
-                        </span>
-
-                        <span className="font-medium text-emerald-700">
-                          Pago
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* PROFISSIONAL */}
-
-                  <div>
-                    <h4 className="mb-3 text-sm font-semibold text-zinc-950">
-                      Profissional
-                    </h4>
-
-                    <div className="rounded-xl border border-zinc-200 p-4">
-                      <p className="font-medium text-zinc-900">
-                        {receipt.professional?.name ??
-                          "Profissional"}
-                      </p>
-
-                      {receipt.professional
-                        ?.specialty && (
-                        <p className="mt-1 text-sm text-zinc-500">
-                          {
-                            receipt
-                              .professional
-                              .specialty
-                          }
-                        </p>
-                      )}
-
-                      {receipt.professional?.phone && (
-                        <p className="mt-1 text-sm text-zinc-500">
-                          {receipt.professional.phone}
-                        </p>
-                      )}
-
-                      {receipt.professional?.email && (
-                        <p className="mt-1 text-sm text-zinc-500">
-                          {receipt.professional.email}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* AGENDAMENTO */}
-
-                  <div>
-                    <h4 className="mb-3 text-sm font-semibold text-zinc-950">
-                      Agendamento
-                    </h4>
-
-                    <div className="rounded-xl border border-zinc-200 p-4">
-                      <div className="flex items-center gap-2 text-sm text-zinc-600">
-                        <CalendarDays className="h-4 w-4 shrink-0 text-zinc-400" />
-
-                        {formatDateTime(
-                          receipt.appointment?.date ??
-                            null,
-                        )}
-                      </div>
-
-                      {receipt.appointment?.status && (
-                        <p className="mt-2 text-sm text-zinc-500">
-                          Estado:{" "}
-                          <span className="font-medium text-zinc-700">
-                            {receipt.appointment.status}
-                          </span>
-                        </p>
-                      )}
-
-                      {receipt.appointment?.notes && (
-                        <p className="mt-3 border-t border-zinc-100 pt-3 text-sm text-zinc-500">
-                          {receipt.appointment.notes}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* RODAPÉ DO RECIBO */}
-
-                  <div className="border-t border-zinc-200 pt-5 text-center">
-                    <p className="text-xs text-zinc-400">
-                      Obrigado pela preferência.
-                    </p>
-
-                    <p className="mt-1 text-xs text-zinc-400">
-                      Agenda+
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex min-h-[250px] items-center justify-center text-sm text-zinc-500">
-                  Não foi possível carregar o
-                  recibo.
-                </div>
-              )}
-            </div>
-
-            {/* FOOTER */}
-
-            <div className="flex items-center justify-end gap-3 border-t border-zinc-100 bg-zinc-50/50 px-6 py-4">
-              <button
-                type="button"
-                onClick={closeReceipt}
-                className="h-10 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-              >
-                Fechar
-              </button>
-
-              {receipt && (
-                <button
-                  type="button"
-                  onClick={printReceipt}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-zinc-950 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
-                >
-                  <Download className="h-4 w-4" />
-                  Imprimir recibo
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ======================================================
-          ESTILOS DE IMPRESSÃO
-      ====================================================== */}
-
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-
-          #payment-receipt,
-          #payment-receipt * {
-            visibility: visible !important;
-          }
-
-          #payment-receipt {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            padding: 24px !important;
-            background: white !important;
-          }
-
-          @page {
-            margin: 12mm;
-          }
-        }
-      `}</style>
+      <ReceiptDrawer
+        appointmentId={receiptId}
+        preview={receiptPreview}
+        onClose={closeReceipt}
+      />
     </div>
   );
 }
