@@ -37,7 +37,7 @@ export function WeekOutlook({ days, loading }: Props) {
           </p>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <TrendingUp size={18} />
+          <TrendingUp size={20} />
         </div>
       </div>
 
@@ -102,7 +102,7 @@ export function WeekOutlook({ days, loading }: Props) {
                 >
                   {day.label}
                 </p>
-                <p className="text-[10px] tabular-nums text-[var(--muted)]">{day.day}</p>
+                <p className="text-[11px] tabular-nums text-[var(--muted)]">{day.day}</p>
               </div>
             ))}
           </div>

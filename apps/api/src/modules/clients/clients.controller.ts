@@ -9,7 +9,7 @@ export const clientsController = {
     const businessId = req.query.businessId as string | undefined;
     if (!businessId) throw new ValidationError("O parâmetro businessId é obrigatório.");
 
-    const clients = await clientsService.listByBusiness(businessId, req.user!.id);
+    const clients = await clientsService.listByBusiness(businessId, req.user!.id, req.query.includeBookers === "true");
     sendSuccess(res, clients);
   },
 

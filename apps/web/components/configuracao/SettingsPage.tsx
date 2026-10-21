@@ -603,7 +603,7 @@ export function SettingsPage() {
                   label="Clientes"
                   value={counts.clients}
                   icon={
-                    <Users size={18} />
+                    <Users size={20} />
                   }
                 />
 
@@ -614,7 +614,7 @@ export function SettingsPage() {
                   }
                   icon={
                     <UsersRound
-                      size={18}
+                      size={20}
                     />
                   }
                 />
@@ -623,7 +623,7 @@ export function SettingsPage() {
                   label="Serviços"
                   value={counts.services}
                   icon={
-                    <Scissors size={18} />
+                    <Scissors size={20} />
                   }
                 />
 
@@ -634,7 +634,7 @@ export function SettingsPage() {
                   }
                   icon={
                     <CalendarDays
-                      size={18}
+                      size={20}
                     />
                   }
                 />
@@ -655,7 +655,7 @@ export function SettingsPage() {
                 }
                 icon={
                   <Building2
-                    size={17}
+                    size={19}
                   />
                 }
                 label="Dados do estabelecimento"
@@ -669,7 +669,7 @@ export function SettingsPage() {
                   setTab("horario")
                 }
                 icon={
-                  <Clock size={17} />
+                  <Clock size={19} />
                 }
                 label="Horário e regras"
               />
@@ -683,7 +683,7 @@ export function SettingsPage() {
                 }
                 icon={
                   <UserRound
-                    size={17}
+                    size={19}
                   />
                 }
                 label="Perfil"
@@ -754,7 +754,7 @@ export function SettingsPage() {
             {/* BARRA */}
 
             {tab !== "perfil" && (
-            <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur sm:-mx-6">
+            <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t border-[var(--border)] bg-[var(--surface)]/95 sm:-mx-6">
               <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 
                 <div className="text-sm text-[var(--muted)]">

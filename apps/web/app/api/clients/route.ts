@@ -3,9 +3,9 @@ import { requireAuth } from "@/lib/auth";
 import { apiCall, errorJson, errorResponse, jsonBody } from "@/lib/dashboard-api";
 
 // The business's clients are two kinds of people: the ones staff registered by hand (what
-// the API calls walk-in clients) and the app users who booked there themselves. A customer
-// who books through the app is therefore on this list from that moment, with nothing to
-// register. `source` tells the two apart; app clients manage their own details.
+// the API calls walk-in clients) and the app users who chose to be clients of the space
+// (the app asks when they book; booking alone doesn't add them). `source` tells the two
+// apart; app clients manage their own details, photo included.
 export async function GET() {
   try {
     const user = await requireAuth();
@@ -18,7 +18,7 @@ export async function GET() {
     ]);
 
     const clients = [
-      ...walkIns.map((client) => ({ ...client, source: "manual" as const })),
+      ...walkIns.map((client) => ({ ...client, avatarUrl: null, source: "manual" as const })),
       ...appClients.map((client) => ({
         id: client.userId,
         businessId: user.businessId,
@@ -29,8 +29,9 @@ export async function GET() {
         visits: client.visits,
         totalSpent: client.totalSpent,
         lastVisit: client.lastVisit,
-        createdAt: client.lastVisit ?? new Date(0).toISOString(),
-        updatedAt: client.lastVisit ?? new Date(0).toISOString(),
+        avatarUrl: client.avatarUrl,
+        createdAt: client.clientSince ?? client.lastVisit ?? new Date(0).toISOString(),
+        updatedAt: client.lastVisit ?? client.clientSince ?? new Date(0).toISOString(),
         source: "app" as const,
       })),
     ];

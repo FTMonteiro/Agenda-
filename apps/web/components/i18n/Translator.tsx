@@ -54,7 +54,7 @@ export function LanguageSwitch({ floating = false }: { floating?: boolean }) {
         "flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-semibold text-[var(--muted)] transition-all duration-200 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] active:scale-95"
       }
     >
-      <Languages size={17} />
+      <Languages size={19} />
       {language === "en" ? "EN" : "PT"}
     </button>
   );

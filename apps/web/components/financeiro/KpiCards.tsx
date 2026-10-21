@@ -13,8 +13,8 @@ import {
 import { useCountUp } from "@/lib/use-count-up";
 import { formatCurrency, percentChange } from "./finance-utils";
 
-function Trend({ change, label, inverted }: { change: number | null; label: string; inverted?: boolean }) {
-  const text = inverted ? "text-white/80" : "text-[var(--muted)]";
+function Trend({ change, label }: { change: number | null; label: string }) {
+  const text = "text-[var(--muted)]";
 
   if (change === null) {
     return <span className={`text-xs ${text}`}>Sem receita no {label}</span>;
@@ -24,9 +24,8 @@ function Trend({ change, label, inverted }: { change: number | null; label: stri
   const direction = rounded > 0 ? "up" : rounded < 0 ? "down" : "flat";
   const Icon = direction === "up" ? ArrowUpRight : direction === "down" ? ArrowDownRight : Minus;
 
-  const tone = inverted
-    ? "bg-white/15 text-white"
-    : direction === "up"
+  const tone =
+    direction === "up"
       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
       : direction === "down"
         ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
@@ -35,7 +34,7 @@ function Trend({ change, label, inverted }: { change: number | null; label: stri
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs ${text}`}>
       <span className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-semibold ${tone}`}>
-        <Icon size={12} strokeWidth={2.5} />
+        <Icon size={13} strokeWidth={2.5} />
         {Math.abs(rounded).toLocaleString("pt-AO")}%
       </span>
       vs. {label}
@@ -60,45 +59,31 @@ function KpiCard({ title, value, format, icon: Icon, change, note, loading, high
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${
-        highlight
-          ? "border-transparent bg-gradient-to-br from-primary to-primary-deep text-white"
-          : "border-[var(--border)] bg-[var(--surface)]"
+      className={`rounded-xl border bg-[var(--surface)] p-5 shadow-sm ${
+        highlight ? "border-primary/30" : "border-[var(--border)]"
       }`}
     >
-      {highlight && (
-        <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
-      )}
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-medium text-[var(--muted)]">{title}</p>
 
-      <div className="relative flex items-start justify-between gap-3">
-        <p className={`text-sm font-medium ${highlight ? "text-white/80" : "text-[var(--muted)]"}`}>{title}</p>
-
-        <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition group-hover:scale-105 ${
-            highlight ? "bg-white/15 text-white" : "bg-primary/10 text-primary"
-          }`}
-        >
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[var(--brand-text)]">
           <Icon size={18} />
         </div>
       </div>
 
       {loading ? (
-        <div className={`relative mt-3 h-8 w-36 animate-pulse rounded-lg ${highlight ? "bg-white/20" : "bg-[var(--surface-secondary)]"}`} />
+        <div className="mt-3 h-8 w-36 animate-pulse rounded-lg bg-[var(--surface-secondary)]" />
       ) : (
-        <p
-          className={`relative mt-2 text-[26px] font-semibold leading-tight tracking-tight tabular-nums ${
-            highlight ? "text-white" : "text-[var(--foreground)]"
-          }`}
-        >
+        <p className="mt-2 text-[26px] font-semibold leading-tight tracking-tight tabular-nums text-[var(--foreground)]">
           {format(Math.round(animated))}
         </p>
       )}
 
-      <div className="relative mt-3 min-h-5">
+      <div className="mt-3 min-h-5">
         {loading ? null : note !== undefined ? (
-          <span className={`text-xs ${highlight ? "text-white/80" : "text-[var(--muted)]"}`}>{note}</span>
+          <span className="text-xs text-[var(--muted)]">{note}</span>
         ) : (
-          <Trend change={change ?? null} label="mês anterior" inverted={highlight} />
+          <Trend change={change ?? null} label="mês anterior" />
         )}
       </div>
     </div>

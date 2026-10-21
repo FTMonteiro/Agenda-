@@ -220,10 +220,22 @@ export interface ClientDTO {
   name: string;
   email: string;
   phone: string | null;
+  // The photo from the client's own app account.
+  avatarUrl: string | null;
+  // When they became a client of the business (accepted when booking in the app).
+  clientSince: string | null;
   visits: number;
   totalSpent: number;
   lastVisit: string | null;
   status: "active" | "vip" | "inactive";
+}
+
+// Whether the signed-in app user is a client of a business. Booking there does not make
+// them one: the app asks, and they can decline and still book.
+export interface BusinessMembershipDTO {
+  businessId: string;
+  isClient: boolean;
+  clientSince: string | null;
 }
 
 // A customer the business knows offline (walk-in, phone booking) with no account of

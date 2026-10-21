@@ -3,17 +3,19 @@ import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet,
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import type { BusinessDTO, ProfessionalDTO, ServiceDTO } from "@slotix/types";
-import { getBusiness, getBusinessProfessionals, getBusinessServices } from "../../services/businesses";
+import { getBusiness, getBusinessProfessionals, getBusinessServices, getMembership } from "../../services/businesses";
+import { ClientCheckSheet } from "@/components/ClientCheckSheet";
 import { createAppointment } from "../../services/appointments";
 import { syncReminders } from "../../services/reminders";
 import { usePreferences } from "../../contexts/PreferencesContext";
 import { ApiRequestError } from "../../services/api-client";
 import { useThemed, type ThemeRoles } from "@/theme/roles";
 import { useT, dateLocale } from "@/i18n";
+import { STAR_COLOR } from "@/components/SpaceCards";
 
 const formatPrice = (value: number) => `${value.toLocaleString("pt-AO")} Kz`;
 
@@ -41,6 +43,8 @@ export default function BookingConfirmationScreen() {
   const scheduledAt = Array.isArray(params.scheduledAt) ? params.scheduledAt[0] : params.scheduledAt;
 
   const [business, setBusiness] = useState<BusinessDTO | null>(null);
+  // Se a pessoa se tornou cliente do espaço nesta marcação (para o dizer no fim).
+  const [joinedNow, setJoinedNow] = useState(false);
   const [service, setService] = useState<ServiceDTO | null>(null);
   const [professional, setProfessional] = useState<ProfessionalDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,7 +137,11 @@ export default function BookingConfirmationScreen() {
     ]).start();
   };
 
-  const handleConfirm = useCallback(async () => {
+  // Quem não é reconhecido como cliente do espaço passa pela tela "Cliente do espaço"
+  // (ClientCheckSheet) antes de a marcação ser criada.
+  const [clientCheckOpen, setClientCheckOpen] = useState(false);
+
+  const handleConfirm = async () => {
     if (submitting || confirmed || !businessId || !serviceId || !professionalId || !scheduledAt) {
       return;
     }
@@ -141,6 +149,27 @@ export default function BookingConfirmationScreen() {
     animateButton();
     setSubmitErrorCode(null);
     setSubmitErrorMessage(null);
+    setSubmitting(true);
+
+    // Se a verificação falhar (sem ligação, servidor em baixo), a pessoa é perguntada na
+    // mesma — nunca se salta a pergunta em silêncio.
+    const membership = await getMembership(businessId).catch(() => null);
+    if (!membership?.isClient) {
+      setClientCheckOpen(true);
+      return;
+    }
+
+    await book();
+  };
+
+  const finishClientCheck = (joined: boolean) => {
+    setClientCheckOpen(false);
+    setJoinedNow(joined);
+    void book();
+  };
+
+  const book = async () => {
+    if (!businessId || !serviceId || !professionalId || !scheduledAt) return;
     setSubmitting(true);
 
     try {
@@ -183,7 +212,7 @@ export default function BookingConfirmationScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [submitting, confirmed, businessId, serviceId, professionalId, scheduledAt, successScale, successOpacity]);
+  };
 
   const handlePickAnotherTime = useCallback(() => {
     if (!businessId || !serviceId || !professionalId) return;
@@ -197,6 +226,33 @@ export default function BookingConfirmationScreen() {
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
+
+  /*
+   * Depois de confirmada, a marcação está feita: não se volta pelos passos (serviço,
+   * profissional, data). Só há duas saídas — o início ou as marcações — e ambas tiram
+   * os passos da reserva da pilha. O gesto de deslizar (iOS) e o botão voltar (Android)
+   * ficam bloqueados nesta tela.
+   */
+  const navigation = useNavigation();
+  const leaving = useRef(false);
+
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: !confirmed });
+    if (!confirmed) return;
+
+    return navigation.addListener("beforeRemove", (event) => {
+      if (!leaving.current) event.preventDefault();
+    });
+  }, [navigation, confirmed]);
+
+  const leaveTo = useCallback(
+    (path: "/" | "/appointments") => {
+      leaving.current = true;
+      if (router.canDismiss()) router.dismissAll();
+      router.replace(path);
+    },
+    [router],
+  );
 
   if (loading) {
     return (
@@ -254,6 +310,13 @@ export default function BookingConfirmationScreen() {
               {t("O seu horário foi reservado com sucesso. Estamos à sua espera em")}{" "}{business.name}.
             </Text>
 
+            {joinedNow ? (
+              <View style={styles.joinedBadge}>
+                <Ionicons name="checkmark-circle" size={16} color={tc.fg("#248A3D")} />
+                <Text style={styles.joinedText}>{t("Agora é cliente de {0}.", [business.name])}</Text>
+              </View>
+            ) : null}
+
             <View style={styles.successBookingCard}>
               <View style={styles.successBookingHeader}>
                 <View>
@@ -306,7 +369,7 @@ export default function BookingConfirmationScreen() {
             </View>
 
             <Pressable
-              onPress={() => router.replace("/appointments")}
+              onPress={() => leaveTo("/appointments")}
               style={({ pressed }) => [styles.successPrimaryButton, pressed && styles.pressed]}
             >
               <Text style={styles.successPrimaryText}>{t("Ver meus agendamentos")}</Text>
@@ -315,7 +378,7 @@ export default function BookingConfirmationScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.replace("/")}
+              onPress={() => leaveTo("/")}
               style={({ pressed }) => [styles.homeButton, pressed && styles.pressed]}
             >
               <Text style={styles.homeButtonText}>{t("Voltar para o início")}</Text>
@@ -389,10 +452,10 @@ export default function BookingConfirmationScreen() {
                 </Text>
               </View>
 
-              {business.favoriteCount > 0 ? (
+              {business.ratingAvg !== null && business.ratingCount > 0 ? (
                 <View style={styles.ratingBadge}>
-                  <Ionicons name="heart" size={12} color={tc.fg("#FFFFFF")} />
-                  <Text style={styles.ratingText}>{business.favoriteCount}</Text>
+                  <Ionicons name="star" size={12} color={tc.fg(STAR_COLOR)} />
+                  <Text style={styles.ratingText}>{business.ratingAvg.toFixed(1)}</Text>
                 </View>
               ) : null}
             </View>
@@ -571,6 +634,13 @@ export default function BookingConfirmationScreen() {
           </View>
         </BlurView>
       </SafeAreaView>
+
+      <ClientCheckSheet
+        visible={clientCheckOpen}
+        businessId={business.id}
+        businessName={business.name}
+        onDone={finishClientCheck}
+      />
     </View>
   );
 }
@@ -1201,6 +1271,24 @@ const createStyles = (tc: ThemeRoles) =>
       fontWeight: "700",
       color: tc.fg("#8E8E93"),
       marginBottom: 6,
+    },
+
+    joinedBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "center",
+      gap: 6,
+      marginTop: 14,
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      borderRadius: 999,
+      backgroundColor: tc.bg("#EAF9EE"),
+    },
+
+    joinedText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: tc.fg("#248A3D"),
     },
 
     successTitle: {

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Figtree, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { NotificationsProvider } from "@/components/notifications/NotificationsProvider";
 import { ThemedToaster } from "@/components/theme/ThemedToaster";
@@ -7,8 +7,9 @@ import { Translator } from "@/components/i18n/Translator";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Fonte do sistema (globals.css: --font-sans). Humanista e legível em ecrãs de trabalho.
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
 });
 
@@ -52,7 +53,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${figtree.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

@@ -1,6 +1,33 @@
 import { prisma } from "../../config/database";
 
 export const clientsRepository = {
+  findUserContact(userId: string) {
+    return prisma.user.findUnique({ where: { id: userId }, select: { email: true, phone: true } });
+  },
+
+  findMembership(businessId: string, userId: string) {
+    return prisma.businessClient.findUnique({ where: { businessId_userId: { businessId, userId } } });
+  },
+
+  // Idempotent: asking twice (two taps, two devices) keeps the first date.
+  upsertMembership(businessId: string, userId: string) {
+    return prisma.businessClient.upsert({
+      where: { businessId_userId: { businessId, userId } },
+      create: { businessId, userId },
+      update: {},
+    });
+  },
+
+  // The app users who chose to be clients of the business, with their own account
+  // details (name, phone, email, photo). Deleted accounts are left out.
+  findMembersByBusiness(businessId: string) {
+    return prisma.businessClient.findMany({
+      where: { businessId, user: { deletedAt: null } },
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
   // clientId: { not: null } excludes walk-in appointments — those are counted separately
   // via findCompletedAppointmentsForWalkIn, never mixed into this User-derived list.
   async findCompletedAppointmentsByBusiness(businessId: string) {

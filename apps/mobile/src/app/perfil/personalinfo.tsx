@@ -35,8 +35,8 @@ const COLORS = {
   muted: "#AEAEB2",
   border: "#E5E5EA",
   inputBackground: "#F2F2F7",
-  blue: "#007AFF",
-  blueSoft: "#E5F1FF",
+  blue: "#2E67B3",
+  blueSoft: "#E2EEFF",
   success: "#34C759",
   danger: "#FF3B30",
   dangerSoft: "#FFEBEA",
@@ -1081,7 +1081,7 @@ const createStyles = (tc: ThemeRoles) =>
       alignItems: "flex-start",
       marginBottom: 20,
       borderWidth: 1,
-      borderColor: tc.border("#E5F1FF"),
+      borderColor: tc.border("#E2EEFF"),
     },
 
     securityIcon: {

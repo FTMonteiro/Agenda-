@@ -274,7 +274,7 @@ export function LocationMap({ value, onChange }: LocationMapProps) {
           </select>
 
           <div className="relative flex-1">
-            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+            <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
 
             <input
               value={query}
@@ -291,12 +291,12 @@ export function LocationMap({ value, onChange }: LocationMapProps) {
           </div>
 
           <button type="button" onClick={() => void search()} disabled={disabled || query.trim().length < 3} className={buttonClass}>
-            {busy === "search" ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+            {busy === "search" ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
             Procurar
           </button>
 
           <button type="button" onClick={locate} disabled={disabled} className={buttonClass}>
-            {busy === "locate" ? <Loader2 size={16} className="animate-spin" /> : <LocateFixed size={16} />}
+            {busy === "locate" ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
             Estou no espaço
           </button>
         </div>
@@ -315,7 +315,7 @@ export function LocationMap({ value, onChange }: LocationMapProps) {
                   }}
                   className="flex w-full items-start gap-2 px-4 py-3 text-left text-sm transition hover:bg-[var(--surface-secondary)]"
                 >
-                  <MapPin size={15} className="mt-0.5 shrink-0 text-[var(--muted)]" />
+                  <MapPin size={17} className="mt-0.5 shrink-0 text-[var(--muted)]" />
                   {result.displayName}
                 </button>
               </li>
@@ -331,7 +331,7 @@ export function LocationMap({ value, onChange }: LocationMapProps) {
             <div className="absolute inset-0 z-[1000] flex items-center justify-center gap-2 bg-[var(--surface-secondary)] px-6 text-center text-sm text-[var(--muted)]">
               {status === "loading" ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin" />
                   A carregar o mapa...
                 </>
               ) : (
@@ -352,7 +352,7 @@ export function LocationMap({ value, onChange }: LocationMapProps) {
       {/* O QUE O OPENSTREETMAP TEM PARA O PONTO */}
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-5">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          {busy === "resolve" ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={16} />}
+          {busy === "resolve" ? <Loader2 size={18} className="animate-spin" /> : <MapPin size={18} />}
           {hasPin ? "Localização do espaço" : "Localização não disponível"}
         </div>
 

@@ -63,7 +63,7 @@ export function TopRankings({ services, professionals, loading }: Props) {
           </div>
         ) : items.length === 0 ? (
           <div className="flex h-full min-h-[180px] flex-col items-center justify-center text-center">
-            <Icon size={20} className="text-[var(--muted)]" />
+            <Icon size={22} className="text-[var(--muted)]" />
             <p className="mt-3 text-sm text-[var(--muted)]">Sem dados neste período.</p>
           </div>
         ) : (
@@ -72,7 +72,7 @@ export function TopRankings({ services, professionals, loading }: Props) {
               <li key={item.name} className="finance-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="flex min-w-0 items-center gap-2">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[var(--surface-secondary)] text-[10px] font-bold text-[var(--muted)]">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[var(--surface-secondary)] text-[11px] font-bold text-[var(--muted)]">
                       {index + 1}
                     </span>
                     <span className="truncate text-sm font-medium text-[var(--foreground)]">{item.name}</span>

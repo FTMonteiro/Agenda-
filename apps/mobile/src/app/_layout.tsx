@@ -145,7 +145,7 @@ function RootLayoutContent() {
             STACK PRINCIPAL
             ================================================= */}
 
-        <View key={language} style={styles.stackContainer}>
+        <View key={`stack-${language}`} style={styles.stackContainer}>
           <Stack
             screenOptions={{
               headerShown: false,
@@ -174,7 +174,7 @@ function RootLayoutContent() {
         */}
 
         {!isAuthRoute && isTabRoute && !isLoading && (
-          <View key={language} pointerEvents="box-none" style={styles.navigationLayer}>
+          <View key={`nav-${language}`} pointerEvents="box-none" style={styles.navigationLayer}>
             <FloatingNavigation />
           </View>
         )}

@@ -161,7 +161,7 @@ export default function FinanceiroPage({
       {/* CABEÇALHO */}
       <header className="finance-fade-up flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Finanças</p>
+          <p className="text-xs font-medium text-primary">Finanças</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[var(--foreground)] md:text-3xl">
             Visão financeira
           </h1>
@@ -179,12 +179,12 @@ export default function FinanceiroPage({
               aria-label="Mês anterior"
               className="flex h-10 w-10 items-center justify-center rounded-l-xl text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] disabled:opacity-40"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={20} />
             </button>
 
             <label className="relative border-x border-[var(--border)]">
               <span className="sr-only">Selecionar mês</span>
-              <CalendarDays size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+              <CalendarDays size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
               <select
                 value={month}
                 onChange={(event) => changeMonth(event.target.value)}
@@ -196,7 +196,7 @@ export default function FinanceiroPage({
                   </option>
                 ))}
               </select>
-              <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+              <ChevronDown size={16} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
             </label>
 
             <button
@@ -206,7 +206,7 @@ export default function FinanceiroPage({
               aria-label="Mês seguinte"
               className="flex h-10 w-10 items-center justify-center rounded-r-xl text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] disabled:opacity-40"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={20} />
             </button>
           </div>
 
@@ -228,7 +228,7 @@ export default function FinanceiroPage({
             title="Atualizar"
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] shadow-sm transition hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] disabled:opacity-50"
           >
-            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+            <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
           </button>
         </div>
       </header>
@@ -237,7 +237,7 @@ export default function FinanceiroPage({
       {error && (
         <div className="finance-fade-up flex items-center justify-between gap-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">
           <span className="flex items-center gap-2">
-            <AlertCircle size={16} className="shrink-0" />
+            <AlertCircle size={18} className="shrink-0" />
             {error}
           </span>
           <button type="button" onClick={refresh} className="shrink-0 font-semibold underline underline-offset-2">

@@ -235,7 +235,7 @@ export default function ReceiptPage() {
             onClick={() => router.back()}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-hover"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-[18px] w-[18px]" />
             Voltar
           </button>
         </div>
@@ -275,7 +275,7 @@ export default function ReceiptPage() {
           onClick={() => router.back()}
           className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-[18px] w-[18px]" />
           Voltar
         </button>
 
@@ -284,7 +284,7 @@ export default function ReceiptPage() {
           onClick={handlePrint}
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover"
         >
-          <Download className="h-4 w-4" />
+          <Download className="h-[18px] w-[18px]" />
           Imprimir / Guardar PDF
         </button>
       </div>
@@ -293,7 +293,7 @@ export default function ReceiptPage() {
           RECIBO
       ====================================================== */}
 
-      <main className="mx-auto w-full max-w-3xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl print:max-w-none print:rounded-none print:border-0 print:shadow-none">
+      <main className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl print:max-w-none print:rounded-none print:border-0 print:shadow-none">
         {/* ====================================================
             CABEÇALHO
         ==================================================== */}
@@ -326,7 +326,7 @@ export default function ReceiptPage() {
 
             <div className="sm:text-right">
               <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-2 text-sm font-semibold text-green-700">
-                <CheckCircle2 className="h-4 w-4" />
+                <CheckCircle2 className="h-[18px] w-[18px]" />
                 Pagamento confirmado
               </div>
 
@@ -360,7 +360,7 @@ export default function ReceiptPage() {
 
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500">
             <span className="inline-flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
+              <CreditCard className="h-[18px] w-[18px]" />
 
               {getPaymentMethod(
                 payment?.method,
@@ -368,7 +368,7 @@ export default function ReceiptPage() {
             </span>
 
             <span className="inline-flex items-center gap-2">
-              <CalendarDays className="h-4 w-4" />
+              <CalendarDays className="h-[18px] w-[18px]" />
 
               {formatDateTime(
                 payment?.paidAt,
@@ -386,7 +386,7 @@ export default function ReceiptPage() {
 
           <section>
             <div className="mb-4 flex items-center gap-2">
-              <UserRound className="h-4 w-4 text-gray-400" />
+              <UserRound className="h-[18px] w-[18px] text-gray-400" />
 
               <h2 className="text-sm font-semibold text-gray-950">
                 Cliente
@@ -401,14 +401,14 @@ export default function ReceiptPage() {
 
               {client?.email && (
                 <p className="flex items-center gap-2 text-sm text-gray-500">
-                  <Mail className="h-3.5 w-3.5" />
+                  <Mail className="h-4 w-4" />
                   {client.email}
                 </p>
               )}
 
               {client?.phone && (
                 <p className="flex items-center gap-2 text-sm text-gray-500">
-                  <Phone className="h-3.5 w-3.5" />
+                  <Phone className="h-4 w-4" />
                   {client.phone}
                 </p>
               )}
@@ -419,7 +419,7 @@ export default function ReceiptPage() {
 
           <section>
             <div className="mb-4 flex items-center gap-2">
-              <UserRound className="h-4 w-4 text-gray-400" />
+              <UserRound className="h-[18px] w-[18px] text-gray-400" />
 
               <h2 className="text-sm font-semibold text-gray-950">
                 Profissional
@@ -440,7 +440,7 @@ export default function ReceiptPage() {
 
               {professional?.phone && (
                 <p className="flex items-center gap-2 text-sm text-gray-500">
-                  <Phone className="h-3.5 w-3.5" />
+                  <Phone className="h-4 w-4" />
                   {professional.phone}
                 </p>
               )}
@@ -454,7 +454,7 @@ export default function ReceiptPage() {
 
         <div className="border-t border-gray-100 px-6 py-8 sm:px-10">
           <div className="mb-4 flex items-center gap-2">
-            <Scissors className="h-4 w-4 text-gray-400" />
+            <Scissors className="h-[18px] w-[18px] text-gray-400" />
 
             <h2 className="text-sm font-semibold text-gray-950">
               Serviço
@@ -471,7 +471,7 @@ export default function ReceiptPage() {
 
                 {service?.duration && (
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="h-4 w-4" />
                     {service.duration} minutos
                   </p>
                 )}
@@ -492,7 +492,7 @@ export default function ReceiptPage() {
 
         <div className="border-t border-gray-100 px-6 py-8 sm:px-10">
           <div className="mb-4 flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-gray-400" />
+            <CalendarDays className="h-[18px] w-[18px] text-gray-400" />
 
             <h2 className="text-sm font-semibold text-gray-950">
               Agendamento
@@ -518,7 +518,7 @@ export default function ReceiptPage() {
               </p>
 
               <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-green-700">
-                <CheckCircle2 className="h-4 w-4" />
+                <CheckCircle2 className="h-[18px] w-[18px]" />
                 Pago
               </p>
             </div>

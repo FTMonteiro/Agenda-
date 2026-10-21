@@ -384,7 +384,7 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-30 w-full border-b border-[var(--border)] bg-[var(--surface)]/95 text-[var(--foreground)] backdrop-blur-md">
+      <header className="sticky top-0 z-30 w-full border-b border-[var(--border)] bg-[var(--surface)]/95 text-[var(--foreground)]">
         <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
 
           {/* ESQUERDA */}
@@ -398,7 +398,7 @@ export function Header({
               aria-controls="menu-lateral"
               className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] active:scale-95 lg:hidden"
             >
-              <Menu size={22} />
+              <Menu size={24} />
             </button>
 
             <div className="min-w-0">
@@ -433,9 +433,9 @@ export function Header({
               className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--muted)] transition-all duration-200 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] active:scale-95"
             >
               {theme === "dark" ? (
-                <Sun size={19} />
+                <Sun size={21} />
               ) : (
-                <Moon size={19} />
+                <Moon size={21} />
               )}
             </button>
 
@@ -453,7 +453,7 @@ export function Header({
                 <div className="flex items-center gap-2 p-1.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-secondary)]">
                     <Loader2
-                      size={17}
+                      size={19}
                       className="animate-spin text-[var(--muted)]"
                     />
                   </div>
@@ -482,10 +482,10 @@ export function Header({
                       <img
                         src={profileImage}
                         alt={`Foto de ${userName}`}
-                        className="h-9 w-9 shrink-0 rounded-full object-cover shadow-sm ring-2 ring-primary/15"
+                        className="h-9 w-9 shrink-0 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-deep text-sm font-semibold text-white shadow-sm ring-2 ring-primary/15">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-[var(--brand-text)]">
                         {avatarLetter}
                       </div>
                     )}
@@ -503,7 +503,7 @@ export function Header({
                     </div>
 
                     <ChevronDown
-                      size={16}
+                      size={18}
                       className={`hidden text-[var(--muted)] transition-transform duration-200 sm:block ${
                         openProfile
                           ? "rotate-180"
@@ -513,9 +513,9 @@ export function Header({
                   </button>
 
                   {openProfile && (
-                    <div className="finance-fade-up absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl">
+                    <div className="finance-fade-up absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg">
 
-                      <div className="border-b border-[var(--border)] bg-gradient-to-br from-primary/[0.06] to-transparent p-4">
+                      <div className="border-b border-[var(--border)] p-4">
                         <div className="flex items-center gap-3">
 
                           {profileImage ? (
@@ -527,7 +527,7 @@ export function Header({
                               className="h-11 w-11 shrink-0 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-deep text-sm font-bold text-white">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-[var(--brand-text)]">
                               {
                                 avatarLetter
                               }
@@ -548,7 +548,7 @@ export function Header({
                               }
                             </p>
 
-                            <p className="mt-1.5 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                            <p className="mt-1.5 inline-flex rounded-md bg-[var(--surface-secondary)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--muted)]">
                               {formatRole(
                                 user?.role,
                               )}
@@ -569,7 +569,7 @@ export function Header({
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
                         >
                           <Settings
-                            size={18}
+                            size={20}
                             className="text-[var(--muted)]"
                           />
 
@@ -586,7 +586,7 @@ export function Header({
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
                         >
                           <User
-                            size={18}
+                            size={20}
                             className="text-[var(--muted)]"
                           />
 
@@ -608,7 +608,7 @@ export function Header({
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <LogOut
-                            size={18}
+                            size={20}
                           />
 
                           Terminar sessão
@@ -628,7 +628,7 @@ export function Header({
 
       {showLogoutModal && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4"
           onMouseDown={(event) => {
             if (
               event.target ===
@@ -643,7 +643,7 @@ export function Header({
             role="dialog"
             aria-modal="true"
             aria-labelledby="logout-title"
-            className="w-full max-w-md overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xl"
           >
 
             <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-5">
@@ -652,7 +652,7 @@ export function Header({
 
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/10 text-red-500">
                   <AlertTriangle
-                    size={21}
+                    size={22}
                   />
                 </div>
 
@@ -680,7 +680,7 @@ export function Header({
                 aria-label="Fechar"
                 className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] disabled:opacity-50"
               >
-                <X size={19} />
+                <X size={21} />
               </button>
 
             </div>
@@ -721,14 +721,14 @@ export function Header({
                 {loggingOut ? (
                   <>
                     <Loader2
-                      size={17}
+                      size={19}
                       className="animate-spin"
                     />
                     A terminar sessão...
                   </>
                 ) : (
                   <>
-                    <LogOut size={17} />
+                    <LogOut size={19} />
                     Terminar sessão
                   </>
                 )}

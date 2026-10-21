@@ -1,8 +1,8 @@
 import { Router, type Request, type Response } from "express";
 import { authRoutes } from "../modules/auth";
-import { usersRoutes } from "../modules/users";
+import { usersRoutes, usersService } from "../modules/users";
 import { businessesRoutes } from "../modules/businesses";
-import { clientsRoutes } from "../modules/clients";
+import { clientsRoutes, clientsService } from "../modules/clients";
 import { professionalsRoutes, professionalsService } from "../modules/professionals";
 import { servicesRoutes, servicesService } from "../modules/services";
 import { appointmentsRoutes } from "../modules/appointments";
@@ -56,6 +56,19 @@ routes.get("/businesses/:id/services", async (req: Request<{ id: string }>, res:
 routes.get("/businesses/:id/professionals", async (req: Request<{ id: string }>, res: Response) => {
   const professionals = await professionalsService.listByBusiness(req.params.id);
   sendSuccess(res, professionals);
+});
+
+// Whether the signed-in customer is a client of the business, and becoming one (the app
+// asks when they book). Composed here for the same reason as the routes above.
+routes.get("/businesses/:id/membership", authenticate, authorize("CUSTOMER"), async (req: Request<{ id: string }>, res: Response) => {
+  const membership = await clientsService.getMembership(req.params.id, req.user!.id);
+  sendSuccess(res, membership);
+});
+
+routes.post("/businesses/:id/membership", authenticate, authorize("CUSTOMER"), async (req: Request<{ id: string }>, res: Response) => {
+  const user = await usersService.getProfile(req.user!.id);
+  const membership = await clientsService.join(req.params.id, req.user!.id, user.name);
+  sendSuccess(res, membership, 201);
 });
 
 routes.get("/businesses/:id/reviews", async (req: Request<{ id: string }>, res: Response) => {

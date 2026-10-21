@@ -63,7 +63,7 @@ export function BusinessHours({
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
         <div className="flex items-center gap-2 border-b border-[var(--border)] px-6 py-5">
           <Clock
-            size={18}
+            size={20}
             className="text-[var(--muted)]"
           />
 
@@ -176,7 +176,7 @@ export function BusinessHours({
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
         <div className="flex items-center gap-2 border-b border-[var(--border)] px-6 py-5">
           <CalendarDays
-            size={18}
+            size={20}
             className="text-[var(--muted)]"
           />
 
@@ -232,7 +232,7 @@ export function BusinessHours({
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
         <div className="flex items-center gap-2 border-b border-[var(--border)] px-6 py-5">
           <ScrollText
-            size={18}
+            size={20}
             className="text-[var(--muted)]"
           />
 

@@ -152,11 +152,11 @@ export function NotificationsBell() {
         aria-haspopup="dialog"
         className="relative flex h-9 w-9 items-center justify-center rounded-xl text-[var(--muted)] transition-all duration-200 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] active:scale-95"
       >
-        <Bell size={19} />
+        <Bell size={21} />
 
         {unreadCount > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white ring-2 ring-[var(--surface)]"
+            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-bold text-white ring-2 ring-[var(--surface)]"
           >
             {unreadCount > 99
               ? "99+"
@@ -171,7 +171,7 @@ export function NotificationsBell() {
         <div
           role="dialog"
           aria-label="Notificações"
-          className="absolute right-0 z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+          className="absolute right-0 z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xl"
         >
           {/*HEADER*/}
 
@@ -201,7 +201,7 @@ export function NotificationsBell() {
                   title="Marcar todas como lidas"
                 >
                   <CheckCheck
-                    size={14}
+                    size={16}
                   />
 
                   <span>
@@ -232,7 +232,7 @@ export function NotificationsBell() {
             <div className="flex flex-col items-center px-6 py-12 text-center">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-secondary)]">
                 <BellOff
-                  size={22}
+                  size={24}
                   className="text-[var(--muted)]"
                 />
               </div>
@@ -294,7 +294,7 @@ function NotificationItem({
       <span
         className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tone}`}
       >
-        <Icon size={17} />
+        <Icon size={19} />
       </span>
 
       {/*CONTEÚDO*/}

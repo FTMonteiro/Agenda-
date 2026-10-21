@@ -103,9 +103,10 @@ export default function HomeScreen() {
         aroundLatitude !== null && aroundLongitude !== null ? { latitude: aroundLatitude, longitude: aroundLongitude } : {};
       const [featuredResult, topResult] = await Promise.all([
         listBusinesses({ sortBy: "recommended", limit: 12, ...around }),
-        // "Mais bem avaliados" são os espaços que muitas pessoas puseram nos favoritos: só
-        // entram os que têm gostos de uma boa parte de quem usa a app (a API faz a conta).
-        listBusinesses({ sortBy: "mostFavorited", popular: true, limit: 12, ...around }),
+        // "Mais bem avaliados" é pelas estrelas: só entram espaços com pelo menos uma
+        // avaliação, ordenados pela média ponderada (a API não deixa uma única nota 5
+        // passar à frente de um espaço com muitas notas altas).
+        listBusinesses({ sortBy: "topRated", minRating: 1, limit: 12, ...around }),
       ]);
       setFeatured(featuredResult.data);
       setTopRated(topResult.data);

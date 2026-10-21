@@ -269,7 +269,7 @@ export function UpcomingAppointmentCard({ item, onPress }: { item: UpcomingAppoi
       accessibilityLabel={`${t("PRÓXIMA MARCAÇÃO")}: ${item.service?.name ?? t("Serviço")}, ${item.business?.name ?? t("Espaço")}, ${when}, ${timeText(item.date)}`}
     >
       <Animated.View style={{ transform: [{ scale }] }}>
-        <LinearGradient colors={["#0A84FF", "#5E5CE6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
+        <LinearGradient colors={["#5585C4", "#5E5CE6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
           {/* Reflexo suave no canto, para dar volume ao cartão */}
           <View style={styles.glow} />
 

@@ -324,7 +324,7 @@ export default function PagamentosPage({
           className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <RefreshCw
-            className={`h-4 w-4 ${
+            className={`h-[18px] w-[18px] ${
               refreshing ? "animate-spin" : ""
             }`}
           />
@@ -353,7 +353,7 @@ export default function PagamentosPage({
             </div>
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <CheckCircle2 className="h-5 w-5" />
+              <CheckCircle2 className="h-[22px] w-[22px]" />
             </div>
           </div>
         </div>
@@ -373,7 +373,7 @@ export default function PagamentosPage({
             </div>
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700">
-              <Wallet className="h-5 w-5" />
+              <Wallet className="h-[22px] w-[22px]" />
             </div>
           </div>
         </div>
@@ -388,7 +388,7 @@ export default function PagamentosPage({
           {/* PESQUISA */}
 
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
 
             <input
               type="text"
@@ -463,7 +463,7 @@ export default function PagamentosPage({
         {loading ? (
           <div className="flex min-h-[300px] items-center justify-center">
             <div className="flex items-center gap-3 text-sm text-zinc-500">
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-[22px] w-[22px] animate-spin" />
               Carregando pagamentos...
             </div>
           </div>
@@ -472,7 +472,7 @@ export default function PagamentosPage({
 
           <div className="flex min-h-[300px] flex-col items-center justify-center px-6 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100">
-              <Wallet className="h-5 w-5 text-zinc-500" />
+              <Wallet className="h-[22px] w-[22px] text-zinc-500" />
             </div>
 
             <h3 className="mt-4 font-medium text-zinc-900">
@@ -542,7 +542,7 @@ export default function PagamentosPage({
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-600">
-                            <User className="h-4 w-4" />
+                            <User className="h-[18px] w-[18px]" />
                           </div>
 
                           <div className="min-w-0">
@@ -581,7 +581,7 @@ export default function PagamentosPage({
 
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2 text-sm text-zinc-600">
-                          <CalendarDays className="h-4 w-4 text-zinc-400" />
+                          <CalendarDays className="h-[18px] w-[18px] text-zinc-400" />
 
                           <div>
                             <p>
@@ -602,7 +602,7 @@ export default function PagamentosPage({
 
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2 text-sm text-zinc-600">
-                          <MethodIcon className="h-4 w-4 text-zinc-400" />
+                          <MethodIcon className="h-[18px] w-[18px] text-zinc-400" />
 
                           {getMethodLabel(
                             payment.method,
@@ -648,7 +648,7 @@ export default function PagamentosPage({
                           disabled={!isPaid}
                           className="inline-flex h-9 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-[18px] w-[18px]" />
                           Recibo
                         </button>
                       </td>

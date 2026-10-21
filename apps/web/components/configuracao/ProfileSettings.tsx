@@ -329,11 +329,11 @@ export function ProfileSettings({
               >
                 {saving ? (
                   <Loader2
-                    size={17}
+                    size={19}
                     className="animate-spin"
                   />
                 ) : (
-                  <Camera size={17} />
+                  <Camera size={19} />
                 )}
               </button>
 
@@ -376,11 +376,11 @@ export function ProfileSettings({
               >
                 {removing ? (
                   <Loader2
-                    size={14}
+                    size={16}
                     className="animate-spin"
                   />
                 ) : (
-                  <Trash2 size={14} />
+                  <Trash2 size={16} />
                 )}
 
                 {removing
@@ -401,7 +401,7 @@ export function ProfileSettings({
             <div className="grid flex-1 gap-4 sm:grid-cols-2">
               <InfoField
                 icon={
-                  <UserRound size={18} />
+                  <UserRound size={20} />
                 }
                 label="Nome"
                 value={profile.name}
@@ -409,7 +409,7 @@ export function ProfileSettings({
 
               <InfoField
                 icon={
-                  <Mail size={18} />
+                  <Mail size={20} />
                 }
                 label="E-mail"
                 value={profile.email}
@@ -417,7 +417,7 @@ export function ProfileSettings({
 
               <InfoField
                 icon={
-                  <Phone size={18} />
+                  <Phone size={20} />
                 }
                 label="Telefone"
                 value={
@@ -430,7 +430,7 @@ export function ProfileSettings({
                 <InfoField
                   icon={
                     <BriefcaseBusiness
-                      size={18}
+                      size={20}
                     />
                   }
                   label="Especialidade"

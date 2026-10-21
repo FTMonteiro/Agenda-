@@ -28,14 +28,14 @@ import { NEAR_ME_RADIUS_KM, useSelectedLocation } from "../contexts/LocationCont
 import { listBusinesses } from "../services/businesses";
 import { useT } from "@/i18n";
 
-type SortMode = Extract<BusinessSortBy, "recommended" | "nearest" | "mostFavorited">;
+type SortMode = Extract<BusinessSortBy, "recommended" | "nearest" | "topRated">;
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
 const SORTS: { value: SortMode; label: string; icon: IconName }[] = [
   { value: "recommended", label: "Recomendados", icon: "sparkles" },
   { value: "nearest", label: "Perto", icon: "navigate" },
-  // A avaliação são os gostos: os melhores são os que mais pessoas puseram nos favoritos.
-  { value: "mostFavorited", label: "Avaliação", icon: "heart" },
+  // A avaliação são as estrelas: primeiro os espaços com a melhor média.
+  { value: "topRated", label: "Avaliação", icon: "star" },
 ];
 
 /* Controlo segmentado do iOS, com a pílula a deslizar até à opção escolhida. */

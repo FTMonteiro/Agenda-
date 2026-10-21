@@ -1,5 +1,6 @@
 import type {
   BusinessDTO,
+  BusinessMembershipDTO,
   BusinessHoursEntryDTO,
   BusinessListQuery,
   GalleryImageDTO,
@@ -32,6 +33,16 @@ export async function getBusinessProfessionals(id: string): Promise<Professional
 
 export async function getBusinessReviews(id: string): Promise<ReviewDTO[]> {
   return apiFetch<ReviewDTO[]>(`/businesses/${id}/reviews`);
+}
+
+// Se a pessoa com sessão iniciada é cliente do espaço (marcar não a torna cliente).
+export async function getMembership(id: string): Promise<BusinessMembershipDTO> {
+  return apiFetch<BusinessMembershipDTO>(`/businesses/${id}/membership`);
+}
+
+// Torna a pessoa cliente do espaço. Os dados (nome, telefone, email, foto) vêm da conta dela.
+export async function joinBusiness(id: string): Promise<BusinessMembershipDTO> {
+  return apiFetch<BusinessMembershipDTO>(`/businesses/${id}/membership`, { method: "POST" });
 }
 
 export async function getBusinessGallery(id: string): Promise<GalleryImageDTO[]> {

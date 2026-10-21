@@ -106,7 +106,7 @@ export function ClientCard({
                   rounded-full
                   px-2
                   py-0.5
-                  text-[10px]
+                  text-[11px]
                   font-semibold
                   ${
                     isActive
@@ -162,11 +162,11 @@ export function ClientCard({
               bg-gray-50
             "
           >
-            <Mail className="h-4 w-4 text-gray-400" />
+            <Mail className="h-[18px] w-[18px] text-gray-400" />
           </div>
 
           <div className="min-w-0">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            <p className="text-xs font-medium text-gray-400">
               Email
             </p>
 
@@ -200,11 +200,11 @@ export function ClientCard({
               bg-gray-50
             "
           >
-            <Phone className="h-4 w-4 text-gray-400" />
+            <Phone className="h-[18px] w-[18px] text-gray-400" />
           </div>
 
           <div className="min-w-0">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            <p className="text-xs font-medium text-gray-400">
               Telefone
             </p>
 
@@ -238,11 +238,11 @@ export function ClientCard({
               bg-gray-50
             "
           >
-            <CalendarDays className="h-4 w-4 text-gray-400" />
+            <CalendarDays className="h-[18px] w-[18px] text-gray-400" />
           </div>
 
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+            <p className="text-xs font-medium text-gray-400">
               Visitas
             </p>
 
@@ -262,7 +262,7 @@ export function ClientCard({
             lg:block
           "
         >
-          <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+          <p className="text-xs font-medium text-gray-400">
             Última visita
           </p>
 
@@ -293,7 +293,7 @@ export function ClientCard({
             lg:group-hover:opacity-100
           "
         >
-          <MoreHorizontal className="h-5 w-5" />
+          <MoreHorizontal className="h-[22px] w-[22px]" />
         </button>
       </div>
 
@@ -314,7 +314,7 @@ export function ClientCard({
         {/* TELEFONE */}
 
         <div className="flex min-w-0 items-center gap-2">
-          <Phone className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <Phone className="h-4 w-4 shrink-0 text-gray-400" />
 
           <span className="truncate text-xs text-gray-600">
             {client.phone || "Sem telefone"}
@@ -324,7 +324,7 @@ export function ClientCard({
         {/* EMAIL */}
 
         <div className="flex min-w-0 items-center gap-2">
-          <Mail className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <Mail className="h-4 w-4 shrink-0 text-gray-400" />
 
           <span className="truncate text-xs text-gray-600">
             {client.email || "Sem email"}
@@ -334,7 +334,7 @@ export function ClientCard({
         {/* VISITAS */}
 
         <div className="flex items-center gap-2">
-          <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
+          <CalendarDays className="h-4 w-4 text-gray-400" />
 
           <span className="text-xs text-gray-600">
             {client.visits ?? 0} visitas

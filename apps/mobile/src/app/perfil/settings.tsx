@@ -22,8 +22,8 @@ const COLORS = {
   muted: "#AEAEB2",
   border: "#E5E5EA",
 
-  blue: "#007AFF",
-  blueSoft: "#E5F1FF",
+  blue: "#2E67B3",
+  blueSoft: "#E2EEFF",
 
   green: "#34C759",
   greenSoft: "#EAF9EE",
@@ -62,7 +62,7 @@ function SwitchRow({ icon, title, description, value, onChange }: SwitchRowProps
         onValueChange={onChange}
         trackColor={{
           false: "#D1D1D6",
-          true: "#E5F1FF",
+          true: "#E2EEFF",
         }}
         thumbColor={value ? COLORS.blue : COLORS.white}
       />

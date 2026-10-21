@@ -24,6 +24,7 @@ import { getBusiness, getBusinessServices } from "../../services/businesses";
 import { useThemed, type ThemeRoles } from "@/theme/roles";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { useT } from "@/i18n";
+import { STAR_COLOR } from "@/components/SpaceCards";
 
 const COLORS = {
   background: "#F5F5F2",
@@ -32,7 +33,7 @@ const COLORS = {
   text: "#1C1C1E",
   secondary: "#636366",
   muted: "#AEAEB2",
-  blue: "#007AFF",
+  blue: "#2E67B3",
   blueSoft: "rgba(29, 99, 255, 0.07)",
   blueBorder: "rgba(29, 99, 255, 0.28)",
   gold: "#A2845E",
@@ -304,11 +305,11 @@ export default function BookingServiceScreen() {
                 ) : null}
               </View>
 
-              {business.favoriteCount > 0 ? (
+              {business.ratingAvg !== null && business.ratingCount > 0 ? (
                 <View style={styles.spaceRating}>
-                  <Ionicons name="heart" size={12} color={tc.fg("#FF375F")} />
+                  <Ionicons name="star" size={12} color={tc.fg(STAR_COLOR)} />
 
-                  <Text style={styles.spaceRatingText}>{business.favoriteCount}</Text>
+                  <Text style={styles.spaceRatingText}>{business.ratingAvg.toFixed(1)}</Text>
                 </View>
               ) : null}
             </LinearGradient>

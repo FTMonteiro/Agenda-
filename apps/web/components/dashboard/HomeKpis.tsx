@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays, Hourglass, UsersRound, WalletCards, type LucideIcon } from "lucide-react";
+import { CalendarDays, Hourglass, UsersRound, WalletCards, type LucideIcon } from "lucide-react";
 import { useCountUp } from "@/lib/use-count-up";
 import { formatPrice } from "./home-utils";
 
@@ -35,13 +35,13 @@ export function HomeKpis(props: Props) {
         highlight
         footer={
           <div className="space-y-2">
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/20">
+            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-secondary)]">
               <div
-                className="h-full rounded-full bg-mint transition-[width] duration-700 ease-out"
+                className="h-full rounded-full bg-primary transition-[width] duration-700 ease-out"
                 style={{ width: `${received * 100}%` }}
               />
             </div>
-            <p className="text-xs text-white/80">
+            <p className="text-xs text-[var(--muted)]">
               {plural(props.paidToday, "1 pagamento", "pagamentos")}
               {props.expectedToday > 0 && <> · previsto {formatPrice(props.expectedToday)}</>}
             </p>
@@ -116,9 +116,8 @@ function Kpi({ index, href, title, icon: Icon, value, format, loading, footer, h
   const animated = useCountUp(loading ? 0 : value);
   const shown = format ? format(animated) : Math.round(animated).toLocaleString("pt-AO");
 
-  const iconTone = highlight
-    ? "bg-white/15 text-white"
-    : tone === "warning"
+  const iconTone =
+    tone === "warning"
       ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
       : "bg-primary/10 text-primary";
 
@@ -126,44 +125,26 @@ function Kpi({ index, href, title, icon: Icon, value, format, loading, footer, h
     <Link
       href={href}
       style={{ animationDelay: `${80 + index * 70}ms` }}
-      className={`finance-fade-up group relative flex flex-col overflow-hidden rounded-2xl border p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg ${
-        highlight
-          ? "border-transparent bg-gradient-to-br from-primary to-primary-deep text-white"
-          : "border-[var(--border)] bg-[var(--surface)] hover:border-primary/30"
+      className={`finance-fade-up group relative flex flex-col rounded-xl border bg-[var(--surface)] p-5 shadow-sm transition-colors hover:border-[var(--border-strong)] ${
+        highlight ? "border-primary/30" : "border-[var(--border)]"
       }`}
     >
-      {highlight && <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />}
-      {tone === "warning" && (
-        <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-amber-500/10 blur-2xl" />
-      )}
-
-      <div className="relative flex items-start justify-between gap-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl transition duration-300 group-hover:scale-110 ${iconTone}`}>
-          <Icon size={19} />
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium text-[var(--muted)]">{title}</p>
+        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${iconTone}`}>
+          <Icon size={18} />
         </div>
-        <ArrowUpRight
-          size={16}
-          className={`opacity-0 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100 ${
-            highlight ? "text-white/80" : "text-[var(--muted)]"
-          }`}
-        />
       </div>
 
-      <p className={`relative mt-5 text-sm font-medium ${highlight ? "text-white/80" : "text-[var(--muted)]"}`}>{title}</p>
-
       {loading ? (
-        <div className={`relative mt-2 h-8 w-28 animate-pulse rounded-lg ${highlight ? "bg-white/20" : "bg-[var(--surface-secondary)]"}`} />
+        <div className="mt-3 h-8 w-28 animate-pulse rounded-lg bg-[var(--surface-secondary)]" />
       ) : (
-        <p
-          className={`relative mt-1 truncate text-[28px] font-semibold leading-tight tracking-tight tabular-nums ${
-            highlight ? "text-white" : "text-[var(--foreground)]"
-          }`}
-        >
+        <p className="mt-2 truncate text-[26px] font-semibold leading-tight tracking-tight tabular-nums text-[var(--foreground)]">
           {shown}
         </p>
       )}
 
-      <div className="relative mt-auto pt-4">{loading ? <div className="h-3 w-32 animate-pulse rounded bg-current opacity-10" /> : footer}</div>
+      <div className="mt-auto pt-3">{loading ? <div className="h-3 w-32 animate-pulse rounded bg-current opacity-10" /> : footer}</div>
     </Link>
   );
 }

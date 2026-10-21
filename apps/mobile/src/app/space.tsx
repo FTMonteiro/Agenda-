@@ -21,14 +21,20 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 
-import { formatDistance, type BusinessDTO, type GalleryImageDTO, type ProfessionalDTO, type ServiceDTO } from "@slotix/types";
+import { formatDistance, type AppointmentDTO, type BusinessDTO, type GalleryImageDTO, type ProfessionalDTO, type ReviewDTO, type ServiceDTO } from "@slotix/types";
 
 import {
   getBusiness,
   getBusinessGallery,
   getBusinessProfessionals,
+  getBusinessReviews,
   getBusinessServices,
 } from "../services/businesses";
+import { listMyAppointments } from "../services/appointments";
+import { useAuth } from "../contexts/AuthContext";
+import { RateSpaceSheet } from "@/components/RateSpaceSheet";
+import { Stars } from "@/components/Stars";
+import { STAR_COLOR } from "@/components/SpaceCards";
 
 import { useFavorites } from "../contexts/FavoritesContext";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
@@ -37,7 +43,7 @@ import { getCoordinatesIfAllowed } from "../services/location";
 import { useSelectedLocation } from "../contexts/LocationContext";
 import { usePreferences } from "../contexts/PreferencesContext";
 import { useThemed, type ThemeRoles } from "@/theme/roles";
-import { useT } from "@/i18n";
+import { dateLocale, useT } from "@/i18n";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -63,6 +69,59 @@ const formatPrice = (value: number) =>
   })
     .format(value)
     .replace("AOA", "Kz");
+
+const formatReviewDate = (value: string) =>
+  new Intl.DateTimeFormat(dateLocale(), { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
+
+// Nova média depois de juntar uma nota, sem voltar a pedir o espaço à API.
+const withRating = (business: BusinessDTO, rating: number): BusinessDTO => {
+  const count = business.ratingCount + 1;
+  const avg = ((business.ratingAvg ?? 0) * business.ratingCount + rating) / count;
+  return { ...business, ratingAvg: Math.round(avg * 10) / 10, ratingCount: count };
+};
+
+const ReviewRow = ({ review, last }: { review: ReviewDTO; last: boolean }) => {
+  const { tc, styles } = useThemed(createStyles);
+  return (
+    <View style={[styles.reviewRow, !last && styles.listRowDivider]}>
+      <View style={styles.reviewHeader}>
+        <View style={styles.reviewAvatar}>
+          <Text style={styles.reviewAvatarText}>{review.clientName.trim().charAt(0).toUpperCase() || "?"}</Text>
+        </View>
+        <View style={styles.reviewWho}>
+          <Text style={styles.reviewName} numberOfLines={1}>
+            {review.clientName}
+          </Text>
+          <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
+        </View>
+        <Stars value={review.rating} size={13} emptyColor={tc.fg(COLORS.soft)} />
+      </View>
+
+      {review.comment ? <Text style={styles.reviewComment}>{review.comment}</Text> : null}
+    </View>
+  );
+};
+
+// Quantas avaliações há de cada nota, em barras de 5 a 1 estrela.
+const RatingBreakdown = ({ reviews }: { reviews: ReviewDTO[] }) => {
+  const { styles } = useThemed(createStyles);
+  const total = reviews.length || 1;
+  return (
+    <View style={styles.breakdown}>
+      {[5, 4, 3, 2, 1].map((stars) => {
+        const count = reviews.filter((review) => review.rating === stars).length;
+        return (
+          <View key={stars} style={styles.breakdownRow}>
+            <Text style={styles.breakdownLabel}>{stars}</Text>
+            <View style={styles.breakdownTrack}>
+              <View style={[styles.breakdownFill, { width: `${(count / total) * 100}%` }]} />
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+};
 
 const GlassCard = ({ children, style }: { children: React.ReactNode; style?: any }) => {
   const { tc, styles } = useThemed(createStyles);
@@ -162,7 +221,7 @@ const SpaceScreen = () => {
   const { tc, styles } = useThemed(createStyles);
   const router = useRouter();
 
-  const params = useLocalSearchParams<{ businessId?: string | string[] }>();
+  const params = useLocalSearchParams<{ businessId?: string | string[]; rate?: string }>();
   const businessId = Array.isArray(params.businessId) ? params.businessId[0] : params.businessId;
 
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -174,6 +233,11 @@ const SpaceScreen = () => {
   const [services, setServices] = useState<ServiceDTO[]>([]);
   const [professionals, setProfessionals] = useState<ProfessionalDTO[]>([]);
   const [gallery, setGallery] = useState<GalleryImageDTO[]>([]);
+  const [reviews, setReviews] = useState<ReviewDTO[]>([]);
+  const [myAppointments, setMyAppointments] = useState<AppointmentDTO[]>([]);
+  const [rating, setRating] = useState(false);
+  const { user } = useAuth();
+  const isCustomer = user?.role === "CUSTOMER";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const { coordinates: knownPosition, requestPosition } = useSelectedLocation();
@@ -202,10 +266,13 @@ const SpaceScreen = () => {
         setBusiness(businessData);
         setFavoriteAtLoad(isFavorite(businessData.id));
 
-        const [servicesData, professionalsData, galleryData] = await Promise.all([
+        const [servicesData, professionalsData, galleryData, reviewsData, appointmentsData] = await Promise.all([
           getBusinessServices(businessId as string).catch(() => []),
           getBusinessProfessionals(businessId as string).catch(() => []),
           getBusinessGallery(businessId as string).catch(() => []),
+          getBusinessReviews(businessId as string).catch(() => []),
+          // Os atendimentos da pessoa dizem se ela já pode avaliar este espaço.
+          isCustomer ? listMyAppointments().catch(() => []) : Promise.resolve([] as AppointmentDTO[]),
         ]);
 
         if (cancelled) return;
@@ -213,6 +280,8 @@ const SpaceScreen = () => {
         setServices(servicesData);
         setProfessionals(professionalsData);
         setGallery(galleryData);
+        setReviews(reviewsData);
+        setMyAppointments(appointmentsData);
       } catch {
         if (!cancelled) setError(true);
       } finally {
@@ -225,7 +294,27 @@ const SpaceScreen = () => {
     return () => {
       cancelled = true;
     };
-  }, [businessId]);
+  }, [businessId, isCustomer]);
+
+  // Pode avaliar quem foi atendido aqui: o atendimento concluído mais recente que ainda
+  // não tem avaliação (a API aceita uma avaliação por atendimento).
+  const reviewableAppointment = useMemo(() => {
+    const reviewed = new Set(reviews.map((review) => review.appointmentId));
+    return (
+      myAppointments
+        .filter((appointment) => appointment.businessId === businessId && appointment.status === "COMPLETED" && !reviewed.has(appointment.id))
+        .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt))[0] ?? null
+    );
+  }, [myAppointments, reviews, businessId]);
+
+  // Vindo de "Avaliar" nas marcações, a folha de avaliação abre sozinha (uma vez).
+  const openedFromRate = useRef(false);
+  useEffect(() => {
+    if (params.rate === "1" && reviewableAppointment && !openedFromRate.current) {
+      openedFromRate.current = true;
+      setRating(true);
+    }
+  }, [params.rate, reviewableAppointment]);
 
   // Fotos postas na galeria pelo painel aparecem logo: a galeria é lida outra vez
   // sempre que se volta a este ecrã, não só na primeira abertura.
@@ -363,8 +452,22 @@ const SpaceScreen = () => {
             onFavorite={() => void toggleFavorite(businessId)}
           />
 
-          {/* A avaliação do espaço são os gostos: quantas pessoas o têm nos favoritos. */}
+          {/* A avaliação do espaço (estrelas) e quantas pessoas o têm nos favoritos (gostos). */}
           <View style={styles.stats}>
+            <View style={styles.stat}>
+              <View style={styles.statValueRow}>
+                <Ionicons name="star" size={16} color={STAR_COLOR} />
+                <Text style={styles.statValue}>{business.ratingAvg !== null && business.ratingCount > 0 ? business.ratingAvg.toFixed(1) : "—"}</Text>
+              </View>
+              <Text style={styles.statLabel}>
+                {business.ratingCount === 0
+                  ? t("Sem avaliações")
+                  : `${business.ratingCount} ${business.ratingCount === 1 ? t("avaliação") : t("avaliações")}`}
+              </Text>
+            </View>
+
+            <View style={styles.statDivider} />
+
             <View style={styles.stat}>
               <View style={styles.statValueRow}>
                 <Ionicons name="heart" size={16} color="#FF3B30" />
@@ -487,8 +590,67 @@ const SpaceScreen = () => {
             )}
           </View>
 
+          <View style={styles.section}>
+            <SectionHeader
+              number={nextNumber()}
+              title={t("Avaliações")}
+              subtitle={
+                business.ratingCount > 0
+                  ? `${business.ratingCount} ${business.ratingCount === 1 ? t("avaliação") : t("avaliações")}`
+                  : undefined
+              }
+            />
+
+            {business.ratingCount > 0 && business.ratingAvg !== null ? (
+              <GlassCard style={styles.ratingSummary}>
+                <View style={styles.ratingScore}>
+                  <Text style={styles.ratingScoreValue}>{business.ratingAvg.toFixed(1)}</Text>
+                  <Stars value={business.ratingAvg} size={15} emptyColor={tc.fg(COLORS.soft)} />
+                  <Text style={styles.ratingScoreLabel}>{t("de 5 estrelas")}</Text>
+                </View>
+                <RatingBreakdown reviews={reviews} />
+              </GlassCard>
+            ) : null}
+
+            {reviewableAppointment ? (
+              <Pressable
+                onPress={() => setRating(true)}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.rateButton, pressed && styles.reserveButtonPressed]}
+              >
+                <Ionicons name="star-outline" size={18} color={tc.fg(COLORS.white)} />
+                <Text style={styles.rateButtonText}>{t("Avaliar este espaço")}</Text>
+              </Pressable>
+            ) : isCustomer ? (
+              <Text style={styles.rateHint}>{t("Pode avaliar este espaço depois de ser atendido aqui.")}</Text>
+            ) : null}
+
+            {reviews.length > 0 ? (
+              <GlassCard style={styles.reviewsCard}>
+                {reviews.slice(0, 20).map((review, index, shown) => (
+                  <ReviewRow key={review.id} review={review} last={index === shown.length - 1} />
+                ))}
+              </GlassCard>
+            ) : (
+              <Text style={styles.emptyText}>{t("Sem avaliações ainda.")}</Text>
+            )}
+          </View>
+
           <View style={styles.bottomSpace} />
         </ScrollView>
+
+        <RateSpaceSheet
+          visible={rating}
+          businessId={business.id}
+          businessName={business.name}
+          appointmentId={reviewableAppointment?.id ?? null}
+          onClose={() => setRating(false)}
+          onRated={(review) => {
+            setRating(false);
+            setReviews((current) => [review, ...current]);
+            setBusiness((current) => (current ? withRating(current, review.rating) : current));
+          }}
+        />
       </SafeAreaView>
 
       <View style={styles.reserveBar}>
@@ -723,6 +885,150 @@ const createStyles = (tc: ThemeRoles) =>
       color: tc.fg(COLORS.muted),
     },
 
+    statDivider: {
+      width: StyleSheet.hairlineWidth,
+      alignSelf: "stretch",
+      backgroundColor: tc.border(COLORS.border),
+    },
+
+    ratingSummary: {
+      padding: 18,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 18,
+      marginBottom: 12,
+    },
+
+    ratingScore: {
+      alignItems: "center",
+      gap: 4,
+      minWidth: 92,
+    },
+
+    ratingScoreValue: {
+      fontSize: 40,
+      fontWeight: "700",
+      letterSpacing: -1,
+      color: tc.fg(COLORS.text),
+    },
+
+    ratingScoreLabel: {
+      fontSize: 11,
+      color: tc.fg(COLORS.muted),
+    },
+
+    breakdown: {
+      flex: 1,
+      gap: 5,
+    },
+
+    breakdownRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+
+    breakdownLabel: {
+      width: 10,
+      fontSize: 11,
+      fontWeight: "600",
+      textAlign: "right",
+      color: tc.fg(COLORS.muted),
+    },
+
+    breakdownTrack: {
+      flex: 1,
+      height: 6,
+      borderRadius: 3,
+      overflow: "hidden",
+      backgroundColor: tc.bg("#E5E5EA"),
+    },
+
+    breakdownFill: {
+      height: "100%",
+      borderRadius: 3,
+      backgroundColor: STAR_COLOR,
+    },
+
+    rateButton: {
+      height: 48,
+      borderRadius: 14,
+      borderCurve: "continuous",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      marginBottom: 12,
+      backgroundColor: tc.bg(COLORS.black),
+    },
+
+    rateButtonText: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: tc.fg(COLORS.white),
+    },
+
+    rateHint: {
+      fontSize: 12,
+      color: tc.fg(COLORS.muted),
+      marginBottom: 12,
+      paddingHorizontal: 2,
+    },
+
+    reviewsCard: {
+      paddingVertical: 2,
+    },
+
+    reviewRow: {
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+
+    reviewHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+
+    reviewAvatar: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: tc.bg("#E5E5EA"),
+    },
+
+    reviewAvatarText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: tc.fg(COLORS.muted),
+    },
+
+    reviewWho: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    reviewName: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: tc.fg(COLORS.text),
+    },
+
+    reviewDate: {
+      marginTop: 1,
+      fontSize: 11,
+      color: tc.fg(COLORS.soft),
+    },
+
+    reviewComment: {
+      marginTop: 10,
+      fontSize: 13,
+      lineHeight: 19,
+      color: tc.fg(COLORS.text),
+    },
+
     sectionHeader: {
       flexDirection: "row",
       alignItems: "flex-start",
@@ -804,7 +1110,7 @@ const createStyles = (tc: ThemeRoles) =>
 
     locationLink: {
       marginTop: 6,
-      color: tc.fg("#007AFF"),
+      color: tc.fg("#2E67B3"),
       fontSize: 13,
       fontWeight: "600",
     },

@@ -23,7 +23,7 @@ import { DistanceChips } from "@/components/DistanceChips";
 import { useIOSColors } from "@/components/ios";
 import { AuroraBackdrop } from "@/components/ios/AuroraBackdrop";
 import { Typography } from "@/constants/theme";
-import { likesLabel, placeText } from "@/components/SpaceCards";
+import { ratingLabel, placeText } from "@/components/SpaceCards";
 import { listBusinesses } from "../services/businesses";
 import { search } from "../services/search";
 import { useFavorites } from "../contexts/FavoritesContext";
@@ -127,7 +127,7 @@ function ResultRow({
   const { business, matchedService } = result;
 
   const details = [
-    likesLabel(business),
+    ratingLabel(business),
     business.distanceKm !== null ? formatDistance(business.distanceKm) : null,
     t(business.category),
   ].filter(Boolean);

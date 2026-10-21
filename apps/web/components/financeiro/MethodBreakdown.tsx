@@ -77,7 +77,7 @@ export function MethodBreakdown({ totals, counts, loading, selected, onSelect }:
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
                   style={{ background: `color-mix(in srgb, ${meta.color} 14%, transparent)`, color: meta.color }}
                 >
-                  {active ? <Check size={16} strokeWidth={2.5} /> : <Icon size={16} />}
+                  {active ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} />}
                 </span>
 
                 <span className="min-w-0 flex-1">

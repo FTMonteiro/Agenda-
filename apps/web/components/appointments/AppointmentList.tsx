@@ -1094,7 +1094,7 @@ export function AppointmentList({
 
                         {isPaid && (
                           <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <CheckCircle2 className="h-4 w-4" />
                             Pago
                           </span>
                         )}
@@ -1102,7 +1102,7 @@ export function AppointmentList({
 
                       <div className="mt-3 grid gap-2 text-sm text-gray-500 sm:grid-cols-2 xl:grid-cols-5">
                         <div className="flex items-center gap-2">
-                          <Scissors className="h-4 w-4 shrink-0 text-gray-400" />
+                          <Scissors className="h-[18px] w-[18px] shrink-0 text-gray-400" />
 
                           <span className="truncate">
                             {appointment.service}
@@ -1110,7 +1110,7 @@ export function AppointmentList({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <UserRound className="h-4 w-4 shrink-0 text-gray-400" />
+                          <UserRound className="h-[18px] w-[18px] shrink-0 text-gray-400" />
 
                           <span className="truncate">
                             {appointment.professional}
@@ -1118,7 +1118,7 @@ export function AppointmentList({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4 shrink-0 text-gray-400" />
+                          <CalendarDays className="h-[18px] w-[18px] shrink-0 text-gray-400" />
 
                           <span>
                             {formatDate(
@@ -1128,7 +1128,7 @@ export function AppointmentList({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 shrink-0 text-gray-400" />
+                          <Clock className="h-[18px] w-[18px] shrink-0 text-gray-400" />
 
                           <span>
                             {appointment.time}
@@ -1136,7 +1136,7 @@ export function AppointmentList({
                         </div>
 
                         <div className="flex items-center gap-2 font-semibold text-gray-700">
-                          <Banknote className="h-4 w-4 shrink-0 text-gray-400" />
+                          <Banknote className="h-[18px] w-[18px] shrink-0 text-gray-400" />
 
                           <span>
                             {formatMoney(
@@ -1170,7 +1170,7 @@ export function AppointmentList({
                           }
                           className="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <CheckCircle2 className="h-4 w-4" />
+                          <CheckCircle2 className="h-[18px] w-[18px]" />
                           {changingStatus?.id ===
                           appointment.id ? (
                             "Confirmando..."
@@ -1200,7 +1200,7 @@ export function AppointmentList({
                         }
                         className="rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
                       >
-                        <MoreHorizontal className="h-5 w-5" />
+                        <MoreHorizontal className="h-[22px] w-[22px]" />
                       </button>
 
                       {openMenu ===
@@ -1229,7 +1229,7 @@ export function AppointmentList({
                                   }
                                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                  <CheckCircle2 className="h-4 w-4" />
+                                  <CheckCircle2 className="h-[18px] w-[18px]" />
                                   Confirmar agendamento
                                 </button>
                               </div>
@@ -1248,7 +1248,7 @@ export function AppointmentList({
                             }}
                             className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-[18px] w-[18px]" />
                             Ver detalhes
                           </button>
 
@@ -1262,7 +1262,7 @@ export function AppointmentList({
                               }
                               className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="h-[18px] w-[18px]" />
                               Editar
                             </button>
                           )}
@@ -1276,7 +1276,7 @@ export function AppointmentList({
                             }
                             className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-[18px] w-[18px]" />
                             Excluir
                           </button>
                         </div>
@@ -1295,13 +1295,13 @@ export function AppointmentList({
 
       {selectedAppointment && (
         <div
-          className="fixed inset-0 z-[9998] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-gray-950/60 p-4"
           onClick={() =>
             setSelectedAppointment(null)
           }
         >
           <div
-            className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
             onClick={(event) => {
               event.stopPropagation();
             }}
@@ -1326,7 +1326,7 @@ export function AppointmentList({
                 }
                 className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
               >
-                <X className="h-5 w-5" />
+                <X className="h-[22px] w-[22px]" />
               </button>
             </div>
 
@@ -1336,7 +1336,7 @@ export function AppointmentList({
               <div className="space-y-3">
                 <Detail
                   icon={
-                    <UserRound className="h-4 w-4" />
+                    <UserRound className="h-[18px] w-[18px]" />
                   }
                   label="Cliente"
                   value={
@@ -1346,7 +1346,7 @@ export function AppointmentList({
 
                 <Detail
                   icon={
-                    <Scissors className="h-4 w-4" />
+                    <Scissors className="h-[18px] w-[18px]" />
                   }
                   label="Serviço"
                   value={
@@ -1356,7 +1356,7 @@ export function AppointmentList({
 
                 <Detail
                   icon={
-                    <UserRound className="h-4 w-4" />
+                    <UserRound className="h-[18px] w-[18px]" />
                   }
                   label="Profissional"
                   value={
@@ -1366,7 +1366,7 @@ export function AppointmentList({
 
                 <Detail
                   icon={
-                    <CalendarDays className="h-4 w-4" />
+                    <CalendarDays className="h-[18px] w-[18px]" />
                   }
                   label="Data"
                   value={formatDate(
@@ -1376,7 +1376,7 @@ export function AppointmentList({
 
                 <Detail
                   icon={
-                    <Clock className="h-4 w-4" />
+                    <Clock className="h-[18px] w-[18px]" />
                   }
                   label="Horário"
                   value={
@@ -1386,7 +1386,7 @@ export function AppointmentList({
 
                 <Detail
                   icon={
-                    <Banknote className="h-4 w-4" />
+                    <Banknote className="h-[18px] w-[18px]" />
                   }
                   label="Preço"
                   value={formatMoney(
@@ -1398,7 +1398,7 @@ export function AppointmentList({
 
                 <Detail
                   icon={
-                    <CreditCard className="h-4 w-4" />
+                    <CreditCard className="h-[18px] w-[18px]" />
                   }
                   label="Pagamento"
                   value={getPaymentLabel(
@@ -1412,7 +1412,7 @@ export function AppointmentList({
                   <>
                     <Detail
                       icon={
-                        <CheckCircle2 className="h-4 w-4" />
+                        <CheckCircle2 className="h-[18px] w-[18px]" />
                       }
                       label="Valor pago"
                       value={formatMoney(
@@ -1425,7 +1425,7 @@ export function AppointmentList({
 
                     <Detail
                       icon={
-                        <CreditCard className="h-4 w-4" />
+                        <CreditCard className="h-[18px] w-[18px]" />
                       }
                       label="Método de pagamento"
                       value={getPaymentMethodLabel(
@@ -1436,7 +1436,7 @@ export function AppointmentList({
                     {selectedAppointment.paidAt && (
                       <Detail
                         icon={
-                          <CalendarDays className="h-4 w-4" />
+                          <CalendarDays className="h-[18px] w-[18px]" />
                         }
                         label="Pagamento recebido em"
                         value={new Date(
@@ -1464,7 +1464,7 @@ export function AppointmentList({
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-700 shadow-sm">
-                          <Receipt className="h-5 w-5" />
+                          <Receipt className="h-[22px] w-[22px]" />
                         </div>
 
                         <div className="min-w-0">
@@ -1501,9 +1501,9 @@ export function AppointmentList({
                           </>
                         ) : (
                           <>
-                            <Receipt className="h-4 w-4" />
+                            <Receipt className="h-[18px] w-[18px]" />
                             Ver recibo
-                            <ExternalLink className="h-3.5 w-3.5" />
+                            <ExternalLink className="h-4 w-4" />
                           </>
                         )}
                       </button>
@@ -1558,7 +1558,7 @@ export function AppointmentList({
                         label="Confirmar"
                         busyLabel="Confirmando..."
                         icon={
-                          <CheckCircle2 className="h-4 w-4" />
+                          <CheckCircle2 className="h-[18px] w-[18px]" />
                         }
                         className="bg-primary text-white hover:bg-primary-hover"
                         busy={
@@ -1583,7 +1583,7 @@ export function AppointmentList({
                       label="Não compareceu"
                       busyLabel="Salvando..."
                       icon={
-                        <UserX className="h-4 w-4" />
+                        <UserX className="h-[18px] w-[18px]" />
                       }
                       className="border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
                       busy={
@@ -1607,7 +1607,7 @@ export function AppointmentList({
                       label="Cancelar"
                       busyLabel="Cancelando..."
                       icon={
-                        <XCircle className="h-4 w-4" />
+                        <XCircle className="h-[18px] w-[18px]" />
                       }
                       className="border border-red-200 bg-white text-red-600 hover:bg-red-50"
                       busy={
@@ -1651,7 +1651,7 @@ export function AppointmentList({
 
       {editingAppointment && (
         <div
-          className="fixed inset-0 z-[9998] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-gray-950/60 p-4"
           onClick={() => {
             if (!isSaving) {
               setEditingAppointment(null);
@@ -1660,7 +1660,7 @@ export function AppointmentList({
           }}
         >
           <div
-            className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
             onClick={(event) => {
               event.stopPropagation();
             }}
@@ -1687,7 +1687,7 @@ export function AppointmentList({
                 }}
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 disabled:opacity-50"
               >
-                <X className="h-5 w-5" />
+                <X className="h-[22px] w-[22px]" />
               </button>
             </div>
 
@@ -1696,7 +1696,7 @@ export function AppointmentList({
             <div className="overflow-y-auto p-6">
               {validationError && (
                 <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                  <AlertTriangle className="mt-0.5 h-[22px] w-[22px] shrink-0 text-red-600" />
 
                   <div>
                     <p className="text-sm font-semibold text-red-800">
@@ -1854,7 +1854,7 @@ export function AppointmentList({
                       </p>
                     </div>
 
-                    <CreditCard className="h-5 w-5 text-gray-400" />
+                    <CreditCard className="h-[22px] w-[22px] text-gray-400" />
                   </div>
 
                   {String(
@@ -1936,7 +1936,7 @@ export function AppointmentList({
                 onClick={saveEdit}
                 className="flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60"
               >
-                <Save className="h-4 w-4" />
+                <Save className="h-[18px] w-[18px]" />
 
                 {isSaving
                   ? "Salvando..."
@@ -1951,7 +1951,7 @@ export function AppointmentList({
       
       {deletingAppointment && (
         <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-950/60 p-4"
           onClick={() => {
             if (!isDeleting) {
               setDeletingAppointment(null);
@@ -1960,7 +1960,7 @@ export function AppointmentList({
           }}
         >
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl"
             onClick={(event) => {
               event.stopPropagation();
             }}
@@ -2000,7 +2000,7 @@ export function AppointmentList({
 
                 <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
                   <span className="flex items-center gap-1.5">
-                    <CalendarDays className="h-3.5 w-3.5" />
+                    <CalendarDays className="h-4 w-4" />
 
                     {formatDate(
                       deletingAppointment.date
@@ -2008,7 +2008,7 @@ export function AppointmentList({
                   </span>
 
                   <span className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="h-4 w-4" />
 
                     {
                       deletingAppointment.time
@@ -2016,7 +2016,7 @@ export function AppointmentList({
                   </span>
 
                   <span className="flex items-center gap-1.5 font-semibold text-gray-700">
-                    <Banknote className="h-3.5 w-3.5" />
+                    <Banknote className="h-4 w-4" />
 
                     {formatMoney(
                       getAppointmentPrice(
@@ -2053,7 +2053,7 @@ export function AppointmentList({
                 onClick={confirmDelete}
                 className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-[18px] w-[18px]" />
 
                 {isDeleting
                   ? "Excluindo..."

@@ -126,7 +126,7 @@ export function TransactionsPanel({
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative sm:w-72">
-            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
             <input
               type="search"
               value={search}
@@ -142,7 +142,7 @@ export function TransactionsPanel({
                 aria-label="Limpar pesquisa"
                 className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[var(--muted)] hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]"
               >
-                <X size={14} />
+                <X size={16} />
               </button>
             )}
           </div>
@@ -150,7 +150,7 @@ export function TransactionsPanel({
           <div className="flex gap-2">
             <label className="relative flex-1 sm:flex-none">
               <span className="sr-only">Ordenar</span>
-              <ArrowDownUp size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+              <ArrowDownUp size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value as Sort)}
@@ -170,7 +170,7 @@ export function TransactionsPanel({
               disabled={loading || payments.length === 0}
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Download size={15} />
+              <Download size={17} />
               <span className="hidden sm:inline">Exportar</span>
             </button>
           </div>
@@ -252,7 +252,7 @@ export function TransactionsPanel({
           groups.map((group) => (
             <div key={group.key}>
               {group.heading && (
-                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-secondary)]/95 px-5 py-2 backdrop-blur">
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-secondary)]/95 px-5 py-2">
                   <span className="text-xs font-semibold capitalize text-[var(--foreground)]">{group.heading}</span>
                   <span className="text-xs tabular-nums text-[var(--muted)]">
                     {group.items.length} · {formatCurrency(sumAmounts(group.items))}
@@ -308,9 +308,9 @@ export function TransactionsPanel({
                         </span>
 
                         <ChevronRight
-                          size={16}
+                          size={18}
                           className={`shrink-0 transition ${
-                            active ? "text-primary" : "text-[var(--muted)] opacity-0 group-hover:translate-x-0.5 group-hover:opacity-100"
+                            active ? "text-primary" : "text-[var(--muted)] opacity-0 group-hover:opacity-100"
                           } max-md:opacity-100`}
                         />
                       </button>

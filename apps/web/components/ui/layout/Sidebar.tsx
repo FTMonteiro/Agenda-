@@ -164,7 +164,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <div
           onClick={onClose}
           aria-hidden="true"
-          className="finance-fade-in fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="finance-fade-in fixed inset-0 z-40 bg-black/40 lg:hidden"
         />
       )}
 
@@ -175,11 +175,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Brilho da marca no topo */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-primary/[0.07] to-transparent" />
-
         {/* LOGO */}
-        <div className="relative flex h-[84px] shrink-0 items-center justify-between px-6">
+        <div className="relative flex h-[72px] shrink-0 items-center justify-between border-b border-[var(--border)] px-5">
           <Link href="/dashboard" onClick={onClose} aria-label="agenda+ — início" className="flex h-full items-center">
             <BrandLogo size={38} tagline className="text-[var(--foreground)]" />
           </Link>
@@ -190,22 +187,20 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             aria-label="Fechar menu"
             className="rounded-xl p-2 text-[var(--muted)] transition-all duration-200 hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] lg:hidden"
           >
-            <X size={20} strokeWidth={2} />
+            <X size={22} strokeWidth={2} />
           </button>
         </div>
 
-        <div className="mx-6 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
-
         {/* MENU PRINCIPAL */}
-        <div className="finance-scroll relative flex-1 overflow-y-auto px-4 py-5">
-          <nav aria-label="Menu principal" className="flex flex-col gap-6">
+        <div className="finance-scroll relative flex-1 overflow-y-auto px-3 py-4">
+          <nav aria-label="Menu principal" className="flex flex-col gap-5">
             {visibleGroups.map((group) => (
               <div key={group.title}>
-                <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted)] opacity-70">
+                <p className="mb-1 px-3 text-xs font-medium text-[var(--subtle)]">
                   {group.title}
                 </p>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-0.5">
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -216,26 +211,20 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         href={item.href}
                         onClick={onClose}
                         aria-current={isActive ? "page" : undefined}
-                        className={`sidebar-link group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                        className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150 ${
                           isActive
-                            ? "bg-primary text-white shadow-[0_8px_20px_-8px_var(--brand)]"
-                            : "text-[var(--muted)] hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]"
+                            ? "bg-primary/10 font-semibold text-[var(--brand-text)]"
+                            : "font-medium text-[var(--muted)] hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]"
                         }`}
                       >
-                        <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-200 ${
-                            isActive
-                              ? "bg-white/15"
-                              : "bg-[var(--surface-secondary)] group-hover:bg-primary/10 group-hover:text-primary"
-                          }`}
-                        >
-                          <Icon size={17} strokeWidth={isActive ? 2.2 : 1.9} className="sidebar-icon" />
-                        </span>
+                        {/* Marcador do item ativo, encostado à esquerda */}
+                        {isActive && (
+                          <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-primary" />
+                        )}
+
+                        <Icon size={20} strokeWidth={isActive ? 2 : 1.75} className="shrink-0" />
 
                         <span className="flex-1">{item.label}</span>
-
-                        {/* O "+" da marca: um ponto menta no item ativo */}
-                        {isActive && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-mint shadow-[0_0_10px_#8fffc7]" />}
                       </Link>
                     );
                   })}
@@ -246,33 +235,30 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         {/* UTILIZADOR */}
-        <div className="relative shrink-0 p-4">
+        <div className="relative shrink-0 border-t border-[var(--border)] p-3">
           {loadingUser ? (
-            <div className="h-[68px] animate-pulse rounded-2xl bg-[var(--surface-secondary)]" />
+            <div className="h-[60px] animate-pulse rounded-xl bg-[var(--surface-secondary)]" />
           ) : (
             <Link
               href="/configuracoes?tab=perfil"
               onClick={onClose}
-              className="brand-sheen group flex items-center gap-3 rounded-2xl bg-gradient-to-br from-primary to-primary-deep p-3 text-white shadow-[0_14px_30px_-16px_var(--brand)] transition duration-300 hover:-translate-y-0.5"
+              className="group flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-[var(--surface-secondary)]"
             >
               {profileImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profileImage} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover ring-2 ring-white/25" />
+                <img src={profileImage} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
               ) : (
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-sm font-bold ring-1 ring-white/20">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-[var(--brand-text)]">
                   {userName.charAt(0).toUpperCase()}
                 </span>
               )}
 
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold leading-tight">{userName}</span>
-                <span className="mt-1 flex items-center gap-1.5 text-[11px] text-white/75">
-                  <span className="h-1.5 w-1.5 rounded-full bg-mint" />
-                  {roleLabel(user?.role)}
-                </span>
+                <span className="block truncate text-sm font-semibold leading-tight text-[var(--foreground)]">{userName}</span>
+                <span className="mt-0.5 block truncate text-xs text-[var(--muted)]">{roleLabel(user?.role)}</span>
               </span>
 
-              <Settings size={16} className="shrink-0 text-white/70 transition duration-500 group-hover:rotate-90" />
+              <Settings size={18} className="shrink-0 text-[var(--subtle)] transition-colors group-hover:text-[var(--foreground)]" />
             </Link>
           )}
         </div>

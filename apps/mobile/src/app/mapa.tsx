@@ -9,7 +9,7 @@ import { formatDistance, normalizeText, sameLocality } from "@slotix/types";
 
 import { useIOSColors } from "@/components/ios";
 import { MapFiltersSheet, NO_MAP_FILTERS, priceLabel, type MapFilters } from "@/components/MapFiltersSheet";
-import { likesLabel, placeText } from "@/components/SpaceCards";
+import { ratingLabel, placeText } from "@/components/SpaceCards";
 import { SpacesMap } from "@/components/SpacesMap";
 import { Typography } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -262,7 +262,7 @@ export default function MapScreen() {
                   {selected.name}
                 </Text>
                 <Text style={[styles.cardLine, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {[likesLabel(selected), t(selected.category)].filter(Boolean).join("  ·  ")}
+                  {[ratingLabel(selected), t(selected.category)].filter(Boolean).join("  ·  ")}
                 </Text>
               </View>
               <Pressable onPress={() => setSelectedId(null)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t("Fechar")}>

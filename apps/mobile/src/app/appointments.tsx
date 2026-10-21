@@ -292,6 +292,7 @@ function DetailsSheet({
   onCancel,
   onOpenSpace,
   onDirections,
+  onRate,
 }: {
   item: AppointmentView | null;
   cancelling: boolean;
@@ -299,6 +300,7 @@ function DetailsSheet({
   onCancel: () => void;
   onOpenSpace: () => void;
   onDirections: () => void;
+  onRate: () => void;
 }) {
   const t = useT();
   const colors = useIOSColors();
@@ -327,7 +329,7 @@ function DetailsSheet({
             {photo ? (
               <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
             ) : (
-              <LinearGradient colors={["#0A84FF", "#5E5CE6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+              <LinearGradient colors={["#5585C4", "#5E5CE6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
             )}
             <LinearGradient
               colors={["rgba(0,0,0,0.35)", "rgba(0,0,0,0)", "rgba(0,0,0,0.8)"]}
@@ -361,6 +363,8 @@ function DetailsSheet({
             <Text style={[styles.statusHint, { color: colors.textSecondary }]}>{t(STATUS_HINT[appointment.status])}</Text>
 
             <View style={styles.quickRow}>
+              {/* Depois de ser atendido, a pessoa pode dar a nota (1 a 5 estrelas) ao espaço. */}
+              {appointment.status === "COMPLETED" ? <QuickAction icon="star" label={t("Avaliar")} onPress={onRate} /> : null}
               <QuickAction icon="storefront" label={t("Ver o espaço")} onPress={onOpenSpace} />
               {hasRoute ? <QuickAction icon="navigate" label={t("Como chegar")} onPress={onDirections} /> : null}
               {business?.phone ? (
@@ -608,9 +612,9 @@ export default function AppointmentsScreen() {
     );
   };
 
-  const openSpace = (businessId: string) => {
+  const openSpace = (businessId: string, rate = false) => {
     setSelectedId(null);
-    router.push({ pathname: "/space", params: { businessId } } as never);
+    router.push({ pathname: "/space", params: rate ? { businessId, rate: "1" } : { businessId } } as never);
   };
 
   const emptyText: Record<Tab, string> = {
@@ -748,6 +752,7 @@ export default function AppointmentsScreen() {
         onCancel={confirmCancel}
         onOpenSpace={() => selected && openSpace(selected.appointment.businessId)}
         onDirections={openDirections}
+        onRate={() => selected && openSpace(selected.appointment.businessId, true)}
       />
     </View>
   );

@@ -24,7 +24,7 @@ import { normalizeText } from "@slotix/types";
 import { Skeleton } from "@/components/HomeWidgets";
 import { useIOSColors } from "@/components/ios";
 import { CircleButton, CollapsingTopBar, Reveal } from "@/components/ScreenChrome";
-import { RowGroup, SpaceRow, placeText } from "@/components/SpaceCards";
+import { RowGroup, STAR_COLOR, SpaceRow, placeText } from "@/components/SpaceCards";
 import { Typography } from "@/constants/theme";
 import { tapFeedback } from "@/services/haptics";
 import { useFavorites } from "../contexts/FavoritesContext";
@@ -82,9 +82,11 @@ function FavoriteCard({
         <View style={styles.cardTop}>
           <View style={styles.glassPill}>
             <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-            {/* A avaliação são os gostos: quantas pessoas têm o espaço nos favoritos */}
-            {space.favoriteCount > 0 ? <Ionicons name="heart" size={11} color="#FF375F" /> : null}
-            <Text style={styles.glassPillText}>{space.favoriteCount > 0 ? space.favoriteCount : t("Novo")}</Text>
+            {/* A avaliação do espaço: a média das estrelas */}
+            {space.ratingAvg !== null && space.ratingCount > 0 ? <Ionicons name="star" size={11} color={STAR_COLOR} /> : null}
+            <Text style={styles.glassPillText}>
+              {space.ratingAvg !== null && space.ratingCount > 0 ? space.ratingAvg.toFixed(1) : t("Novo")}
+            </Text>
           </View>
           <Pressable
             onPress={onRemove}
@@ -605,6 +607,6 @@ const styles = StyleSheet.create({
   },
   toastAction: {
     ...Typography.headline,
-    color: "#0A84FF",
+    color: "#5585C4",
   },
 });

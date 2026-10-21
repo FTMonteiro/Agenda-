@@ -140,7 +140,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="Recibo do pagamento">
       <div className="finance-fade-in absolute inset-0 bg-black/40 backdrop-blur-[2px] print:hidden" onClick={onClose} />
 
-      <aside className="finance-slide-in relative flex h-full w-full max-w-[480px] flex-col bg-[var(--background)] shadow-2xl print:max-w-none print:shadow-none">
+      <aside className="finance-slide-in relative flex h-full w-full max-w-[480px] flex-col bg-[var(--background)] shadow-xl print:max-w-none print:shadow-none">
         {/* BARRA DE AÇÕES */}
         <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4 print:hidden">
           <div className="min-w-0">
@@ -157,7 +157,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
             aria-label="Fechar"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)]"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </header>
 
@@ -175,7 +175,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
                 </div>
               )}
               <div className="flex items-center justify-center gap-2 py-6 text-sm text-[var(--muted)]">
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={18} className="animate-spin" />
                 A gerar o recibo...
               </div>
             </div>
@@ -184,7 +184,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
           {!loading && error && (
             <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600">
-                <AlertCircle size={22} />
+                <AlertCircle size={24} />
               </div>
               <p className="mt-4 text-sm font-semibold text-[var(--foreground)]">Recibo indisponível</p>
               <p className="mt-1 max-w-xs text-sm text-[var(--muted)]">{error}</p>
@@ -193,7 +193,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
                 onClick={() => setAttempt((value) => value + 1)}
                 className="mt-5 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
               >
-                <RefreshCw size={14} />
+                <RefreshCw size={16} />
                 Tentar novamente
               </button>
             </div>
@@ -222,13 +222,13 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
                     <p className="truncate font-semibold text-[var(--foreground)]">{businessName}</p>
                     {receipt.business?.address && (
                       <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-[var(--muted)]">
-                        <MapPin size={11} className="shrink-0" />
+                        <MapPin size={12} className="shrink-0" />
                         {receipt.business.address}
                       </p>
                     )}
                     {receipt.business?.phone && (
                       <p className="mt-0.5 flex items-center gap-1 text-xs text-[var(--muted)]">
-                        <Phone size={11} className="shrink-0" />
+                        <Phone size={12} className="shrink-0" />
                         {receipt.business.phone}
                       </p>
                     )}
@@ -236,21 +236,21 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
                 </div>
 
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 print:border print:border-emerald-600">
-                  <CheckCircle2 size={13} />
+                  <CheckCircle2 size={14} />
                   Pago
                 </span>
               </div>
 
               {/* VALOR */}
-              <div className="mx-6 rounded-2xl bg-gradient-to-br from-primary to-primary-deep px-6 py-6 text-center text-white print:bg-none print:text-black">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75 print:text-black/60">
+              <div className="mx-6 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-6 py-6 text-center print:bg-none print:text-black">
+                <p className="text-xs font-medium text-[var(--muted)] print:text-black/60">
                   Total pago
                 </p>
-                <p className="mt-2 text-[34px] font-bold leading-none tracking-tight tabular-nums">
+                <p className="mt-2 text-[32px] font-semibold leading-none tracking-tight tabular-nums text-[var(--foreground)]">
                   {formatCurrency(receipt.total, true)}
                 </p>
-                <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-white/85 print:text-black/70">
-                  <MethodIcon size={13} />
+                <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--muted)] print:text-black/70">
+                  <MethodIcon size={14} />
                   {method.label} · {formatDateTime(receipt.payment.paidAt)}
                 </p>
               </div>
@@ -296,12 +296,12 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
                     <p className="font-medium text-[var(--foreground)]">{receipt.service.name}</p>
                     <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--muted)]">
                       <span className="inline-flex items-center gap-1">
-                        <CalendarDays size={12} />
+                        <CalendarDays size={13} />
                         {formatDateTime(receipt.appointment.date)}
                       </span>
                       {receipt.service.duration > 0 && (
                         <span className="inline-flex items-center gap-1">
-                          <Clock size={12} />
+                          <Clock size={13} />
                           {receipt.service.duration} min
                         </span>
                       )}
@@ -349,7 +349,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
               <div className="border-t border-[var(--border)] bg-[var(--surface-secondary)] px-6 py-5 text-center">
                 <p className="text-sm font-semibold text-[var(--foreground)]">Obrigado pela preferência.</p>
                 <p className="mt-1 text-xs text-[var(--muted)]">Este documento comprova o pagamento registado.</p>
-                <p className="mt-3 text-[10px] font-medium uppercase tracking-widest text-[var(--muted)]">
+                <p className="mt-3 text-xs font-medium text-[var(--muted)]">
                   Emitido por Agenda+ · {receipt.payment.id.slice(-12)}
                 </p>
               </div>
@@ -365,7 +365,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
               onClick={() => window.print()}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-[0.98]"
             >
-              <Printer size={16} />
+              <Printer size={18} />
               Imprimir / PDF
             </button>
             <button
@@ -375,7 +375,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
               title="Copiar número"
               className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
             >
-              <Copy size={16} />
+              <Copy size={18} />
             </button>
             <button
               type="button"
@@ -384,7 +384,7 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
               title="Copiar link"
               className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
             >
-              <Link2 size={16} />
+              <Link2 size={18} />
             </button>
           </footer>
         )}

@@ -77,7 +77,7 @@ export function PhotoField({ value, onChange, disabled, allowRemove = true }: Ph
             onClick={() => inputRef.current?.click()}
             className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
           >
-            <Camera size={16} />
+            <Camera size={18} />
             {value ? "Trocar foto" : "Escolher foto"}
           </button>
 
@@ -88,7 +88,7 @@ export function PhotoField({ value, onChange, disabled, allowRemove = true }: Ph
               onClick={() => onChange("")}
               className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
             >
-              <Trash2 size={16} />
+              <Trash2 size={18} />
               Remover
             </button>
           ) : null}

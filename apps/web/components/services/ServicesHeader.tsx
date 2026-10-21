@@ -123,14 +123,14 @@ export default function ServicesHeader({
     <>
       <PageActions>
           <button type="button" onClick={() => setOpen(true)} className={brandButton}>
-            <Plus size={18} />
+            <Plus size={20} />
             Novo serviço
           </button>
       </PageActions>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b p-6">
               <div>
                 <h2 className="text-lg font-bold text-gray-950">
@@ -147,7 +147,7 @@ export default function ServicesHeader({
                 onClick={closeModal}
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
               >
-                <X size={20} />
+                <X size={22} />
               </button>
             </div>
 
@@ -243,7 +243,7 @@ export default function ServicesHeader({
                   disabled={saving}
                   className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60"
                 >
-                  {saving && <Loader2 size={16} className="animate-spin" />}
+                  {saving && <Loader2 size={18} className="animate-spin" />}
                   Criar serviço
                 </button>
               </div>

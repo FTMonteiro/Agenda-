@@ -203,7 +203,7 @@ export default function ProfileScreen() {
                 {user?.avatarUrl ? (
                   <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
                 ) : (
-                  <LinearGradient colors={["#5AC8FA", "#007AFF"]} style={styles.avatar}>
+                  <LinearGradient colors={["#5AC8FA", "#2E67B3"]} style={styles.avatar}>
                     <Text style={styles.avatarText}>{initials}</Text>
                   </LinearGradient>
                 )}
@@ -262,7 +262,7 @@ export default function ProfileScreen() {
       <Group header={t("Conta")}>
         <SettingsRow icon="person" tint="#8E8E93" title={t("Informações pessoais")} onPress={go("/perfil/personalinfo")} />
         <SettingsRow icon="notifications" tint="#FF3B30" title={t("Notificações")} onPress={go("/perfil/notifications")} />
-        <SettingsRow icon="language" tint="#007AFF" title={t("Idioma")} value={languageName} onPress={go("/perfil/language")} />
+        <SettingsRow icon="language" tint="#2E67B3" title={t("Idioma")} value={languageName} onPress={go("/perfil/language")} />
       </Group>
 
       <Group header={t("Aparência")} footer={t("Em Sistema, a app acompanha o modo claro ou escuro do telemóvel.")}>

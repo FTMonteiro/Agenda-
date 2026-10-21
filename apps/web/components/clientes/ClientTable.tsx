@@ -32,6 +32,8 @@ interface ApiClient {
   visits: number;
   totalSpent: number;
   lastVisit: string | null;
+  avatarUrl?: string | null;
+  source?: "manual" | "app";
 }
 
 interface Client {
@@ -43,6 +45,32 @@ interface Client {
   totalSpent: number;
   status: "Ativo" | "Inativo";
   lastVisit: string | null;
+  // A foto da conta do cliente na app (os clientes registados à mão não têm).
+  avatarUrl: string | null;
+  // "app": tornou-se cliente pela app ao marcar; "manual": registado no painel.
+  source: "manual" | "app";
+}
+
+/* Foto do cliente, ou a inicial do nome quando não há foto. */
+function ClientAvatar({ client, size }: { client: Pick<Client, "name" | "avatarUrl">; size: string }) {
+  if (client.avatarUrl) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={client.avatarUrl} alt="" className={`${size} shrink-0 rounded-full object-cover`} />;
+  }
+  return (
+    <div className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-700`}>
+      {client.name.charAt(0).toUpperCase() || "?"}
+    </div>
+  );
+}
+
+/* Etiqueta discreta para quem se tornou cliente pela app. */
+function AppBadge() {
+  return (
+    <span className="ml-1.5 inline-flex shrink-0 items-center rounded-md bg-blue-50 px-1.5 py-0.5 align-middle text-[11px] font-medium text-blue-700">
+      App
+    </span>
+  );
 }
 
 interface ClientForm {
@@ -148,6 +176,8 @@ export function ClientTable() {
             ? "Ativo"
             : "Inativo",
           lastVisit: client.lastVisit ?? null,
+          avatarUrl: client.avatarUrl ?? null,
+          source: client.source ?? "manual",
         })
       );
 
@@ -376,6 +406,8 @@ export function ClientTable() {
         lastVisit:
           oldClient?.lastVisit ??
           editForm.lastVisit,
+        avatarUrl: oldClient?.avatarUrl ?? null,
+        source: oldClient?.source ?? "manual",
       };
 
       setClients((current) =>
@@ -540,7 +572,7 @@ export function ClientTable() {
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50"
             >
               <RefreshCw
-                className={`h-3.5 w-3.5 ${
+                className={`h-4 w-4 ${
                   loading
                     ? "animate-spin"
                     : ""
@@ -553,7 +585,7 @@ export function ClientTable() {
               onClick={handleOpenAddClient}
               className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold text-white transition hover:bg-primary-hover"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" />
               Novo cliente
             </button>
 
@@ -565,23 +597,23 @@ export function ClientTable() {
 
         <div className="mb-2 hidden grid-cols-[minmax(240px,1.7fr)_minmax(150px,1fr)_110px_120px_80px] items-center rounded-xl border border-gray-200 bg-gray-50 px-5 py-3 lg:grid">
 
-          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+          <div className="text-xs font-medium text-gray-400">
             Cliente
           </div>
 
-          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+          <div className="text-xs font-medium text-gray-400">
             Telefone
           </div>
 
-          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+          <div className="text-xs font-medium text-gray-400">
             Visitas
           </div>
 
-          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+          <div className="text-xs font-medium text-gray-400">
             Estado
           </div>
 
-          <div className="text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+          <div className="text-right text-xs font-medium text-gray-400">
             Ações
           </div>
 
@@ -594,7 +626,7 @@ export function ClientTable() {
             <div className="text-center">
 
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-50">
-                <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />
+                <RefreshCw className="h-[18px] w-[18px] animate-spin text-gray-400" />
               </div>
 
               <p className="mt-3 text-xs font-medium text-gray-600">
@@ -615,7 +647,7 @@ export function ClientTable() {
             <div className="rounded-xl border border-gray-200 bg-white px-6 py-14 text-center">
 
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
-                <X className="h-4 w-4 text-red-500" />
+                <X className="h-[18px] w-[18px] text-red-500" />
               </div>
 
               <p className="mt-3 text-xs font-semibold text-red-600">
@@ -641,11 +673,6 @@ export function ClientTable() {
             <div className="space-y-2">
 
               {visibleClients.map((client) => {
-                const initial =
-                  client.name
-                    .charAt(0)
-                    .toUpperCase();
-
                 return (
                   <div
                     key={client.id}
@@ -660,17 +687,16 @@ export function ClientTable() {
 
                       <div className="flex min-w-0 items-center gap-3">
 
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-700">
-                          {initial}
-                        </div>
+                        <ClientAvatar client={client} size="h-9 w-9" />
 
                         <div className="min-w-0">
 
                           <p className="truncate text-xs font-semibold text-gray-950">
                             {client.name}
+                            {client.source === "app" && <AppBadge />}
                           </p>
 
-                          <p className="mt-1 truncate text-[10px] text-gray-400">
+                          <p className="mt-1 truncate text-[11px] text-gray-400">
                             {client.email ||
                               "Sem email"}
                           </p>
@@ -683,7 +709,7 @@ export function ClientTable() {
 
                       <div className="flex items-center gap-2">
 
-                        <Phone className="h-3.5 w-3.5 text-gray-400" />
+                        <Phone className="h-4 w-4 text-gray-400" />
 
                         <span className="text-[11px] font-medium text-gray-600">
                           {client.phone}
@@ -696,7 +722,7 @@ export function ClientTable() {
                       <div>
 
                         <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5 text-[11px] font-semibold text-gray-700">
-                          <CalendarDays className="h-3 w-3 text-gray-400" />
+                          <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
                           {client.visits}
                         </span>
 
@@ -707,7 +733,7 @@ export function ClientTable() {
                       <div>
 
                         <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                             client.status ===
                             "Ativo"
                               ? "bg-green-50 text-green-700"
@@ -762,11 +788,11 @@ export function ClientTable() {
                               }
                               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[11px] font-medium text-gray-700 hover:bg-gray-50"
                             >
-                              <UserRound className="h-3.5 w-3.5 text-gray-400" />
+                              <UserRound className="h-4 w-4 text-gray-400" />
 
                               Ver cliente
 
-                              <ChevronRight className="ml-auto h-3 w-3 text-gray-300" />
+                              <ChevronRight className="ml-auto h-3.5 w-3.5 text-gray-300" />
                             </button>
 
                             <button
@@ -778,7 +804,7 @@ export function ClientTable() {
                               }
                               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[11px] font-medium text-red-600 hover:bg-red-50"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-4 w-4" />
 
                               Excluir
                             </button>
@@ -798,17 +824,16 @@ export function ClientTable() {
 
                         <div className="flex min-w-0 items-center gap-3">
 
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-700">
-                            {initial}
-                          </div>
+                          <ClientAvatar client={client} size="h-10 w-10" />
 
                           <div className="min-w-0">
 
                             <p className="truncate text-xs font-semibold text-gray-950">
                               {client.name}
+                              {client.source === "app" && <AppBadge />}
                             </p>
 
-                            <p className="mt-1 truncate text-[10px] text-gray-400">
+                            <p className="mt-1 truncate text-[11px] text-gray-400">
                               {client.email ||
                                 "Sem email"}
                             </p>
@@ -849,7 +874,7 @@ export function ClientTable() {
                                 }
                                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[11px] font-medium text-gray-700 hover:bg-gray-50"
                               >
-                                <UserRound className="h-3.5 w-3.5" />
+                                <UserRound className="h-4 w-4" />
                                 Ver cliente
                               </button>
 
@@ -862,7 +887,7 @@ export function ClientTable() {
                                 }
                                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[11px] font-medium text-red-600 hover:bg-red-50"
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                                 Excluir
                               </button>
 
@@ -877,11 +902,11 @@ export function ClientTable() {
 
                         <div className="rounded-lg bg-gray-50 p-2.5">
 
-                          <p className="text-[9px] uppercase tracking-wide text-gray-400">
+                          <p className="text-xs text-gray-400">
                             Telefone
                           </p>
 
-                          <p className="mt-1 truncate text-[10px] font-medium text-gray-700">
+                          <p className="mt-1 truncate text-[11px] font-medium text-gray-700">
                             {client.phone}
                           </p>
 
@@ -889,11 +914,11 @@ export function ClientTable() {
 
                         <div className="rounded-lg bg-gray-50 p-2.5">
 
-                          <p className="text-[9px] uppercase tracking-wide text-gray-400">
+                          <p className="text-xs text-gray-400">
                             Visitas
                           </p>
 
-                          <p className="mt-1 text-[10px] font-semibold text-gray-700">
+                          <p className="mt-1 text-[11px] font-semibold text-gray-700">
                             {client.visits}
                           </p>
 
@@ -901,12 +926,12 @@ export function ClientTable() {
 
                         <div className="rounded-lg bg-gray-50 p-2.5">
 
-                          <p className="text-[9px] uppercase tracking-wide text-gray-400">
+                          <p className="text-xs text-gray-400">
                             Estado
                           </p>
 
                           <p
-                            className={`mt-1 text-[10px] font-semibold ${
+                            className={`mt-1 text-[11px] font-semibold ${
                               client.status ===
                               "Ativo"
                                 ? "text-green-600"
@@ -937,7 +962,7 @@ export function ClientTable() {
             <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center">
 
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-50">
-                <UserRound className="h-5 w-5 text-gray-400" />
+                <UserRound className="h-[22px] w-[22px] text-gray-400" />
               </div>
 
               <p className="mt-4 text-sm font-semibold text-gray-950">
@@ -983,7 +1008,7 @@ export function ClientTable() {
           onClick={handleCloseAddClient}
         >
           <div
-            className="w-full max-w-[390px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+            className="w-full max-w-[390px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl"
             onClick={(e) =>
               e.stopPropagation()
             }
@@ -1007,7 +1032,7 @@ export function ClientTable() {
                 disabled={isSaving}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-900"
               >
-                <X className="h-4 w-4" />
+                <X className="h-[18px] w-[18px]" />
               </button>
 
             </div>
@@ -1147,7 +1172,7 @@ export function ClientTable() {
           onClick={handleCloseDetails}
         >
           <div
-            className="w-full max-w-[460px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+            className="w-full max-w-[460px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl"
             onClick={(e) =>
               e.stopPropagation()
             }
@@ -1175,7 +1200,7 @@ export function ClientTable() {
                 disabled={isUpdating}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-900"
               >
-                <X className="h-4 w-4" />
+                <X className="h-[18px] w-[18px]" />
               </button>
 
             </div>
@@ -1298,11 +1323,7 @@ export function ClientTable() {
               <>
                 <div className="flex items-center gap-3 px-5 py-5">
 
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-base font-bold text-gray-700">
-                    {selectedClient.name
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+                  <ClientAvatar client={selectedClient} size="h-12 w-12" />
 
                   <div className="min-w-0">
 
@@ -1317,7 +1338,7 @@ export function ClientTable() {
                   </div>
 
                   <span
-                    className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                    className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                       selectedClient.status ===
                       "Ativo"
                         ? "bg-green-50 text-green-700"
@@ -1342,13 +1363,13 @@ export function ClientTable() {
 
                   <div className="rounded-xl bg-white p-3 ring-1 ring-gray-100">
 
-                    <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
+                    <CalendarDays className="h-4 w-4 text-gray-400" />
 
                     <p className="mt-2 text-base font-bold text-gray-950">
                       {selectedClient.visits}
                     </p>
 
-                    <p className="mt-1 text-[9px] text-gray-500">
+                    <p className="mt-1 text-[11px] text-gray-500">
                       Visitas
                     </p>
 
@@ -1356,7 +1377,7 @@ export function ClientTable() {
 
                   <div className="rounded-xl bg-white p-3 ring-1 ring-gray-100">
 
-                    <span className="text-[10px] font-bold text-gray-400">
+                    <span className="text-[11px] font-bold text-gray-400">
                       Kz
                     </span>
 
@@ -1366,7 +1387,7 @@ export function ClientTable() {
                       )}
                     </p>
 
-                    <p className="mt-1 text-[9px] text-gray-500">
+                    <p className="mt-1 text-[11px] text-gray-500">
                       Total gasto
                     </p>
 
@@ -1374,7 +1395,7 @@ export function ClientTable() {
 
                   <div className="rounded-xl bg-white p-3 ring-1 ring-gray-100">
 
-                    <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
+                    <CalendarDays className="h-4 w-4 text-gray-400" />
 
                     <p className="mt-2 truncate text-[11px] font-bold text-gray-950">
                       {formatDate(
@@ -1382,7 +1403,7 @@ export function ClientTable() {
                       )}
                     </p>
 
-                    <p className="mt-1 text-[9px] text-gray-500">
+                    <p className="mt-1 text-[11px] text-gray-500">
                       Última visita
                     </p>
 
@@ -1392,7 +1413,7 @@ export function ClientTable() {
 
                 <div className="px-5 py-5">
 
-                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+                  <p className="mb-3 text-xs font-medium text-gray-400">
                     Contacto
                   </p>
 
@@ -1402,9 +1423,9 @@ export function ClientTable() {
 
                       <div className="flex items-center gap-1.5 text-gray-400">
 
-                        <Mail className="h-3 w-3" />
+                        <Mail className="h-3.5 w-3.5" />
 
-                        <span className="text-[9px] font-medium uppercase">
+                        <span className="text-xs font-medium">
                           Email
                         </span>
 
@@ -1421,9 +1442,9 @@ export function ClientTable() {
 
                       <div className="flex items-center gap-1.5 text-gray-400">
 
-                        <Phone className="h-3 w-3" />
+                        <Phone className="h-3.5 w-3.5" />
 
-                        <span className="text-[9px] font-medium uppercase">
+                        <span className="text-xs font-medium">
                           Telefone
                         </span>
 
@@ -1446,7 +1467,7 @@ export function ClientTable() {
                     onClick={handleStartEdit}
                     className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    <Pencil className="h-3 w-3" />
+                    <Pencil className="h-3.5 w-3.5" />
                     Editar
                   </button>
 
@@ -1474,14 +1495,14 @@ export function ClientTable() {
           onClick={handleCancelDelete}
         >
           <div
-            className="w-full max-w-[360px] rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl"
+            className="w-full max-w-[360px] rounded-2xl border border-gray-100 bg-white p-5 shadow-xl"
             onClick={(e) =>
               e.stopPropagation()
             }
           >
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-[18px] w-[18px]" />
             </div>
 
             <h2 className="mt-4 text-sm font-semibold text-gray-950">
@@ -1513,7 +1534,7 @@ export function ClientTable() {
                 disabled={isDeleting}
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-red-600 px-3.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-3.5 w-3.5" />
 
                 {isDeleting
                   ? "A excluir..."

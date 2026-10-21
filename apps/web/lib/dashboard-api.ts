@@ -127,7 +127,8 @@ export async function loadLookups(businessId: string): Promise<BusinessLookups> 
     apiCall<ServiceDTO[]>(`/services?${query}`),
     apiCall<ProfessionalDTO[]>(`/professionals?${query}`),
     apiCall<WalkInClientDTO[]>(`/clients/walk-in?${query}`),
-    apiCall<ClientDTO[]>(`/clients?${query}`).catch(() => [] as ClientDTO[]),
+    // Também quem marcou sem se tornar cliente: as marcações precisam do nome de todos.
+    apiCall<ClientDTO[]>(`/clients?${query}&includeBookers=true`).catch(() => [] as ClientDTO[]),
     apiCall<PaymentDTO[]>(`/payments?${query}`).catch(() => [] as PaymentDTO[]),
   ]);
 

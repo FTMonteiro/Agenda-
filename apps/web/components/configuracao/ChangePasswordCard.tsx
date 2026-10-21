@@ -54,7 +54,7 @@ export function ChangePasswordCard() {
       <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-6 py-5">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <KeyRound size={18} />
+            <KeyRound size={20} />
             Alterar senha
           </h2>
 
@@ -69,7 +69,7 @@ export function ChangePasswordCard() {
           aria-label={visible ? "Ocultar senhas" : "Mostrar senhas"}
           className="rounded-lg p-2 text-[var(--muted)] transition hover:bg-[var(--surface-secondary)]"
         >
-          {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+          {visible ? <EyeOff size={20} /> : <Eye size={20} />}
         </button>
       </div>
 
@@ -121,7 +121,7 @@ export function ChangePasswordCard() {
             disabled={saving}
             className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {saving && <Loader2 size={16} className="animate-spin" />}
+            {saving && <Loader2 size={18} className="animate-spin" />}
             {saving ? "Salvando..." : "Alterar senha"}
           </button>
         </div>

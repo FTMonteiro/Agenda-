@@ -20,9 +20,9 @@ import { Platform } from 'react-native';
    CORES
    ========================================================= */
 
-// Apple's system colours (iOS Human Interface Guidelines), keeping the key names every
-// screen already uses. `primary` is the tint colour — iOS uses one accent for everything
-// tappable — and the grouped backgrounds are the Settings-style grey behind white cards.
+// Base nas cores de sistema do iOS (Human Interface Guidelines), com as chaves que todos
+// os ecrãs já usam. `primary` é o azul da marca, mais sereno que o systemBlue, e é o
+// único destaque para tudo o que se toca; os fundos agrupados ficam atrás dos cartões.
 export const Colors = {
   light: {
     /* Texto (label / secondaryLabel / tertiaryLabel) */
@@ -36,8 +36,8 @@ export const Colors = {
     backgroundElement: '#FFFFFF',
     backgroundSelected: '#E5E5EA',
 
-    /* Cor de destaque (systemBlue) */
-    primary: '#007AFF',
+    /* Cor de destaque (azul da marca) */
+    primary: '#2E67B3',
     primaryForeground: '#FFFFFF',
 
     /* Estados */
@@ -50,8 +50,8 @@ export const Colors = {
     error: '#FF3B30',
     errorBackground: 'rgba(255, 59, 48, 0.12)',
 
-    info: '#007AFF',
-    infoBackground: 'rgba(0, 122, 255, 0.12)',
+    info: '#2E67B3',
+    infoBackground: 'rgba(46, 103, 179, 0.12)',
 
     /* Separadores */
     border: 'rgba(60, 60, 67, 0.29)',
@@ -85,7 +85,7 @@ export const Colors = {
     backgroundSelected: '#2C2C2E',
 
     /* Cor de destaque */
-    primary: '#0A84FF',
+    primary: '#5585C4',
     primaryForeground: '#FFFFFF',
 
     /* Estados */
@@ -98,8 +98,8 @@ export const Colors = {
     error: '#FF453A',
     errorBackground: 'rgba(255, 69, 58, 0.16)',
 
-    info: '#0A84FF',
-    infoBackground: 'rgba(10, 132, 255, 0.16)',
+    info: '#5585C4',
+    infoBackground: 'rgba(85, 133, 196, 0.16)',
 
     /* Separadores */
     border: 'rgba(84, 84, 88, 0.6)',

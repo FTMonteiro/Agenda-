@@ -585,7 +585,7 @@ export default function ServicesList({
     <>
       {/* LISTA */}
 
-      <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
         {/* HEADER */}
 
         <div className="flex flex-col gap-4 border-b border-gray-100 p-5 md:flex-row md:items-center md:justify-between">
@@ -605,7 +605,7 @@ export default function ServicesList({
 
           <div className="relative w-full md:w-80">
             <Search
-              size={18}
+              size={20}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
 
@@ -711,7 +711,7 @@ export default function ServicesList({
                           aria-label="Abrir ações"
                         >
                           <MoreHorizontal
-                            size={20}
+                            size={22}
                           />
                         </button>
 
@@ -735,7 +735,7 @@ export default function ServicesList({
                               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                             >
                               <Pencil
-                                size={16}
+                                size={18}
                               />
 
                               Editar
@@ -756,7 +756,7 @@ export default function ServicesList({
                               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                             >
                               <Power
-                                size={16}
+                                size={18}
                               />
 
                               {service.active
@@ -779,7 +779,7 @@ export default function ServicesList({
                               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                             >
                               <Trash2
-                                size={16}
+                                size={18}
                               />
 
                               Excluir
@@ -801,7 +801,7 @@ export default function ServicesList({
       {!readOnly &&
         editingService && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl">
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
               {/* HEADER */}
 
               <div className="flex items-center justify-between border-b border-gray-100 p-6">
@@ -825,7 +825,7 @@ export default function ServicesList({
                   }
                   className="rounded-xl p-2 text-gray-500 transition hover:bg-gray-100"
                 >
-                  <X size={20} />
+                  <X size={22} />
                 </button>
               </div>
 
@@ -962,7 +962,7 @@ export default function ServicesList({
                   className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Save
-                    size={16}
+                    size={18}
                   />
 
                   {loadingId ===
@@ -980,12 +980,12 @@ export default function ServicesList({
       {!readOnly &&
         deletingService && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
               {/* ÍCONE */}
 
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
                 <Trash2
-                  size={22}
+                  size={24}
                   className="text-red-600"
                 />
               </div>

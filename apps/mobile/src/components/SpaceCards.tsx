@@ -17,10 +17,21 @@ import { translate, useT } from "@/i18n";
  * Todos encolhem ligeiramente no instante do toque.
  */
 
-// A avaliação de um espaço são os gostos: quantas pessoas o têm nos favoritos ("♥ 8").
-// Enquanto ninguém o guardou, é "Novo".
-export function likesLabel(space: BusinessDTO): string {
-  return space.favoriteCount > 0 ? `♥ ${space.favoriteCount}` : translate('Novo');
+// A cor das estrelas em toda a app.
+export const STAR_COLOR = '#F5A623';
+
+// A nota média do espaço, de 1 a 5 estrelas, com o número de avaliações: "★ 4.8 (12)".
+export function starsText(space: BusinessDTO): string | null {
+  return space.ratingAvg !== null && space.ratingCount > 0
+    ? `★ ${space.ratingAvg.toFixed(1)} (${space.ratingCount})`
+    : null;
+}
+
+// A linha de resumo dos cartões: as estrelas (a avaliação) e os favoritos (os gostos),
+// "★ 4.8 (12)  ·  ♥ 8". Sem nenhum dos dois, o espaço é "Novo".
+export function ratingLabel(space: BusinessDTO): string {
+  const parts = [starsText(space), space.favoriteCount > 0 ? `♥ ${space.favoriteCount}` : null].filter(Boolean);
+  return parts.length > 0 ? parts.join('  ·  ') : translate('Novo');
 }
 
 // Onde o espaço fica, em poucas palavras: "Talatona, Luanda". Sem zona marcada no mapa
@@ -139,7 +150,7 @@ export function HeroSpaceCard({
             {space.name}
           </Text>
           <Text style={styles.heroMeta} numberOfLines={1}>
-            {likesLabel(space)}
+            {ratingLabel(space)}
             {place ? `  ·  ${place}` : ''}
           </Text>
         </View>
@@ -191,7 +202,7 @@ export function SpaceTile({
           {space.name}
         </Text>
         <Text style={[styles.tileMeta, { color: colors.textSecondary }]} numberOfLines={1}>
-          {likesLabel(space)}
+          {ratingLabel(space)}
           {space.category ? `  ·  ${t(space.category)}` : ''}
         </Text>
         {place ? (
@@ -225,7 +236,7 @@ export function SpaceRow({
   const colors = useIOSColors();
 
   const details = [
-    likesLabel(space),
+    ratingLabel(space),
     space.distanceKm !== null ? formatDistance(space.distanceKm) : null,
     t(space.category),
   ].filter(Boolean);

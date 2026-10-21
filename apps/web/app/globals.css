@@ -9,27 +9,101 @@
 /*
  * MARCA AGENDA+
  *
- * O azul da logo (#1451D6) é a cor principal de todo o sistema. A escala `blue` do
- * Tailwind é redefinida à volta dele: qualquer bg-blue-600 / text-blue-600 já usado
- * nas páginas passa a ser exatamente o azul da marca. O verde-menta é o "+" do ícone.
+ * Um azul sereno e pouco saturado, pensado para quem passa o dia inteiro com o
+ * painel aberto: lê-se bem, não cansa e não grita. A escala `blue` do Tailwind é
+ * redefinida à volta dele, por isso qualquer bg-blue-600 / text-blue-600 já usado
+ * nas páginas passa a ser o azul da marca.
  *
- * `primary` muda com o tema (ver --brand mais abaixo): no escuro sobe um tom para
- * manter o contraste sobre as superfícies escuras.
+ * Os cinzentos (gray, zinc, neutral, slate, stone) passam todos a uma única escala
+ * neutra ligeiramente quente: as páginas que misturavam famílias diferentes ficam
+ * coerentes e o conjunto perde o tom azulado e frio dos cinzentos por omissão.
+ *
+ * `primary` muda com o tema (ver --brand mais abaixo).
  */
 @theme {
-  --color-blue-50: #eef4ff;
-  --color-blue-100: #dce7ff;
-  --color-blue-200: #bcd1ff;
-  --color-blue-300: #8fb2ff;
-  --color-blue-400: #5e8cf8;
-  --color-blue-500: #3469ec;
-  --color-blue-600: #1451d6;
-  --color-blue-700: #1043b3;
-  --color-blue-800: #0f388f;
-  --color-blue-900: #112f70;
-  --color-blue-950: #0b1d45;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
 
-  --color-mint: #8fffc7;
+  --color-blue-50: #f2f7ff;
+  --color-blue-100: #e2eeff;
+  --color-blue-200: #c6ddfc;
+  --color-blue-300: #9dc0f1;
+  --color-blue-400: #6e9ddf;
+  --color-blue-500: #477ec9;
+  --color-blue-600: #2e67b3;
+  --color-blue-700: #245496;
+  --color-blue-800: #1e4579;
+  --color-blue-900: #18355e;
+  --color-blue-950: #0f223b;
+
+  --color-gray-50: #fbfaf9;
+  --color-gray-100: #f5f3f1;
+  --color-gray-200: #e8e6e3;
+  --color-gray-300: #d6d4d1;
+  --color-gray-400: #a4a19d;
+  --color-gray-500: #77746f;
+  --color-gray-600: #5b5753;
+  --color-gray-700: #45423e;
+  --color-gray-800: #2b2826;
+  --color-gray-900: #1b1917;
+  --color-gray-950: #0e0d0b;
+
+  --color-zinc-50: var(--color-gray-50);
+  --color-zinc-100: var(--color-gray-100);
+  --color-zinc-200: var(--color-gray-200);
+  --color-zinc-300: var(--color-gray-300);
+  --color-zinc-400: var(--color-gray-400);
+  --color-zinc-500: var(--color-gray-500);
+  --color-zinc-600: var(--color-gray-600);
+  --color-zinc-700: var(--color-gray-700);
+  --color-zinc-800: var(--color-gray-800);
+  --color-zinc-900: var(--color-gray-900);
+  --color-zinc-950: var(--color-gray-950);
+
+  --color-neutral-50: var(--color-gray-50);
+  --color-neutral-100: var(--color-gray-100);
+  --color-neutral-200: var(--color-gray-200);
+  --color-neutral-300: var(--color-gray-300);
+  --color-neutral-400: var(--color-gray-400);
+  --color-neutral-500: var(--color-gray-500);
+  --color-neutral-600: var(--color-gray-600);
+  --color-neutral-700: var(--color-gray-700);
+  --color-neutral-800: var(--color-gray-800);
+  --color-neutral-900: var(--color-gray-900);
+  --color-neutral-950: var(--color-gray-950);
+
+  --color-slate-50: var(--color-gray-50);
+  --color-slate-100: var(--color-gray-100);
+  --color-slate-200: var(--color-gray-200);
+  --color-slate-300: var(--color-gray-300);
+  --color-slate-400: var(--color-gray-400);
+  --color-slate-500: var(--color-gray-500);
+  --color-slate-600: var(--color-gray-600);
+  --color-slate-700: var(--color-gray-700);
+  --color-slate-800: var(--color-gray-800);
+  --color-slate-900: var(--color-gray-900);
+  --color-slate-950: var(--color-gray-950);
+
+  --color-stone-50: var(--color-gray-50);
+  --color-stone-100: var(--color-gray-100);
+  --color-stone-200: var(--color-gray-200);
+  --color-stone-300: var(--color-gray-300);
+  --color-stone-400: var(--color-gray-400);
+  --color-stone-500: var(--color-gray-500);
+  --color-stone-600: var(--color-gray-600);
+  --color-stone-700: var(--color-gray-700);
+  --color-stone-800: var(--color-gray-800);
+  --color-stone-900: var(--color-gray-900);
+  --color-stone-950: var(--color-gray-950);
+
+  --color-mint: #7fd6ad;
+
+  /* Sombras curtas e neutras: separam sem fazer os cartões flutuar. */
+  --shadow-sm: 0 1px 2px 0 rgb(28 25 23 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(28 25 23 / 0.07), 0 1px 2px -1px rgb(28 25 23 / 0.05);
+  --shadow-md: 0 2px 6px -1px rgb(28 25 23 / 0.07), 0 1px 3px -1px rgb(28 25 23 / 0.05);
+  --shadow-lg: 0 6px 16px -4px rgb(28 25 23 / 0.09), 0 2px 4px -2px rgb(28 25 23 / 0.05);
+  --shadow-xl: 0 12px 28px -8px rgb(28 25 23 / 0.14), 0 4px 8px -4px rgb(28 25 23 / 0.06);
+  --shadow-2xl: 0 20px 40px -12px rgb(28 25 23 / 0.2);
 }
 
 @theme inline {
@@ -42,58 +116,54 @@
    VARIÁVEIS
 ============================================================ */
 
-:root {
-  --background: #ffffff;
-  --foreground: #232323;
-
-  --card: #ffffff;
-
-  --border: #e5e7eb;
-
-  --muted: #6b7280;
-
-  --surface: #ffffff;
-  --surface-secondary: #f3f4f6;
-
-  --brand: #1451d6;
-  --brand-hover: #1043b3;
-  --brand-deep: #0b2a86;
-}
-
+:root,
 html.light {
-  --background: #ffffff;
-  --foreground: #232323;
+  --background: #f9f7f6;
+  --foreground: #211f1c;
 
   --card: #ffffff;
 
-  --border: #e5e7eb;
+  --border: #e8e6e3;
+  --border-strong: #d6d4d1;
 
-  --muted: #6b7280;
+  --muted: #6f6b67;
+  --subtle: #a4a19d;
 
   --surface: #ffffff;
-  --surface-secondary: #f3f4f6;
+  --surface-secondary: #f5f3f1;
+  --surface-hover: #efedea;
 
-  --brand: #1451d6;
-  --brand-hover: #1043b3;
-  --brand-deep: #0b2a86;
+  --brand: #2e67b3;
+  --brand-hover: #245496;
+  --brand-deep: #1e4579;
+  --brand-text: #2e67b3;
 }
 
 html.dark {
-  --background: #0b1120;
-  --foreground: #f9fafb;
+  /*
+   * Escuro em camadas: fundo quase preto, cartões um degrau acima e superfícies
+   * secundárias mais um. Neutro (sem o azul-marinho), para o azul da marca e as
+   * cores de estado se destacarem limpas.
+   */
+  --background: #111112;
+  --foreground: #ececed;
 
-  --card: #1f2937;
+  --card: #1a1a1c;
 
-  --border: #374151;
+  --border: #2b2b2e;
+  --border-strong: #3f3f43;
 
-  --muted: #9ca3af;
+  --muted: #a1a1a7;
+  --subtle: #737379;
 
-  --surface: #111827;
-  --surface-secondary: #1f2937;
+  --surface: #1a1a1c;
+  --surface-secondary: #222225;
+  --surface-hover: #2a2a2d;
 
-  --brand: #3d78f2;
-  --brand-hover: #5e8cf8;
-  --brand-deep: #1a3d9e;
+  --brand: #4677be;
+  --brand-hover: #5888ca;
+  --brand-deep: #2c568f;
+  --brand-text: #93b6e8;
 }
 
 /* ============================================================
@@ -212,7 +282,7 @@ select {
 
   color: #111111 !important;
 
-  border-color: #3b82f6 !important;
+  border-color: #2e67b3 !important;
 
   outline: none;
 }
@@ -240,7 +310,7 @@ select {
   transform: translateY(-2px);
 
   box-shadow:
-    0 14px 35px rgba(37, 99, 235, 0.15);
+    0 14px 35px rgba(28, 25, 23, 0.12);
 }
 
 /* ============================================================
@@ -578,12 +648,12 @@ select {
 }
 
 .nevrx-primary-button:hover {
-  background: #2563eb !important;
+  background: #2e67b3 !important;
 
   color: #ffffff !important;
 
   box-shadow:
-    0 12px 30px rgba(37, 99, 235, 0.18);
+    0 12px 30px rgba(28, 25, 23, 0.12);
 
   transform: translateY(-1px);
 }
@@ -622,43 +692,7 @@ select {
    SIDEBAR
 ============================================================ */
 
-@keyframes iconPop {
-  0% {
-    transform:
-      translateY(0)
-      scale(1)
-      rotate(0deg);
-  }
-
-  30% {
-    transform:
-      translateY(-4px)
-      scale(1.22)
-      rotate(-10deg);
-  }
-
-  60% {
-    transform:
-      translateY(1px)
-      scale(1.05)
-      rotate(6deg);
-  }
-
-  100% {
-    transform:
-      translateY(0)
-      scale(1.14)
-      rotate(0deg);
-  }
-}
-
-.sidebar-link:hover .sidebar-icon {
-  animation:
-    iconPop
-    0.45s
-    ease-out
-    forwards;
-}
+/* Os ícones da navegação não se animam: o estado ativo já chega como sinal. */
 
 /* ============================================================
    LOGIN
@@ -740,7 +774,7 @@ html.dark .bg-gray-100:not([class*="dark:bg-"]) {
 
 html.dark .bg-gray-900:not([class*="dark:bg-"]),
 html.dark .bg-gray-950:not([class*="dark:bg-"]) {
-  background-color: #030712;
+  background-color: var(--background);
 }
 
 html.dark .text-gray-950:not([class*="dark:text-"]),
@@ -750,7 +784,7 @@ html.dark .text-gray-900:not([class*="dark:text-"]) {
 
 html.dark .text-gray-800:not([class*="dark:text-"]),
 html.dark .text-gray-700:not([class*="dark:text-"]) {
-  color: #e5e7eb;
+  color: color-mix(in oklab, var(--foreground) 88%, var(--muted));
 }
 
 html.dark .text-gray-600:not([class*="dark:text-"]),
@@ -760,7 +794,7 @@ html.dark .text-gray-500:not([class*="dark:text-"]) {
 
 html.dark .text-gray-400:not([class*="dark:text-"]),
 html.dark .text-gray-300:not([class*="dark:text-"]) {
-  color: #6b7280;
+  color: var(--subtle);
 }
 
 html.dark .border-gray-100:not([class*="dark:border-"]),
@@ -862,7 +896,7 @@ html.dark .fixed.inset-0 .bg-gray-100 {
 }
 
 html.dark .fixed.inset-0 .bg-gray-200 {
-  background-color: #374151 !important;
+  background-color: var(--surface-hover) !important;
 }
 
 /* =========================================================
@@ -871,22 +905,22 @@ html.dark .fixed.inset-0 .bg-gray-200 {
 
 html.dark .fixed.inset-0 .text-gray-950,
 html.dark .fixed.inset-0 .text-gray-900 {
-  color: #f9fafb !important;
+  color: var(--foreground) !important;
 }
 
 html.dark .fixed.inset-0 .text-gray-800,
 html.dark .fixed.inset-0 .text-gray-700 {
-  color: #e5e7eb !important;
+  color: color-mix(in oklab, var(--foreground) 88%, var(--muted)) !important;
 }
 
 html.dark .fixed.inset-0 .text-gray-600,
 html.dark .fixed.inset-0 .text-gray-500 {
-  color: #9ca3af !important;
+  color: var(--muted) !important;
 }
 
 html.dark .fixed.inset-0 .text-gray-400,
 html.dark .fixed.inset-0 .text-gray-300 {
-  color: #6b7280 !important;
+  color: var(--subtle) !important;
 }
 
 /* =========================================================
@@ -897,7 +931,7 @@ html.dark .fixed.inset-0 .border-gray-50,
 html.dark .fixed.inset-0 .border-gray-100,
 html.dark .fixed.inset-0 .border-gray-200,
 html.dark .fixed.inset-0 .border-gray-300 {
-  border-color: #374151 !important;
+  border-color: var(--surface-hover) !important;
 }
 
 /* =========================================================
@@ -907,21 +941,21 @@ html.dark .fixed.inset-0 .border-gray-300 {
 html.dark .fixed.inset-0 input,
 html.dark .fixed.inset-0 select,
 html.dark .fixed.inset-0 textarea {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-  border-color: #374151 !important;
+  background-color: var(--surface-secondary) !important;
+  color: var(--foreground) !important;
+  border-color: var(--surface-hover) !important;
 }
 
 html.dark .fixed.inset-0 input::placeholder,
 html.dark .fixed.inset-0 textarea::placeholder {
-  color: #9ca3af !important;
+  color: var(--muted) !important;
 }
 
 html.dark .fixed.inset-0 input:focus,
 html.dark .fixed.inset-0 select:focus,
 html.dark .fixed.inset-0 textarea:focus {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
+  background-color: var(--surface-secondary) !important;
+  color: var(--foreground) !important;
 }
 
 /* =========================================================
@@ -929,8 +963,8 @@ html.dark .fixed.inset-0 textarea:focus {
    ========================================================= */
 
 html.dark .fixed.inset-0 option {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
+  background-color: var(--surface-secondary) !important;
+  color: var(--foreground) !important;
 }
 
 /* =========================================================
@@ -938,11 +972,11 @@ html.dark .fixed.inset-0 option {
    ========================================================= */
 
 html.dark .fixed.inset-0 .hover\:bg-gray-50:hover {
-  background-color: #374151 !important;
+  background-color: var(--surface-hover) !important;
 }
 
 html.dark .fixed.inset-0 .hover\:bg-gray-100:hover {
-  background-color: #374151 !important;
+  background-color: var(--surface-hover) !important;
 }
 
 /* =========================================================
@@ -951,7 +985,7 @@ html.dark .fixed.inset-0 .hover\:bg-gray-100:hover {
 
 html.dark .fixed.inset-0 .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
 html.dark .fixed.inset-0 .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #374151 !important;
+  border-color: var(--surface-hover) !important;
 }
 
 /* =========================================================
@@ -989,9 +1023,9 @@ html.dark [role="dialog"] .bg-gray-100 {
 html.dark [role="dialog"] input,
 html.dark [role="dialog"] select,
 html.dark [role="dialog"] textarea {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-  border-color: #374151 !important;
+  background-color: var(--surface-secondary) !important;
+  color: var(--foreground) !important;
+  border-color: var(--surface-hover) !important;
 }
 
 
@@ -1050,7 +1084,7 @@ html.dark .fixed.inset-0 button[type="button"]:not([class*="dark:bg-"]):not([cla
 }
 
 html.dark .fixed.inset-0 button[type="button"]:not([class*="dark:bg-"]):not([class*="bg-blue-"]):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-primary"]):hover {
-  background-color: #374151 !important;
+  background-color: var(--surface-hover) !important;
   color: #ffffff !important;
 }
 
@@ -1071,13 +1105,13 @@ html.dark .fixed.inset-0 button[type="button"]:disabled {
 html.dark .fixed.inset-0 button[aria-label="Fechar"],
 html.dark .fixed.inset-0 button[aria-label="Close"] {
   background-color: transparent !important;
-  color: #9ca3af !important;
+  color: var(--muted) !important;
   border-color: transparent !important;
 }
 
 html.dark .fixed.inset-0 button[aria-label="Fechar"]:hover,
 html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
-  background-color: #374151 !important;
+  background-color: var(--surface-hover) !important;
   color: #ffffff !important;
 }
 /* =========================================================
@@ -1117,7 +1151,7 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
 
   html.dark .dashboard-shell .bg-gray-200:not([class*="dark:bg-"]),
   html.dark .dashboard-shell .bg-zinc-200:not([class*="dark:bg-"]) {
-    background-color: #374151;
+    background-color: var(--surface-hover);
   }
 
   html.dark .dashboard-shell .hover\:bg-gray-50:hover:not([class*="dark:hover:bg-"]),
@@ -1125,7 +1159,7 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
   html.dark .dashboard-shell .hover\:bg-zinc-50:hover:not([class*="dark:hover:bg-"]),
   html.dark .dashboard-shell .hover\:bg-zinc-50\/50:hover:not([class*="dark:hover:bg-"]),
   html.dark .dashboard-shell .hover\:bg-zinc-100:hover:not([class*="dark:hover:bg-"]) {
-    background-color: #273244;
+    background-color: var(--surface-hover);
   }
 
   /* Botão principal (preto no claro, claro no escuro) */
@@ -1144,7 +1178,7 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
   html.dark .dashboard-shell .hover\:bg-gray-800:hover:not([class*="dark:hover:bg-"]),
   html.dark .dashboard-shell .hover\:bg-gray-900:hover:not([class*="dark:hover:bg-"]),
   html.dark .dashboard-shell .hover\:bg-zinc-800:hover:not([class*="dark:hover:bg-"]) {
-    background-color: #e5e7eb;
+    background-color: color-mix(in oklab, var(--foreground) 88%, var(--muted));
   }
 
   /* Textos */
@@ -1165,7 +1199,7 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
   html.dark .dashboard-shell .text-zinc-800:not([class*="dark:text-"]),
   html.dark .dashboard-shell .text-zinc-700:not([class*="dark:text-"]),
   html.dark .dashboard-shell .hover\:text-gray-700:hover:not([class*="dark:hover:text-"]) {
-    color: #e5e7eb;
+    color: color-mix(in oklab, var(--foreground) 88%, var(--muted));
   }
 
   html.dark .dashboard-shell .text-gray-600:not([class*="dark:text-"]),
@@ -1178,7 +1212,7 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
   }
 
   html.dark .dashboard-shell .text-gray-300:not([class*="dark:text-"]) {
-    color: #6b7280;
+    color: var(--subtle);
   }
 
   /* Bordas e anéis */
@@ -1197,7 +1231,7 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
   html.dark .dashboard-shell .focus\:border-zinc-400:focus:not([class*="dark:focus:border-"]),
   html.dark .dashboard-shell .focus\:border-gray-900:focus:not([class*="dark:focus:border-"]),
   html.dark .dashboard-shell .focus\:border-gray-950:focus:not([class*="dark:focus:border-"]) {
-    border-color: #6b7280;
+    border-color: var(--subtle);
   }
 
   html.dark .dashboard-shell .ring-gray-100,
@@ -1213,7 +1247,7 @@ html.dark .fixed.inset-0 button[aria-label="Close"]:hover {
 
   /* Campos sem cor própria */
   html.dark .dashboard-shell :is(input, select, textarea)::placeholder {
-    color: #6b7280;
+    color: var(--subtle);
   }
 
   html.dark .dashboard-shell option {
@@ -1251,12 +1285,12 @@ html.dark .leaflet-bar {
 }
 
 html.dark .leaflet-control-attribution {
-  background: rgba(17, 24, 39, 0.8) !important;
+  background: color-mix(in oklab, var(--surface) 85%, transparent) !important;
   color: var(--muted);
 }
 
 html.dark .leaflet-control-attribution a {
-  color: #93c5fd;
+  color: var(--brand-text);
 }
 
 /* =========================================================
@@ -1294,7 +1328,7 @@ select:disabled {
 
 :root,
 html.light {
-  --chart-bar: #1451d6;
+  --chart-bar: #2e67b3;
   --method-cash: #009685;
   --method-card: #2a78d6;
   --method-transfer: #eb6834;
@@ -1303,7 +1337,7 @@ html.light {
 }
 
 html.dark {
-  --chart-bar: #3d78f2;
+  --chart-bar: #4f80c4;
   --method-cash: #00a896;
   --method-card: #3987e5;
   --method-transfer: #d95926;
@@ -1312,7 +1346,7 @@ html.dark {
 }
 
 @keyframes finance-fade-up {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -1331,7 +1365,7 @@ html.dark {
   to { transform: scaleY(1); }
 }
 
-.finance-fade-up { animation: finance-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.finance-fade-up { animation: finance-fade-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 .finance-slide-in { animation: finance-slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .finance-fade-in { animation: finance-fade-in 0.25s ease-out both; }
 .finance-grow { transform-origin: bottom; animation: finance-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -1375,49 +1409,23 @@ html.dark {
   scrollbar-color: var(--border) transparent;
 }
 
-/* Entrada de página: o conteúdo sobe e aparece a cada mudança de rota. */
+/* Entrada de página: um fade curto a cada mudança de rota, sem cascata. */
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /*
- * "backwards" e não "both": no fim não fica nenhum transform aplicado. Um transform
- * num antepassado prende os modais (position: fixed) dentro dele.
+ * "backwards" e não "both": no fim não fica nenhum estilo aplicado, para não
+ * interferir com os modais (position: fixed) dentro da página.
  */
 .page-enter > * {
-  animation: page-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
-}
-.page-enter > :nth-child(2) { animation-delay: 60ms; }
-.page-enter > :nth-child(3) { animation-delay: 120ms; }
-.page-enter > :nth-child(4) { animation-delay: 180ms; }
-.page-enter > :nth-child(n + 5) { animation-delay: 240ms; }
-
-/* Brilho que atravessa um elemento (cartões da marca, botões principais). */
-@keyframes brand-sheen {
-  0% { transform: translateX(-120%) skewX(-18deg); }
-  100% { transform: translateX(220%) skewX(-18deg); }
+  animation: page-enter 0.18s ease-out backwards;
 }
 
+/* .brand-sheen fica sem efeito: o brilho a atravessar botões foi retirado do sistema. */
 .brand-sheen {
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.brand-sheen::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
-  transform: translateX(-120%) skewX(-18deg);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.brand-sheen:hover::after {
-  animation: brand-sheen 0.9s ease-out;
 }
 
 /* Fundo de pontos discreto para cabeçalhos e destaques. */
@@ -1429,7 +1437,6 @@ html.dark {
 
 @media (prefers-reduced-motion: reduce) {
   .page-enter > * { animation: none; }
-  .brand-sheen:hover::after { animation: none; }
 }
 
 /* Superfícies azuis claras (bg-blue-50…) no modo escuro do painel. */
@@ -1447,11 +1454,11 @@ html.dark {
 
   html.dark .dashboard-shell .text-blue-700:not([class*="dark:text-"]),
   html.dark .dashboard-shell .text-blue-800:not([class*="dark:text-"]) {
-    color: #8fb2ff;
+    color: var(--brand-text);
   }
 
   html.dark .dashboard-shell .text-blue-600:not([class*="dark:text-"]) {
-    color: #6c9bff;
+    color: var(--brand-text);
   }
 }
 
@@ -1475,12 +1482,12 @@ html.dark {
   html.dark .dashboard-shell .bg-neutral-200:not([class*="dark:bg-"]),
   html.dark .dashboard-shell .bg-slate-100:not([class*="dark:bg-"]),
   html.dark .dashboard-shell .bg-slate-200\/50:not([class*="dark:bg-"]) {
-    background-color: #374151;
+    background-color: var(--surface-hover);
   }
 
   html.dark .dashboard-shell .hover\:bg-neutral-50:hover:not([class*="dark:hover:bg-"]),
   html.dark .dashboard-shell .hover\:bg-neutral-100:hover:not([class*="dark:hover:bg-"]) {
-    background-color: #273244;
+    background-color: var(--surface-hover);
   }
 
   html.dark .dashboard-shell .text-neutral-950:not([class*="dark:text-"]),
@@ -1493,7 +1500,7 @@ html.dark {
   html.dark .dashboard-shell .text-neutral-700:not([class*="dark:text-"]),
   html.dark .dashboard-shell .text-slate-700:not([class*="dark:text-"]),
   html.dark .dashboard-shell .hover\:text-neutral-700:hover:not([class*="dark:hover:text-"]) {
-    color: #e5e7eb;
+    color: color-mix(in oklab, var(--foreground) 88%, var(--muted));
   }
 
   html.dark .dashboard-shell .text-neutral-500:not([class*="dark:text-"]),
@@ -1510,7 +1517,7 @@ html.dark {
   }
 
   html.dark .dashboard-shell .hover\:border-neutral-300:hover:not([class*="dark:hover:border-"]) {
-    border-color: #6b7280;
+    border-color: var(--subtle);
   }
 
   html.dark .dashboard-shell .bg-red-50:not([class*="dark:bg-"]),
@@ -1606,5 +1613,244 @@ html.dark {
   html.dark .dashboard-shell .text-amber-900:not([class*="dark:text-"]),
   html.dark .dashboard-shell .hover\:text-amber-700:hover:not([class*="dark:hover:text-"]) {
     color: #fcd34d;
+  }
+}
+
+/* =========================================================
+   MICROINTERAÇÕES — BOTÕES, CARTÕES E MODAIS
+   =========================================================
+ *
+ * Transições curtas e discretas em todo o sistema:
+ * - botões e links-botão mudam de cor suavemente e afundam um pouco ao clicar;
+ * - cartões do painel (caixas com borda e fundo de superfície) reforçam a borda
+ *   e ganham uma sombra leve ao passar o rato;
+ * - modais entram com um fade do fundo e o painel a crescer de 97% para 100%.
+ *
+ * Os seletores de modal usam :where() (especificidade zero), por isso qualquer
+ * animação própria de um componente continua a ganhar. "backwards" em vez de
+ * "both": no fim não fica transform aplicado, que prenderia elementos fixed.
+ */
+
+:root {
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+button,
+[role="button"],
+a[class*="bg-primary"],
+a[class*="rounded-lg"],
+a[class*="rounded-xl"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform, scale;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out-soft);
+}
+
+button:not(:disabled):active,
+[role="button"]:active,
+a[class*="bg-primary"]:active {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+
+/*
+ * Cartões do painel: caixas com borda e fundo de superfície. Ao passar o rato sobem
+ * 2px, reforçam a borda e ganham sombra; ao sair voltam com a mesma suavidade.
+ * Ficam de fora os painéis com tabelas ou formulários (não faz sentido um formulário
+ * inteiro mexer-se) e os que têm um modal aberto lá dentro — um transform num
+ * antepassado prenderia o modal (position: fixed) dentro do cartão.
+ */
+.dashboard-shell :is(div, article, li, a)[class*="rounded-"][class*="border"]:is(
+    [class*="bg-[var(--surface)]"],
+    [class*="bg-white"]
+  ):not([role="dialog"]):not(:has(table, form, input, select, textarea, .fixed)) {
+  transition:
+    transform 260ms var(--ease-out-soft),
+    border-color 260ms var(--ease-out-soft),
+    box-shadow 260ms var(--ease-out-soft);
+}
+
+.dashboard-shell :is(div, article, li, a)[class*="rounded-"][class*="border"]:is(
+    [class*="bg-[var(--surface)]"],
+    [class*="bg-white"]
+  ):not([role="dialog"]):not(:has(table, form, input, select, textarea, .fixed)):hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg);
+}
+
+/* No escuro as sombras quase não se veem: um brilho fino no topo dá a profundidade. */
+html.dark .dashboard-shell :is(div, section, article, li, a)[class*="rounded-"][class*="border"]:is(
+    [class*="bg-[var(--surface)]"],
+    [class*="bg-white"]
+  ) {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035);
+}
+
+html.dark .dashboard-shell :is(div, article, li, a)[class*="rounded-"][class*="border"]:is(
+    [class*="bg-[var(--surface)]"],
+    [class*="bg-white"]
+  ):not([role="dialog"]):not(:has(table, form, input, select, textarea, .fixed)):hover {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 10px 24px -10px rgb(0 0 0 / 0.7);
+}
+
+/* Ícones: crescem um pouco ao passar o rato num botão e encolhem ao clicar. */
+:is(button, a, [role="button"]) svg.lucide {
+  transition:
+    transform 180ms var(--ease-out-soft),
+    color 160ms var(--ease-out-soft);
+}
+
+:is(button, a, [role="button"]):not(:disabled):hover > svg.lucide:only-child {
+  transform: scale(1.08);
+}
+
+:is(button, a, [role="button"]):not(:disabled):active svg.lucide {
+  transform: scale(0.88);
+  transition-duration: 90ms;
+}
+
+/* Modais */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+:where(.fixed.inset-0:not([class*="transition"])) {
+  animation: overlay-in 180ms ease-out backwards;
+}
+
+:where(.fixed.inset-0:not([class*="transition"])) > :where(div, form, section) {
+  animation: modal-in 220ms var(--ease-out-soft) backwards;
+}
+
+/* Linhas de listas e opções dentro dos modais acompanham o mesmo ritmo. */
+:where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"]) :where(li, label, a) {
+  transition:
+    background-color 150ms var(--ease-out-soft),
+    border-color 150ms var(--ease-out-soft),
+    color 150ms var(--ease-out-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-shell [class*="rounded-"][class*="border"]:hover,
+  :is(button, a, [role="button"]) svg.lucide,
+  button:not(:disabled):active,
+  [role="button"]:active,
+  a[class*="bg-primary"]:active {
+    transform: none;
+  }
+
+  :where(.fixed.inset-0),
+  :where(.fixed.inset-0) > :where(div, form, section) {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   CURSOR DE CLIQUE
+   =========================================================
+ *
+ * O Tailwind v4 deixa os botões com o cursor normal (seta). Tudo o que se clica
+ * passa a mostrar a mão, e o que está desativado mostra que não se pode usar.
+ */
+
+button:not(:disabled),
+[role="button"],
+[role="tab"],
+[role="option"],
+[role="menuitem"],
+[role="switch"],
+[role="checkbox"],
+[role="radio"],
+summary,
+label[for],
+label:has(input[type="checkbox"], input[type="radio"]),
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+input[type="color"],
+select:not(:disabled),
+[onclick] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   HOVER DENTRO DOS MODAIS, MENUS E PAINÉIS FLUTUANTES
+   =========================================================
+ *
+ * Vale para todos os modais (.fixed.inset-0 / role="dialog"), menus, listas de
+ * opções e menus que abrem por baixo de um botão (.absolute.top-full, como o do
+ * perfil no header):
+ * - botões e opções com fundo ou borda sobem 1px e ganham uma sombra leve;
+ * - botões simples (só texto/ícone) ganham um fundo suave;
+ * - cartões e linhas de informação reforçam a borda;
+ * - ao sair, tudo volta com a mesma suavidade; ao clicar, afunda um pouco.
+ * Só se mexe em transform, sombra e borda, para não estragar a cor de uma opção
+ * selecionada. O botão de fechar (X) fica de fora.
+ */
+
+:where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full)
+  :is(button, a, label, li, [role="option"], [role="menuitem"], [role="tab"], div[class*="rounded-"][class*="border"]) {
+  transition:
+    transform 200ms var(--ease-out-soft),
+    box-shadow 200ms var(--ease-out-soft),
+    border-color 200ms var(--ease-out-soft),
+    background-color 160ms var(--ease-out-soft),
+    color 160ms var(--ease-out-soft),
+    opacity 160ms var(--ease-out-soft);
+}
+
+/* Botões e opções com fundo ou borda: sobem */
+:where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full)
+  :is(button, a, label, [role="option"], [role="menuitem"], [role="tab"]):is([class*="border"], [class*="bg-"]):not(:disabled):not([aria-disabled="true"]):not([aria-label^="Fechar"]):not([aria-label="Close"]):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+html.dark :where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full)
+  :is(button, a, label, [role="option"], [role="menuitem"], [role="tab"]):is([class*="border"], [class*="bg-"]):not(:disabled):not([aria-disabled="true"]):not([aria-label^="Fechar"]):not([aria-label="Close"]):hover {
+  box-shadow: 0 6px 16px -8px rgb(0 0 0 / 0.7);
+}
+
+/* Botões simples, sem fundo nem borda e sem hover próprio: fundo suave */
+:where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full)
+  :is(button, a, [role="option"], [role="menuitem"]):not([class*="border"]):not([class*="bg-"]):not([class*="hover:"]):not(:disabled):hover {
+  background-color: var(--surface-secondary);
+}
+
+/* Cartões e linhas de informação: a borda reforça-se (o painel do modal não) */
+:where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full)
+  :is(div, li)[class*="rounded-"][class*="border"]:not([role="dialog"]):not(:has(input, select, textarea, form)):hover {
+  border-color: var(--border-strong);
+}
+
+/* Ao clicar volta ao lugar e afunda um pouco, como os outros botões */
+:where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full)
+  :is(button, a, label, [role="option"], [role="menuitem"], [role="tab"]):not(:disabled):active {
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+/* O X de fechar: só o fundo, sem subir */
+:where(.fixed.inset-0, [role="dialog"]) button:is([aria-label^="Fechar"], [aria-label="Close"]):hover {
+  background-color: var(--surface-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full) :is(button, a, label, [role="option"], [role="menuitem"], [role="tab"]):hover,
+  :where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full) :is(button, a, label, [role="option"], [role="menuitem"], [role="tab"]):active {
+    transform: none;
   }
 }

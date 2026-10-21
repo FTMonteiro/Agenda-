@@ -82,25 +82,25 @@ const PAYMENT_METHODS: {
     value: "CASH",
     label: "Dinheiro",
     description: "Em espécie",
-    icon: <Banknote className="h-5 w-5" />,
+    icon: <Banknote className="h-[22px] w-[22px]" />,
   },
   {
     value: "CARD",
     label: "Cartão",
     description: "TPA / bancário",
-    icon: <CreditCard className="h-5 w-5" />,
+    icon: <CreditCard className="h-[22px] w-[22px]" />,
   },
   {
     value: "TRANSFER",
     label: "Transferência",
     description: "Bancária",
-    icon: <Landmark className="h-5 w-5" />,
+    icon: <Landmark className="h-[22px] w-[22px]" />,
   },
   {
     value: "MOBILE_MONEY",
     label: "Multicaixa Express",
     description: "Pagamento móvel",
-    icon: <Smartphone className="h-5 w-5" />,
+    icon: <Smartphone className="h-[22px] w-[22px]" />,
   },
 ];
 
@@ -547,17 +547,17 @@ export function ReceivePayment({
       <button
         type="button"
         onClick={handleOpen}
-        className="group inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:translate-y-0 sm:w-auto"
+        className="group inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] shadow-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md sm:w-auto"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white transition group-hover:scale-105">
-          <CreditCard className="h-4 w-4" />
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white transition">
+          <CreditCard className="h-[18px] w-[18px]" />
         </span>
         Receber Pagamento
       </button>
 
       {isOpen && (
         <div
-          className={`fixed inset-0 z-[9999] flex items-end justify-center bg-black/55 backdrop-blur-sm transition-opacity duration-200 sm:items-center sm:p-4 ${
+          className={`fixed inset-0 z-[9999] flex items-end justify-center bg-black/55 transition-opacity duration-200 sm:items-center sm:p-4 ${
             isVisible ? "opacity-100" : "opacity-0"
           }`}
           onMouseDown={(event) => {
@@ -570,7 +570,7 @@ export function ReceivePayment({
             role="dialog"
             aria-modal="true"
             aria-labelledby="receive-payment-title"
-            className={`flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-t-3xl border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-[0_30px_100px_rgba(0,0,0,0.25)] transition-all duration-200 ease-out sm:rounded-3xl ${
+            className={`flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-[0_30px_100px_rgba(0,0,0,0.25)] transition-all duration-200 ease-out sm:rounded-3xl ${
               isVisible
                 ? "translate-y-0 scale-100 opacity-100"
                 : "translate-y-6 scale-[0.98] opacity-0"
@@ -602,7 +602,7 @@ export function ReceivePayment({
                 <header className="flex shrink-0 items-start justify-between gap-4 px-6 pb-4 pt-6">
                   <div className="flex items-center gap-3.5">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                      <Wallet className="h-5 w-5" />
+                      <Wallet className="h-[22px] w-[22px]" />
                     </div>
 
                     <div>
@@ -626,7 +626,7 @@ export function ReceivePayment({
                     aria-label="Fechar"
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] disabled:opacity-40"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-[18px] w-[18px]" />
                   </button>
                 </header>
 
@@ -635,7 +635,7 @@ export function ReceivePayment({
                 <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 pb-6">
                   {error && (
                     <div className="flex items-start gap-3 rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">
-                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <AlertCircle className="mt-0.5 h-[18px] w-[18px] shrink-0" />
                       <span className="flex-1">
                         {error}
                       </span>
@@ -646,7 +646,7 @@ export function ReceivePayment({
                             onClick={loadAppointments}
                             className="inline-flex items-center gap-1 text-xs font-semibold underline-offset-2 hover:underline"
                           >
-                            <RefreshCw className="h-3.5 w-3.5" />
+                            <RefreshCw className="h-4 w-4" />
                             Tentar novamente
                           </button>
                         )}
@@ -669,7 +669,7 @@ export function ReceivePayment({
                     {appointments.length > 3 && (
                       <FieldShell
                         icon={
-                          <Search className="h-4 w-4" />
+                          <Search className="h-[18px] w-[18px]" />
                         }
                         className="mb-3"
                       >
@@ -862,7 +862,7 @@ export function ReceivePayment({
                       <button
                         type="submit"
                         disabled={!canSubmit}
-                        className="inline-flex h-11 flex-[2] items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition-all hover:-translate-y-0.5 hover:brightness-110 hover:shadow-md active:translate-y-0 disabled:pointer-events-none disabled:opacity-40 sm:flex-none"
+                        className="inline-flex h-11 flex-[2] items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 hover:shadow-md disabled:pointer-events-none disabled:opacity-40 sm:flex-none"
                       >
                         {isSubmitting ? (
                           <>
@@ -871,7 +871,7 @@ export function ReceivePayment({
                           </>
                         ) : (
                           <>
-                            <Check className="h-4 w-4" />
+                            <Check className="h-[18px] w-[18px]" />
                             Confirmar
                           </>
                         )}
@@ -998,15 +998,15 @@ function AppointmentOption({
             {appointment.service.name}
           </span>
           <span className="inline-flex items-center gap-1">
-            <CalendarDays className="h-3 w-3" />
+            <CalendarDays className="h-3.5 w-3.5" />
             {formatDate(appointment.date)}
           </span>
           <span className="inline-flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+            <Clock className="h-3.5 w-3.5" />
             {formatTime(appointment.date)}
           </span>
           <span className="hidden items-center gap-1 sm:inline-flex">
-            <UserRound className="h-3 w-3" />
+            <UserRound className="h-3.5 w-3.5" />
             {appointment.professional.name}
           </span>
         </span>
@@ -1057,7 +1057,7 @@ function EmptyState({
   return (
     <div className="flex flex-col items-center rounded-2xl border border-dashed border-[var(--border)] px-6 py-8 text-center">
       <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--surface-secondary)] text-[var(--muted)]">
-        <Inbox className="h-5 w-5" />
+        <Inbox className="h-[22px] w-[22px]" />
       </span>
 
       <p className="mt-3 text-sm font-semibold">
@@ -1104,7 +1104,7 @@ function PaymentMethodCard({
       className={`relative flex flex-col items-start rounded-2xl border p-3.5 text-left transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${
         selected
           ? "border-primary bg-primary/[0.06] ring-4 ring-primary/10"
-          : "border-[var(--border)] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"
+          : "border-[var(--border)] hover:border-primary/40 hover:shadow-sm"
       }`}
     >
       <span

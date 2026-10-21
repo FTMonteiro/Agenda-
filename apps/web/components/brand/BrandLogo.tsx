@@ -31,7 +31,7 @@ export function BrandLogo({
   tagline = false,
   descriptor = false,
   iconClassName = "",
-  plusClassName = "text-[#1451D6] dark:text-[#6C9BFF]",
+  plusClassName = "text-blue-600 dark:text-blue-400",
 }: {
   size?: number;
   className?: string;

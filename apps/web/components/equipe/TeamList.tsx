@@ -473,7 +473,7 @@ export default function TeamList({
     <>
       {/*LISTA */}
 
-      <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
         {/*HEADER */}
 
         <div className="flex flex-col gap-4 border-b border-gray-100 p-5 md:flex-row md:items-center md:justify-between">
@@ -487,7 +487,7 @@ export default function TeamList({
 
           <div className="relative w-full md:w-80">
             <Search
-              size={18}
+              size={20}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
 
@@ -589,7 +589,7 @@ export default function TeamList({
                       aria-label="Abrir ações"
                       className="rounded-xl p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50"
                     >
-                      <MoreHorizontal size={22} />
+                      <MoreHorizontal size={24} />
                     </button>
 
                     {openMenu === member.id && (
@@ -601,7 +601,7 @@ export default function TeamList({
                           onClick={() => openEdit(member)}
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
                         >
-                          <Pencil size={16} />
+                          <Pencil size={18} />
                           Editar
                         </button>
 
@@ -613,7 +613,7 @@ export default function TeamList({
                           onClick={() => handleToggleActive(member)}
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                         >
-                          <Power size={16} />
+                          <Power size={18} />
 
                           {member.active ? "Desativar" : "Ativar"}
                         </button>
@@ -629,7 +629,7 @@ export default function TeamList({
                           }}
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={18} />
                           Excluir
                         </button>
                       </div>
@@ -646,7 +646,7 @@ export default function TeamList({
 
       {editingMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
-          <div className="my-8 w-full max-w-lg rounded-3xl bg-white shadow-2xl">
+          <div className="my-8 w-full max-w-lg rounded-2xl bg-white shadow-xl">
             {/*HEADER */}
 
             <div className="flex items-center justify-between border-b border-gray-100 p-6">
@@ -667,7 +667,7 @@ export default function TeamList({
                 className="rounded-xl p-2 text-gray-500 transition hover:bg-gray-100 disabled:opacity-50"
                 aria-label="Fechar"
               >
-                <X size={20} />
+                <X size={22} />
               </button>
             </div>
 
@@ -763,7 +763,7 @@ export default function TeamList({
 
               <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white">
-                  <KeyRound size={18} className="text-gray-600" />
+                  <KeyRound size={20} className="text-gray-600" />
                 </div>
 
                 <div>
@@ -823,7 +823,7 @@ export default function TeamList({
                 disabled={loadingId === editingMember.id}
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Save size={16} />
+                <Save size={18} />
 
                 {loadingId === editingMember.id
                   ? "A guardar..."
@@ -838,11 +838,11 @@ export default function TeamList({
 
       {deletingMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             {/* ÍCONE */}
 
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-              <Trash2 size={22} className="text-red-600" />
+              <Trash2 size={24} className="text-red-600" />
             </div>
 
             {/* TÍTULO */}

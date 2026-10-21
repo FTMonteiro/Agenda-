@@ -366,7 +366,7 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
             }}
             className={brandButton}
           >
-            <Plus size={18} />
+            <Plus size={20} />
             Novo profissional
           </button>
       </PageActions>
@@ -377,7 +377,7 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
-          <div className="my-8 w-full max-w-lg rounded-3xl bg-white shadow-2xl">
+          <div className="my-8 w-full max-w-lg rounded-2xl bg-white shadow-xl">
             {/* 
                 HEADER DO MODAL
              */}
@@ -386,9 +386,9 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50">
                   {createdPassword ? (
-                    <KeyRound size={21} className="text-blue-600" />
+                    <KeyRound size={22} className="text-blue-600" />
                   ) : (
-                    <UserPlus size={21} className="text-blue-600" />
+                    <UserPlus size={22} className="text-blue-600" />
                   )}
                 </div>
 
@@ -414,7 +414,7 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
                 className="rounded-xl p-2 text-gray-500 transition hover:bg-gray-100 disabled:opacity-50"
                 aria-label="Fechar"
               >
-                <X size={20} />
+                <X size={22} />
               </button>
             </div>
 
@@ -527,7 +527,7 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
 
                 <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
                   <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white">
-                    <KeyRound size={18} className="text-gray-600" />
+                    <KeyRound size={20} className="text-gray-600" />
                   </div>
 
                   <div>
@@ -579,7 +579,7 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
                   <div className="flex items-start gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                      <Check size={20} className="text-emerald-600" />
+                      <Check size={22} className="text-emerald-600" />
                     </div>
 
                     <div>
@@ -650,9 +650,9 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
                           }
                         >
                           {showCreatedPassword ? (
-                            <EyeOff size={18} />
+                            <EyeOff size={20} />
                           ) : (
-                            <Eye size={18} />
+                            <Eye size={20} />
                           )}
                         </button>
                       </div>
@@ -666,12 +666,12 @@ export default function TeamHeader({ onMemberCreated }: TeamHeaderProps) {
                       >
                         {passwordCopied ? (
                           <>
-                            <Check size={17} className="text-emerald-600" />
+                            <Check size={19} className="text-emerald-600" />
                             Copiado
                           </>
                         ) : (
                           <>
-                            <Copy size={17} />
+                            <Copy size={19} />
                             Copiar
                           </>
                         )}

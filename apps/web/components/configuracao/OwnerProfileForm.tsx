@@ -93,7 +93,7 @@ export function OwnerProfileForm({
       <div>
         <span className={labelClass}>E-mail</span>
         <p className="flex h-11 items-center gap-2 truncate rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] px-4 text-sm text-[var(--muted)]">
-          <Mail size={16} className="shrink-0" />
+          <Mail size={18} className="shrink-0" />
           <span className="truncate">{profile.email}</span>
         </p>
       </div>
@@ -104,7 +104,7 @@ export function OwnerProfileForm({
           disabled={saving || !isDirty}
           className="flex items-center gap-2 rounded-xl bg-[var(--foreground)] px-6 py-2.5 text-sm font-medium text-[var(--background)] shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {saving && <Loader2 size={16} className="animate-spin" />}
+          {saving && <Loader2 size={18} className="animate-spin" />}
           {saving ? "Salvando..." : "Salvar perfil"}
         </button>
       </div>

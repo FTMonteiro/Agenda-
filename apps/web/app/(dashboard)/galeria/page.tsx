@@ -24,7 +24,6 @@ import {
   Images,
   Maximize2,
   MoreHorizontal,
-  Sparkles,
   Star,
   Trash2,
   Upload,
@@ -406,7 +405,7 @@ export default function GaleriaPage() {
                 onClick={clearGallery}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
               >
-                <Trash2 size={16} />
+                <Trash2 size={18} />
                 Limpar galeria
               </button>
             </PageActions>
@@ -430,7 +429,7 @@ export default function GaleriaPage() {
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
             <div className="flex items-center justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--foreground)]">
-                <Images size={19} />
+                <Images size={21} />
               </div>
 
               <span className="text-xs font-medium text-[var(--muted)]">
@@ -453,7 +452,7 @@ export default function GaleriaPage() {
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
             <div className="flex items-center justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--foreground)]">
-                <Star size={19} />
+                <Star size={21} />
               </div>
 
               <span className="text-xs font-medium text-[var(--muted)]">
@@ -476,7 +475,7 @@ export default function GaleriaPage() {
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
             <div className="flex items-center justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--foreground)]">
-                <Check size={19} />
+                <Check size={21} />
               </div>
 
               <span className="text-xs font-medium text-[var(--muted)]">
@@ -499,7 +498,7 @@ export default function GaleriaPage() {
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
             <div className="flex items-center justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--foreground)]">
-                <Sparkles size={19} />
+                <Images size={21} />
               </div>
 
               <span className="text-xs font-medium text-[var(--muted)]">
@@ -523,7 +522,7 @@ export default function GaleriaPage() {
 
         {/*FOTO DE DESTAQUE*/}
         {coverImage && (
-          <section className="mb-8 overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)]">
+          <section className="mb-8 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
 
             <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4 sm:px-6">
               <div>
@@ -538,7 +537,7 @@ export default function GaleriaPage() {
 
               <div className="hidden items-center gap-2 rounded-full bg-[var(--surface-secondary)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)] sm:flex">
                 <Star
-                  size={13}
+                  size={14}
                   fill="currentColor"
                 />
                 Capa
@@ -584,10 +583,10 @@ export default function GaleriaPage() {
                         )
                       )
                     }
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur-md transition hover:bg-white/25"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition hover:bg-white/25"
                     aria-label="Visualizar foto"
                   >
-                    <Maximize2 size={17} />
+                    <Maximize2 size={19} />
                   </button>
                 </div>
               </div>
@@ -601,7 +600,7 @@ export default function GaleriaPage() {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`mb-8 cursor-pointer rounded-3xl border border-dashed transition ${
+          className={`mb-8 cursor-pointer rounded-2xl border border-dashed transition ${
             isDragging
               ? "border-[var(--primary)] bg-[var(--surface-secondary)]"
               : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--foreground)] hover:bg-[var(--surface-secondary)]"
@@ -645,7 +644,7 @@ export default function GaleriaPage() {
               disabled={isUploading}
               className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Upload size={17} />
+              <Upload size={19} />
 
               {isUploading
                 ? "A carregar imagens..."
@@ -681,7 +680,7 @@ export default function GaleriaPage() {
               </div>
 
               <div className="hidden items-center gap-2 text-xs text-[var(--muted)] sm:flex">
-                <Grid2X2 size={15} />
+                <Grid2X2 size={17} />
                 Galeria
               </div>
             </div>
@@ -716,9 +715,9 @@ export default function GaleriaPage() {
                     {/* CAPA */}
                     {image.isCover && (
                       <div className="absolute left-2.5 top-2.5 z-10">
-                        <div className="flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1.5 text-[10px] font-semibold text-neutral-900 shadow-lg">
+                        <div className="flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1.5 text-[11px] font-semibold text-neutral-900 shadow-lg">
                           <Star
-                            size={11}
+                            size={12}
                             fill="currentColor"
                           />
                           Capa
@@ -741,14 +740,14 @@ export default function GaleriaPage() {
                                 : image.id
                           );
                         }}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white opacity-0 backdrop-blur-md transition group-hover:opacity-100 hover:bg-black/50"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/50"
                         aria-label="Opções da imagem"
                       >
-                        <MoreHorizontal size={16} />
+                        <MoreHorizontal size={18} />
                       </button>
 
                       {menuOpen === image.id && (
-                        <div className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-2xl">
+                        <div className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xl">
 
                           {!image.isCover && (
                             <button
@@ -760,7 +759,7 @@ export default function GaleriaPage() {
                               }
                               className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
                             >
-                              <Star size={15} />
+                              <Star size={17} />
                               Definir como capa
                             </button>
                           )}
@@ -772,7 +771,7 @@ export default function GaleriaPage() {
                             }
                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
                           >
-                            <Maximize2 size={15} />
+                            <Maximize2 size={17} />
                             Visualizar
                           </button>
 
@@ -785,7 +784,7 @@ export default function GaleriaPage() {
                             }
                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-medium text-red-600 transition hover:bg-red-50"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={17} />
                             Eliminar
                           </button>
                         </div>
@@ -798,7 +797,7 @@ export default function GaleriaPage() {
                         {image.name}
                       </p>
 
-                      <p className="mt-0.5 text-[10px] text-white/60">
+                      <p className="mt-0.5 text-[11px] text-white/60">
                         {formatFileSize(
                           image.size
                         )}
@@ -816,15 +815,15 @@ export default function GaleriaPage() {
               >
                 <div className="flex h-full flex-col items-center justify-center px-4 text-center">
 
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--foreground)] transition group-hover:scale-105">
-                    <ImagePlus size={20} />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--foreground)] transition">
+                    <ImagePlus size={22} />
                   </div>
 
                   <span className="mt-3 text-xs font-semibold text-[var(--foreground)]">
                     Adicionar foto
                   </span>
 
-                  <span className="mt-1 text-[10px] text-[var(--muted)]">
+                  <span className="mt-1 text-[11px] text-[var(--muted)]">
                     Clique para selecionar
                   </span>
                 </div>
@@ -835,7 +834,7 @@ export default function GaleriaPage() {
 
         {/* ESTADO VAZIO*/}
         {images.length === 0 && (
-          <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] px-6 py-12 text-center sm:py-16">
+          <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-6 py-12 text-center sm:py-16">
 
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-secondary)] text-[var(--foreground)]">
               <Camera size={25} />
@@ -856,7 +855,7 @@ export default function GaleriaPage() {
               onClick={handleOpenFilePicker}
               className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-5 text-sm font-semibold text-white transition hover:opacity-90"
             >
-              <ImagePlus size={17} />
+              <ImagePlus size={19} />
               Adicionar primeira foto
             </button>
           </section>
@@ -869,7 +868,7 @@ export default function GaleriaPage() {
             <div className="flex gap-4">
 
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--foreground)]">
-                <Sparkles size={18} />
+                <Images size={20} />
               </div>
 
               <div>
@@ -894,7 +893,7 @@ export default function GaleriaPage() {
       {selectedImage &&
         selectedIndex !== null && (
           <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
             onClick={() =>
               setSelectedIndex(null)
             }
@@ -908,10 +907,10 @@ export default function GaleriaPage() {
               onClick={() =>
                 setSelectedIndex(null)
               }
-              className="absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 sm:right-6 sm:top-6"
+              className="absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:right-6 sm:top-6"
               aria-label="Fechar"
             >
-              <X size={20} />
+              <X size={22} />
             </button>
 
             {/* TÍTULO */}
@@ -936,7 +935,7 @@ export default function GaleriaPage() {
               <img
                 src={selectedImage.url}
                 alt={selectedImage.name}
-                className="max-h-[82vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
+                className="max-h-[82vh] max-w-[90vw] rounded-xl object-contain shadow-xl"
               />
             </div>
 
@@ -948,7 +947,7 @@ export default function GaleriaPage() {
                   event.stopPropagation();
                   previousImage();
                 }}
-                className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 sm:left-6 sm:h-12 sm:w-12"
+                className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:left-6 sm:h-12 sm:w-12"
                 aria-label="Imagem anterior"
               >
                 <ChevronLeft size={24} />
@@ -963,7 +962,7 @@ export default function GaleriaPage() {
                   event.stopPropagation();
                   nextImage();
                 }}
-                className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 sm:right-6 sm:h-12 sm:w-12"
+                className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:right-6 sm:h-12 sm:w-12"
                 aria-label="Próxima imagem"
               >
                 <ChevronRight size={24} />
@@ -972,7 +971,7 @@ export default function GaleriaPage() {
 
             {/* CONTROLOS */}
             <div
-              className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/10 bg-black/40 p-1.5 backdrop-blur-xl"
+              className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/10 bg-black/40 p-1.5"
               onClick={(event) =>
                 event.stopPropagation()
               }
@@ -983,7 +982,7 @@ export default function GaleriaPage() {
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-white transition hover:bg-white/10"
                 aria-label="Anterior"
               >
-                <ArrowLeft size={16} />
+                <ArrowLeft size={18} />
               </button>
 
               <button
@@ -1000,7 +999,7 @@ export default function GaleriaPage() {
                 }`}
               >
                 <Star
-                  size={13}
+                  size={14}
                   fill={
                     selectedImage.isCover
                       ? "currentColor"
@@ -1023,7 +1022,7 @@ export default function GaleriaPage() {
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-white transition hover:bg-red-500/20 hover:text-red-300"
                 aria-label="Eliminar imagem"
               >
-                <Trash2 size={15} />
+                <Trash2 size={17} />
               </button>
 
               <button
@@ -1032,7 +1031,7 @@ export default function GaleriaPage() {
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-white transition hover:bg-white/10"
                 aria-label="Próxima"
               >
-                <ArrowRight size={16} />
+                <ArrowRight size={18} />
               </button>
             </div>
           </div>

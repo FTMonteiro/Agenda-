@@ -11,7 +11,7 @@ export default function TermosPage() {
             <BrandLogo size={34} />
 
             <div className="leading-none">
-              <p className="mt-1 text-[9px] font-medium uppercase tracking-[0.18em] text-gray-400">
+              <p className="mt-1 text-xs font-medium text-gray-400">
                 by NEVREX
               </p>
             </div>
@@ -21,7 +21,7 @@ export default function TermosPage() {
             href="/login"
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-950"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-4 w-4" />
             Voltar ao Agenda+
           </Link>
         </div>
@@ -31,7 +31,7 @@ export default function TermosPage() {
         <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
           <aside className="hidden lg:block">
             <div className="sticky top-8">
-              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-400">
+              <p className="mb-3 text-xs font-medium text-gray-400">
                 Neste documento
               </p>
 
@@ -111,11 +111,11 @@ export default function TermosPage() {
 
           <article className="min-w-0">
             <div className="mb-10 border-b border-gray-200 pb-10">
-              <div className="mb-5 flex h-13 w-40 items-center justify-center ">
+              <div className="mb-5 flex h-13 w-40 items-center justify-center">
                 <BrandLogo size={34} />
               </div>
 
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
+              <p className="mb-2 text-xs font-medium text-gray-400">
                 NEVREX · Agenda+
               </p>
 
@@ -352,7 +352,7 @@ export default function TermosPage() {
               <section id="contacto">
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-7">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-950 text-white">
-                    <Mail className="h-4 w-4" />
+                    <Mail className="h-[18px] w-[18px]" />
                   </div>
 
                   <h2 className="mt-4 text-lg font-semibold text-gray-950">
@@ -368,7 +368,7 @@ export default function TermosPage() {
                     href="mailto:nevrex.contacto@gmail.com"
                     className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-gray-950 underline underline-offset-4"
                   >
-                    <Mail className="h-4 w-4" />
+                    <Mail className="h-[18px] w-[18px]" />
                     nevrex.contacto@gmail.com
                   </a>
                 </div>

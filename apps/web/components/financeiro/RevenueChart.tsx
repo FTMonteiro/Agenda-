@@ -107,7 +107,7 @@ export function RevenueChart({ days, month, loading }: Props) {
           </div>
         ) : isEmpty ? (
           <div className="flex h-[240px] flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] text-center">
-            <BarChart3 size={22} className="text-[var(--muted)]" />
+            <BarChart3 size={24} className="text-[var(--muted)]" />
             <p className="mt-3 text-sm font-medium text-[var(--foreground)]">Sem receitas para mostrar</p>
             <p className="mt-1 text-xs text-[var(--muted)]">Os pagamentos recebidos aparecem aqui dia a dia.</p>
           </div>
@@ -118,7 +118,7 @@ export function RevenueChart({ days, month, loading }: Props) {
               {gridLines.map((ratio) => (
                 <span
                   key={ratio}
-                  className="absolute right-2 -translate-y-1/2 text-[10px] tabular-nums text-[var(--muted)]"
+                  className="absolute right-2 -translate-y-1/2 text-[11px] tabular-nums text-[var(--muted)]"
                   style={{ top: `${(1 - ratio) * 100}%` }}
                 >
                   {formatAxis(max * ratio)}
@@ -144,7 +144,7 @@ export function RevenueChart({ days, month, loading }: Props) {
                   className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-dotted border-[var(--muted)]/50"
                   style={{ top: `${(1 - average / max) * 100}%` }}
                 >
-                  <span className="absolute -top-5 right-0 rounded bg-[var(--surface)] px-1 text-[10px] font-medium text-[var(--muted)]">
+                  <span className="absolute -top-5 right-0 rounded bg-[var(--surface)] px-1 text-[11px] font-medium text-[var(--muted)]">
                     Média
                   </span>
                 </div>
@@ -223,7 +223,7 @@ export function RevenueChart({ days, month, loading }: Props) {
               return (
                 <span
                   key={day.day}
-                  className={`flex-1 text-center text-[10px] tabular-nums ${
+                  className={`flex-1 text-center text-[11px] tabular-nums ${
                     index === todayIndex ? "font-semibold text-primary" : "text-[var(--muted)]"
                   } ${show ? "" : "invisible"} ${day.day % 5 === 0 || day.day === 1 ? "" : "max-sm:invisible"}`}
                 >

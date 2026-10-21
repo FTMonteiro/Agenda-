@@ -21,7 +21,7 @@ export function UserAvatar({ size }: { size: number }) {
     .join("");
 
   return (
-    <LinearGradient colors={["#5AC8FA", "#007AFF"]} style={[shape, styles.center]}>
+    <LinearGradient colors={["#5AC8FA", "#2E67B3"]} style={[shape, styles.center]}>
       <Text style={[styles.initials, { fontSize: size * 0.38 }]}>{initials || "?"}</Text>
     </LinearGradient>
   );

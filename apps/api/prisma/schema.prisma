@@ -61,6 +61,7 @@ model User {
   refreshTokens       RefreshToken[]
   favorites           Favorite[]
   reviews             Review[]
+  clientOf            BusinessClient[]
   notifications       Notification[]
   pushTokens          PushToken[]
   payments            Payment[]
@@ -112,6 +113,7 @@ model Business {
   appointments  Appointment[]
   favorites     Favorite[]
   reviews       Review[]
+  clients       BusinessClient[]
   hours         BusinessHours[]
   payments      Payment[]
   galleryImages GalleryImage[]
@@ -275,6 +277,22 @@ model Favorite {
   @@unique([userId, businessId])
   @@index([businessId])
   @@map("favorites")
+}
+
+// An app user who chose to be a client of a business (asked when they book there). Booking
+// alone does not make someone a client: they can decline and still book. Their name,
+// phone, email and photo come from their own account, so they stay up to date.
+model BusinessClient {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([businessId, userId])
+  @@index([userId])
+  @@map("business_clients")
 }
 
 model Review {

@@ -136,7 +136,7 @@ function TimeWheel({ times, value, onChange }: { times: string[]; value: string 
         })}
       </Animated.ScrollView>
       <View pointerEvents="none" style={styles.wheelIcon}>
-        <Ionicons name="time" size={20} color={tc.fg("#007AFF")} />
+        <Ionicons name="time" size={20} color={tc.fg("#2E67B3")} />
       </View>
     </View>
   );
@@ -676,7 +676,7 @@ const createStyles = (tc: ThemeRoles) =>
       height: WHEEL_ROW,
       borderRadius: 16,
       borderCurve: "continuous",
-      backgroundColor: tc.bg("rgba(0,122,255,0.10)"),
+      backgroundColor: tc.bg("rgba(46, 103, 179,0.10)"),
     },
 
     wheelRow: {

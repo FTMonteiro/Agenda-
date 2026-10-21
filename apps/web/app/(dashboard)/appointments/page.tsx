@@ -516,7 +516,7 @@ export default function AppointmentsPage() {
 
       <PageActions>
           <button type="button" onClick={openModal} className={brandButton}>
-            <Plus className="h-4 w-4" />
+            <Plus className="h-[18px] w-[18px]" />
             Novo agendamento
           </button>
       </PageActions>
@@ -575,7 +575,7 @@ export default function AppointmentsPage() {
                   onClick={() => setActiveFilter(filter.value)}
                   className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition duration-200 ${
                     active
-                      ? "bg-primary text-white shadow-[0_8px_20px_-10px_var(--brand)]"
+                      ? "bg-primary text-white shadow-sm"
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
@@ -596,7 +596,7 @@ export default function AppointmentsPage() {
           </div>
 
           <div className="relative w-full xl:max-w-sm">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-[22px] w-[22px] -translate-y-1/2 text-gray-400" />
 
             <input
               type="text"
@@ -647,7 +647,7 @@ export default function AppointmentsPage() {
 
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-950/50 p-4"
           onClick={() => {
             if (!isCreating) {
               setIsModalOpen(false);
@@ -655,7 +655,7 @@ export default function AppointmentsPage() {
           }}
         >
           <div
-            className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="border-b border-gray-100 px-6 py-5">

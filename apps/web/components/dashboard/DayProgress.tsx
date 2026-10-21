@@ -30,7 +30,7 @@ export function DayProgress({ counts, loading }: Props) {
           <p className="mt-0.5 text-xs text-[var(--muted)]">Atendimentos concluídos</p>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Gauge size={18} />
+          <Gauge size={20} />
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export function DayProgress({ counts, loading }: Props) {
                 >
                   <span className="flex min-w-0 items-center gap-2 text-xs text-[var(--muted)]">
                     <span className={`h-2 w-2 shrink-0 rounded-full ${meta.dot}`} />
-                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    <Icon className="h-4 w-4 shrink-0" />
                     <span className="truncate">{meta.label}</span>
                   </span>
                   <span className="text-sm font-semibold tabular-nums text-[var(--foreground)]">{counts[status]}</span>

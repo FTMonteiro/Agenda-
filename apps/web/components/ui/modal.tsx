@@ -29,7 +29,6 @@ export function Modal({
         justify-center
         bg-black/50
         p-4
-        backdrop-blur-sm
         dark:bg-black/80
       "
       onClick={onClose}
@@ -48,11 +47,11 @@ export function Modal({
           border-gray-200
           bg-white
           text-gray-900
-          shadow-2xl
+          shadow-xl
 
-          dark:border-gray-800
-          dark:bg-black
-          dark:text-white
+          dark:border-[var(--border)]
+          dark:bg-[var(--surface)]
+          dark:text-[var(--foreground)]
         "
         onClick={(event) => {
           event.stopPropagation();
@@ -71,8 +70,8 @@ export function Modal({
             px-6
             py-5
 
-            dark:border-gray-800
-            dark:bg-black
+            dark:border-[var(--border)]
+            dark:bg-[var(--surface)]
           "
         >
           {title ? (
@@ -114,7 +113,7 @@ export function Modal({
             "
             aria-label="Fechar modal"
           >
-            <X className="h-5 w-5" />
+            <X className="h-[22px] w-[22px]" />
           </button>
         </div>
 

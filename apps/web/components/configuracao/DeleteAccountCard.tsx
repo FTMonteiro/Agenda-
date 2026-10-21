@@ -43,7 +43,7 @@ export function DeleteAccountCard() {
         <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="flex items-center gap-2 text-lg font-semibold text-red-600">
-              <Trash2 size={18} />
+              <Trash2 size={20} />
               Eliminar conta
             </h2>
 
@@ -65,7 +65,7 @@ export function DeleteAccountCard() {
 
       {open && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) close();
           }}
@@ -74,12 +74,12 @@ export function DeleteAccountCard() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-account-title"
-            className="w-full max-w-md overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xl"
           >
             <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/10 text-red-500">
-                  <AlertTriangle size={21} />
+                  <AlertTriangle size={22} />
                 </div>
 
                 <h2 id="delete-account-title" className="text-base font-semibold text-[var(--foreground)]">
@@ -94,7 +94,7 @@ export function DeleteAccountCard() {
                 aria-label="Fechar"
                 className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-[var(--foreground)] disabled:opacity-50"
               >
-                <X size={19} />
+                <X size={21} />
               </button>
             </div>
 
@@ -134,7 +134,7 @@ export function DeleteAccountCard() {
                 disabled={deleting || typed.trim().toUpperCase() !== CONFIRM_WORD}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
-                {deleting ? <Loader2 size={17} className="animate-spin" /> : <Trash2 size={17} />}
+                {deleting ? <Loader2 size={19} className="animate-spin" /> : <Trash2 size={19} />}
                 {deleting ? "A eliminar..." : "Eliminar de vez"}
               </button>
             </div>
