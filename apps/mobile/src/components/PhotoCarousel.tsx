@@ -24,8 +24,8 @@ interface PhotoCarouselProps {
   photos: string[];
   name: string;
   location: string | null;
-  ratingAvg: number | null;
-  ratingCount: number;
+  // A avaliação do espaço: quantas pessoas o têm nos favoritos.
+  likes: number;
   favorite: boolean;
   onFavorite: () => void;
 }
@@ -33,13 +33,13 @@ interface PhotoCarouselProps {
 /*
  * Carrossel das fotos do espaço (a galeria carregada no painel).
  *
- * - As fotos deslizam por baixo; o nome, a avaliação e o coração ficam fixos por cima,
+ * - As fotos deslizam por baixo; o nome, os gostos e o coração ficam fixos por cima,
  *   desenhados uma só vez (não em cada foto), por isso nada pisca ao trocar.
  * - A largura é a do próprio carrossel, medida no ecrã, e não a da janela no arranque.
  * - Avança sozinho; as barras no fundo enchem-se como um temporizador. Enquanto a
  *   pessoa arrasta, o avanço automático pára e recomeça quando larga.
  */
-export function PhotoCarousel({ photos, name, location, ratingAvg, ratingCount, favorite, onFavorite }: PhotoCarouselProps) {
+export function PhotoCarousel({ photos, name, location, likes, favorite, onFavorite }: PhotoCarouselProps) {
   const t = useT();
   const [width, setWidth] = useState(0);
   const [index, setIndex] = useState(0);
@@ -181,12 +181,10 @@ export function PhotoCarousel({ photos, name, location, ratingAvg, ratingCount, 
           </Text>
         </View>
 
-        {ratingAvg !== null ? (
+        {likes > 0 ? (
           <View style={styles.rating}>
-            <Ionicons name="star" size={14} color="#FFCC00" />
-            <Text style={styles.ratingText}>
-              {ratingAvg.toFixed(1)} ({ratingCount})
-            </Text>
+            <Ionicons name="heart" size={14} color="#FF375F" />
+            <Text style={styles.ratingText}>{likes}</Text>
           </View>
         ) : null}
       </View>

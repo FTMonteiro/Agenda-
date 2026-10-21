@@ -304,11 +304,11 @@ export default function BookingServiceScreen() {
                 ) : null}
               </View>
 
-              {business.ratingAvg !== null ? (
+              {business.favoriteCount > 0 ? (
                 <View style={styles.spaceRating}>
-                  <Ionicons name="star" size={12} color={tc.fg(COLORS.gold)} />
+                  <Ionicons name="heart" size={12} color={tc.fg("#FF375F")} />
 
-                  <Text style={styles.spaceRatingText}>{business.ratingAvg.toFixed(1)}</Text>
+                  <Text style={styles.spaceRatingText}>{business.favoriteCount}</Text>
                 </View>
               ) : null}
             </LinearGradient>

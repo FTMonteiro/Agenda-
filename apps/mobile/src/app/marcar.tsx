@@ -8,7 +8,7 @@ import type { BusinessDTO } from "@slotix/types";
 import { formatDistance } from "@slotix/types";
 
 import { useIOSColors } from "@/components/ios";
-import { likesText, placeText, ratingWithCount, RowGroup, SectionTitle } from "@/components/SpaceCards";
+import { likesLabel, placeText, RowGroup, SectionTitle } from "@/components/SpaceCards";
 import { CATEGORIES } from "@/constants/categories";
 import { Typography } from "@/constants/theme";
 import { useSelectedLocation } from "../contexts/LocationContext";
@@ -196,8 +196,7 @@ export default function BookScreen() {
             <RowGroup>
               {spaces.map((space) => {
                 const details = [
-                  `★ ${ratingWithCount(space)}`,
-                  likesText(space),
+                  likesLabel(space),
                   space.distanceKm !== null ? formatDistance(space.distanceKm) : null,
                   t(space.category),
                 ].filter(Boolean);

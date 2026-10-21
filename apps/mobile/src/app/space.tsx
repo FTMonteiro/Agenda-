@@ -21,13 +21,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 
-import { formatDistance, type BusinessDTO, type GalleryImageDTO, type ProfessionalDTO, type ReviewDTO, type ServiceDTO } from "@slotix/types";
+import { formatDistance, type BusinessDTO, type GalleryImageDTO, type ProfessionalDTO, type ServiceDTO } from "@slotix/types";
 
 import {
   getBusiness,
   getBusinessGallery,
   getBusinessProfessionals,
-  getBusinessReviews,
   getBusinessServices,
 } from "../services/businesses";
 
@@ -38,7 +37,7 @@ import { getCoordinatesIfAllowed } from "../services/location";
 import { useSelectedLocation } from "../contexts/LocationContext";
 import { usePreferences } from "../contexts/PreferencesContext";
 import { useThemed, type ThemeRoles } from "@/theme/roles";
-import { useT, dateLocale } from "@/i18n";
+import { useT } from "@/i18n";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -64,13 +63,6 @@ const formatPrice = (value: number) =>
   })
     .format(value)
     .replace("AOA", "Kz");
-
-const formatReviewDate = (value: string) =>
-  new Intl.DateTimeFormat(dateLocale(), {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(value));
 
 const GlassCard = ({ children, style }: { children: React.ReactNode; style?: any }) => {
   const { tc, styles } = useThemed(createStyles);
@@ -165,29 +157,6 @@ const ProfessionalRow = ({ professional, last }: { professional: ProfessionalDTO
   );
 };
 
-const ReviewRow = ({ review, last }: { review: ReviewDTO; last: boolean }) => {
-  const { tc, styles } = useThemed(createStyles);
-  return (
-    <View style={[styles.reviewRow, !last && styles.listRowDivider]}>
-      <View style={styles.reviewHeader}>
-        <Text style={styles.reviewName} numberOfLines={1}>
-          {review.clientName}
-        </Text>
-
-        <View style={styles.reviewRating}>
-          <Ionicons name="star" size={12} color={tc.fg(COLORS.gold)} />
-
-          <Text style={styles.reviewRatingText}>{review.rating}</Text>
-        </View>
-      </View>
-
-      {review.comment ? <Text style={styles.reviewComment}>{review.comment}</Text> : null}
-
-      <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
-    </View>
-  );
-};
-
 const SpaceScreen = () => {
   const t = useT();
   const { tc, styles } = useThemed(createStyles);
@@ -204,7 +173,6 @@ const SpaceScreen = () => {
   const [favoriteAtLoad, setFavoriteAtLoad] = useState(false);
   const [services, setServices] = useState<ServiceDTO[]>([]);
   const [professionals, setProfessionals] = useState<ProfessionalDTO[]>([]);
-  const [reviews, setReviews] = useState<ReviewDTO[]>([]);
   const [gallery, setGallery] = useState<GalleryImageDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -234,10 +202,9 @@ const SpaceScreen = () => {
         setBusiness(businessData);
         setFavoriteAtLoad(isFavorite(businessData.id));
 
-        const [servicesData, professionalsData, reviewsData, galleryData] = await Promise.all([
+        const [servicesData, professionalsData, galleryData] = await Promise.all([
           getBusinessServices(businessId as string).catch(() => []),
           getBusinessProfessionals(businessId as string).catch(() => []),
-          getBusinessReviews(businessId as string).catch(() => []),
           getBusinessGallery(businessId as string).catch(() => []),
         ]);
 
@@ -245,7 +212,6 @@ const SpaceScreen = () => {
 
         setServices(servicesData);
         setProfessionals(professionalsData);
-        setReviews(reviewsData);
         setGallery(galleryData);
       } catch {
         if (!cancelled) setError(true);
@@ -392,28 +358,13 @@ const SpaceScreen = () => {
             photos={photos}
             name={business.name}
             location={business.address ?? t(business.category)}
-            ratingAvg={business.ratingAvg}
-            ratingCount={business.ratingCount}
+            likes={likes}
             favorite={isFavorite(businessId)}
             onFavorite={() => void toggleFavorite(businessId)}
           />
 
-          {/* Quantas pessoas avaliaram o espaço e quantas o têm nos favoritos. */}
+          {/* A avaliação do espaço são os gostos: quantas pessoas o têm nos favoritos. */}
           <View style={styles.stats}>
-            <View style={styles.stat}>
-              <View style={styles.statValueRow}>
-                <Ionicons name="star" size={16} color="#FFCC00" />
-                <Text style={styles.statValue}>{business.ratingAvg !== null ? business.ratingAvg.toFixed(1) : "—"}</Text>
-              </View>
-              <Text style={styles.statLabel}>
-                {business.ratingCount === 0
-                  ? t("Sem avaliações")
-                  : `${business.ratingCount} ${business.ratingCount === 1 ? t("avaliação") : t("avaliações")}`}
-              </Text>
-            </View>
-
-            <View style={styles.statDivider} />
-
             <View style={styles.stat}>
               <View style={styles.statValueRow}>
                 <Ionicons name="heart" size={16} color="#FF3B30" />
@@ -533,28 +484,6 @@ const SpaceScreen = () => {
               </GlassCard>
             ) : (
               <Text style={styles.emptyText}>{t("Sem profissionais disponíveis neste espaço.")}</Text>
-            )}
-          </View>
-
-          <View style={styles.section}>
-            <SectionHeader
-              number={nextNumber()}
-              title={t("Avaliações")}
-              subtitle={
-                reviews.length > 0
-                  ? `${reviews.length} ${reviews.length === 1 ? t("avaliação") : t("avaliações")}`
-                  : undefined
-              }
-            />
-
-            {reviews.length > 0 ? (
-              <GlassCard>
-                {reviews.map((review, index) => (
-                  <ReviewRow key={review.id} review={review} last={index === reviews.length - 1} />
-                ))}
-              </GlassCard>
-            ) : (
-              <Text style={styles.emptyText}>{t("Sem avaliações ainda.")}</Text>
             )}
           </View>
 
@@ -794,12 +723,6 @@ const createStyles = (tc: ThemeRoles) =>
       color: tc.fg(COLORS.muted),
     },
 
-    statDivider: {
-      width: StyleSheet.hairlineWidth,
-      alignSelf: "stretch",
-      backgroundColor: tc.border(COLORS.border),
-    },
-
     sectionHeader: {
       flexDirection: "row",
       alignItems: "flex-start",
@@ -992,51 +915,6 @@ const createStyles = (tc: ThemeRoles) =>
       color: tc.fg(COLORS.text),
       fontSize: 11,
       fontWeight: "700",
-    },
-
-    reviewRow: {
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-    },
-
-    reviewHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-
-    reviewName: {
-      flex: 1,
-      marginRight: 8,
-      color: tc.fg(COLORS.black),
-      fontSize: 13,
-      fontWeight: "700",
-    },
-
-    reviewRating: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-    },
-
-    reviewRatingText: {
-      color: tc.fg(COLORS.text),
-      fontSize: 11,
-      fontWeight: "700",
-    },
-
-    reviewComment: {
-      marginTop: 6,
-      color: tc.fg(COLORS.text),
-      fontSize: 12,
-      lineHeight: 18,
-    },
-
-    reviewDate: {
-      marginTop: 8,
-      color: tc.fg(COLORS.soft),
-      fontSize: 10,
-      fontWeight: "600",
     },
 
     bottomSpace: {

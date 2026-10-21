@@ -389,10 +389,10 @@ export default function BookingConfirmationScreen() {
                 </Text>
               </View>
 
-              {business.ratingAvg !== null ? (
+              {business.favoriteCount > 0 ? (
                 <View style={styles.ratingBadge}>
-                  <Ionicons name="star" size={12} color={tc.fg("#FFFFFF")} />
-                  <Text style={styles.ratingText}>{business.ratingAvg.toFixed(1)}</Text>
+                  <Ionicons name="heart" size={12} color={tc.fg("#FFFFFF")} />
+                  <Text style={styles.ratingText}>{business.favoriteCount}</Text>
                 </View>
               ) : null}
             </View>

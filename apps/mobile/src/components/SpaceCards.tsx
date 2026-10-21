@@ -17,18 +17,10 @@ import { translate, useT } from "@/i18n";
  * Todos encolhem ligeiramente no instante do toque.
  */
 
-export function ratingText(space: BusinessDTO): string {
-  return space.ratingAvg !== null ? space.ratingAvg.toFixed(1) : translate('Novo');
-}
-
-// A nota com o número de avaliações em que assenta: "4.8 (12)".
-export function ratingWithCount(space: BusinessDTO): string {
-  return space.ratingCount > 0 ? `${ratingText(space)} (${space.ratingCount})` : ratingText(space);
-}
-
-// Quantas pessoas têm o espaço nos favoritos: "♥ 8". Nada enquanto ninguém o guardou.
-export function likesText(space: BusinessDTO): string | null {
-  return space.favoriteCount > 0 ? `♥ ${space.favoriteCount}` : null;
+// A avaliação de um espaço são os gostos: quantas pessoas o têm nos favoritos ("♥ 8").
+// Enquanto ninguém o guardou, é "Novo".
+export function likesLabel(space: BusinessDTO): string {
+  return space.favoriteCount > 0 ? `♥ ${space.favoriteCount}` : translate('Novo');
 }
 
 // Onde o espaço fica, em poucas palavras: "Talatona, Luanda". Sem zona marcada no mapa
@@ -147,8 +139,7 @@ export function HeroSpaceCard({
             {space.name}
           </Text>
           <Text style={styles.heroMeta} numberOfLines={1}>
-            ★ {ratingWithCount(space)}
-            {space.favoriteCount > 0 ? `  ·  ${likesText(space)}` : ''}
+            {likesLabel(space)}
             {place ? `  ·  ${place}` : ''}
           </Text>
         </View>
@@ -200,8 +191,7 @@ export function SpaceTile({
           {space.name}
         </Text>
         <Text style={[styles.tileMeta, { color: colors.textSecondary }]} numberOfLines={1}>
-          ★ {ratingWithCount(space)}
-          {space.favoriteCount > 0 ? `  ·  ${likesText(space)}` : ''}
+          {likesLabel(space)}
           {space.category ? `  ·  ${t(space.category)}` : ''}
         </Text>
         {place ? (
@@ -235,8 +225,7 @@ export function SpaceRow({
   const colors = useIOSColors();
 
   const details = [
-    `★ ${ratingWithCount(space)}`,
-    likesText(space),
+    likesLabel(space),
     space.distanceKm !== null ? formatDistance(space.distanceKm) : null,
     t(space.category),
   ].filter(Boolean);
