@@ -3,10 +3,12 @@ import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text, View, type Di
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect } from "expo-router";
-import type { AppointmentDTO, BusinessDTO, ServiceDTO } from "@slotix/types";
+import { useFocusEffect, useRouter } from "expo-router";
+import type { AppointmentDTO, BusinessDTO, ProfessionalDTO, ServiceDTO } from "@slotix/types";
 
 import { useIOSColors } from "@/components/ios";
+import { CircleButton } from "@/components/ScreenChrome";
+import { useAuth } from "@/contexts/AuthContext";
 import { Typography } from "@/constants/theme";
 import { listMyAppointments } from "@/services/appointments";
 import { getBusiness, getBusinessServices } from "@/services/businesses";
@@ -123,6 +125,24 @@ export function useUnreadCount(enabled: boolean): number {
   return count;
 }
 
+// O sino dos avisos, igual em todos os ecrãs (Início, Explorar): com o número real de
+// avisos por ler, que se atualiza na hora quando chega um aviso novo.
+export function NotificationBell() {
+  const t = useT();
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const unread = useUnreadCount(isAuthenticated);
+
+  return (
+    <CircleButton
+      icon={unread > 0 ? "notifications" : "notifications-outline"}
+      label={unread > 0 ? t("Notificações, {0} por ler", [unread]) : t("Notificações")}
+      badge={unread}
+      onPress={() => router.push("/perfil/notifications")}
+    />
+  );
+}
+
 /* ---------------------------------------------------------
    Próxima marcação
 --------------------------------------------------------- */
@@ -132,6 +152,7 @@ export interface UpcomingAppointment {
   date: Date;
   business?: BusinessDTO;
   service?: ServiceDTO;
+  professional?: ProfessionalDTO;
 }
 
 // A marcação ativa (pendente ou confirmada) mais próxima no futuro, com o nome do espaço
@@ -272,6 +293,7 @@ export function UpcomingAppointmentCard({ item, onPress }: { item: UpcomingAppoi
               </Text>
               <Text style={styles.business} numberOfLines={1}>
                 {item.business?.name ?? t("Espaço")}
+                {item.professional ? `  ·  ${item.professional.name}` : ""}
               </Text>
               <View style={styles.whenRow}>
                 <Ionicons name="time" size={14} color="#FFFFFF" />

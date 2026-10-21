@@ -18,6 +18,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BusinessDTO, BusinessSortBy } from "@slotix/types";
 
+import { NotificationBell } from "@/components/HomeWidgets";
 import { useIOSColors } from "@/components/ios";
 import { HeroSpaceCard, RowGroup, SectionTitle, SpaceRow, SpaceTile } from "@/components/SpaceCards";
 import { CATEGORY_FILTERS as CATEGORIES } from "@/constants/categories";
@@ -193,13 +194,8 @@ export default function ExploreScreen() {
       >
         <View style={styles.titleRow}>
           <View />
-          <Pressable onPress={() => router.push("/perfil/notifications")} hitSlop={8} accessibilityLabel={t("Notificações")}>
-            {({ pressed }) => (
-              <View style={[styles.circleButton, { backgroundColor: colors.card, opacity: pressed ? 0.6 : 1 }]}>
-                <Ionicons name="notifications-outline" size={20} color={colors.text} />
-              </View>
-            )}
-          </Pressable>
+          {/* O mesmo sino do Início, com o número real de avisos por ler */}
+          <NotificationBell />
         </View>
 
         <View style={styles.searchRow}>
@@ -362,13 +358,6 @@ const styles = StyleSheet.create({
   },
   largeTitle: {
     ...Typography.largeTitle,
-  },
-  circleButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
   },
   searchRow: {
     flexDirection: "row",

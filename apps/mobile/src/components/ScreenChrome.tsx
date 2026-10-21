@@ -9,8 +9,7 @@ import { Typography } from "@/constants/theme";
 
 /*
  * A moldura comum dos ecrãs de topo (Início, Favoritos, Marcações), como nas apps da Apple:
- * um título grande que sobe com a página e passa para uma barra translúcida fixa no topo,
- * botões redondos para as ações e uma entrada em cascata das secções.
+ * uma barra translúcida fixa no topo que aparece quando a página sobe, botões redondos para as ações e uma entrada em cascata das secções.
  */
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
@@ -59,39 +58,6 @@ export function CollapsingTopBar({
         </View>
       </View>
     </View>
-  );
-}
-
-/* Título grande do ecrã; desvanece ao subir e cresce ligeiramente ao puxar para baixo. */
-export function LargeTitle({
-  scrollY,
-  title,
-  subtitle,
-  accessory,
-}: {
-  scrollY: Animated.Value;
-  title: React.ReactNode;
-  subtitle?: string;
-  accessory?: React.ReactNode;
-}) {
-  const colors = useIOSColors();
-  const opacity = scrollY.interpolate({ inputRange: [0, COLLAPSE_END - 10], outputRange: [1, 0], extrapolate: "clamp" });
-  const scale = scrollY.interpolate({ inputRange: [-120, 0], outputRange: [1.08, 1], extrapolate: "clamp" });
-
-  return (
-    <Animated.View style={[styles.largeTitle, { opacity, transform: [{ scale }] }]}>
-      <View style={styles.largeTitleText}>
-        {typeof title === "string" ? (
-          <Text style={[styles.largeTitleLabel, { color: colors.text }]} numberOfLines={1} accessibilityRole="header">
-            {title}
-          </Text>
-        ) : (
-          title
-        )}
-        {subtitle ? <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text> : null}
-      </View>
-      {accessory ? <View style={styles.accessory}>{accessory}</View> : null}
-    </Animated.View>
   );
 }
 
@@ -211,29 +177,6 @@ const styles = StyleSheet.create({
     ...Typography.headline,
     flex: 1,
     textAlign: "center",
-  },
-  largeTitle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    transformOrigin: "left",
-  },
-  largeTitleText: {
-    flex: 1,
-  },
-  largeTitleLabel: {
-    ...Typography.largeTitle,
-    fontWeight: "800",
-    letterSpacing: -0.6,
-  },
-  subtitle: {
-    ...Typography.subheadline,
-    marginTop: 2,
-  },
-  accessory: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
   },
   circle: {
     width: 40,

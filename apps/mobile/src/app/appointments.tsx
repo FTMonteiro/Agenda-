@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -13,6 +14,7 @@ import {
   View,
   type LayoutChangeEvent,
 } from "react-native";
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -20,7 +22,9 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AppointmentDTO, AppointmentStatus, BusinessDTO, ProfessionalDTO, ServiceDTO } from "@slotix/types";
 
+import { Skeleton, UpcomingAppointmentCard } from "@/components/HomeWidgets";
 import { useIOSColors } from "@/components/ios";
+import { CircleButton, CollapsingTopBar, Reveal } from "@/components/ScreenChrome";
 import { Typography } from "@/constants/theme";
 import { cancelAppointment, listMyAppointments } from "../services/appointments";
 import { clearHistory, getHistoryClearedAt, withoutClearedHistory } from "../services/appointment-history";
@@ -29,6 +33,7 @@ import { syncReminders } from "../services/reminders";
 import { onRealtime } from "../services/realtime";
 import { usePreferences } from "../contexts/PreferencesContext";
 import { getBusiness, getBusinessProfessionals, getBusinessServices } from "../services/businesses";
+import { tapFeedback } from "../services/haptics";
 import { useT, translate, dateLocale } from "@/i18n";
 
 // De quanto em quanto tempo o ecrã volta a perguntar ao servidor pelo estado das
@@ -51,6 +56,13 @@ function tabOf(status: AppointmentStatus): Tab {
 }
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
+
+const TAB_ICON: Record<Tab, IconName> = {
+  PENDING: "time-outline",
+  CONFIRMED: "checkmark-circle-outline",
+  COMPLETED: "checkmark-done-circle-outline",
+  CANCELLED: "close-circle-outline",
+};
 
 function statusStyle(status: AppointmentStatus, colors: ReturnType<typeof useIOSColors>) {
   switch (status) {
@@ -170,44 +182,104 @@ function StatusPill({ status }: { status: AppointmentStatus }) {
   const style = statusStyle(status, colors);
   return (
     <View style={[styles.pill, { backgroundColor: style.background }]}>
-      <Ionicons name={style.icon} size={13} color={style.color} />
+      <Ionicons name={style.icon} size={12} color={style.color} />
       <Text style={[styles.pillText, { color: style.color }]}>{t(style.label)}</Text>
     </View>
   );
 }
 
+// Os grupos da lista: por dia nas marcações por acontecer ("Hoje", "Amanhã", "sexta-feira,
+// 24 de outubro"), por mês no histórico ("Outubro de 2026").
+function groupLabel(date: Date, upcoming: boolean): string {
+  if (!upcoming) {
+    const month = new Intl.DateTimeFormat(dateLocale(), { month: "long", year: "numeric" }).format(date);
+    return month.charAt(0).toUpperCase() + month.slice(1);
+  }
+  const day = relativeDay(date);
+  return day.charAt(0).toUpperCase() + day.slice(1);
+}
+
 function AppointmentCard({ item, onPress }: { item: AppointmentView; onPress: () => void }) {
   const t = useT();
   const colors = useIOSColors();
+  const status = statusStyle(item.appointment.status, colors);
   const scale = useRef(new Animated.Value(1)).current;
   const spring = (toValue: number) =>
     Animated.spring(scale, { toValue, useNativeDriver: true, speed: 40, bounciness: toValue === 1 ? 6 : 0 }).start();
+  const photo = item.business?.logoUrl ?? item.business?.imageUrl;
 
   return (
-    <Pressable onPress={onPress} onPressIn={() => spring(0.98)} onPressOut={() => spring(1)} accessibilityRole="button">
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => spring(0.98)}
+      onPressOut={() => spring(1)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.service?.name ?? t("Serviço")}, ${item.business?.name ?? t("Espaço")}, ${formatLongDate(item.date)}, ${formatTime(item.date)}, ${t(status.label)}`}
+    >
       <Animated.View style={[styles.card, { backgroundColor: colors.card, transform: [{ scale }] }]}>
+        {/* Faixa com a cor do estado, para ler a lista de relance */}
+        <View style={[styles.cardAccent, { backgroundColor: status.color }]} />
+
         <View style={[styles.dateBlock, { backgroundColor: colors.input }]}>
-          <Text style={[styles.dateMonth, { color: colors.error }]}>{monthShort(item.date)}</Text>
+          <Text style={[styles.dateMonth, { color: status.color }]}>{monthShort(item.date)}</Text>
           <Text style={[styles.dateDay, { color: colors.text }]}>{item.date.getDate()}</Text>
-          <Text style={[styles.dateTime, { color: colors.textSecondary }]}>{formatTime(item.date)}</Text>
         </View>
 
         <View style={styles.cardText}>
           <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
             {item.service?.name ?? t("Serviço")}
           </Text>
-          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-            {item.business?.name ?? t("Espaço")}
-            {item.professional ? `  ·  ${item.professional.name}` : ""}
-          </Text>
+          <View style={styles.cardBusiness}>
+            {photo ? <Image source={{ uri: photo }} style={styles.cardLogo} contentFit="cover" /> : null}
+            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+              {item.business?.name ?? t("Espaço")}
+              {item.professional ? `  ·  ${item.professional.name}` : ""}
+            </Text>
+          </View>
           <View style={styles.cardFooter}>
+            <View style={styles.cardTime}>
+              <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.cardTimeText, { color: colors.text }]}>{formatTime(item.date)}</Text>
+            </View>
             <StatusPill status={item.appointment.status} />
-            <Text style={[styles.cardPrice, { color: colors.text }]}>{formatPrice(item.appointment.price)}</Text>
           </View>
         </View>
 
-        <Ionicons name="chevron-forward" size={17} color={colors.textTertiary} />
+        <View style={styles.cardEnd}>
+          <Text style={[styles.cardPrice, { color: colors.text }]}>{formatPrice(item.appointment.price)}</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+        </View>
       </Animated.View>
+    </Pressable>
+  );
+}
+
+/* Lugar guardado para a lista enquanto as marcações chegam. */
+function ListSkeleton() {
+  return (
+    <View style={styles.list}>
+      {[0, 1, 2].map((key) => (
+        <Skeleton key={key} width="100%" height={96} radius={18} />
+      ))}
+    </View>
+  );
+}
+
+/* Atalho redondo na folha de detalhes ("Ver espaço", "Como chegar", "Ligar"). */
+function QuickAction({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  const colors = useIOSColors();
+  return (
+    <Pressable onPress={onPress} style={styles.flex} accessibilityRole="button" accessibilityLabel={label}>
+      {({ pressed }) => (
+        <View style={[styles.quickAction, { backgroundColor: colors.card, opacity: pressed ? 0.6 : 1 }]}>
+          <View style={[styles.quickIcon, { backgroundColor: colors.infoBackground }]}>
+            <Ionicons name={icon} size={19} color={colors.primary} />
+          </View>
+          <Text style={[styles.quickLabel, { color: colors.text }]} numberOfLines={1}>
+            {label}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -219,111 +291,132 @@ function DetailsSheet({
   onClose,
   onCancel,
   onOpenSpace,
+  onDirections,
 }: {
   item: AppointmentView | null;
   cancelling: boolean;
   onClose: () => void;
   onCancel: () => void;
   onOpenSpace: () => void;
+  onDirections: () => void;
 }) {
   const t = useT();
   const colors = useIOSColors();
   if (!item) return null;
 
-  const { appointment } = item;
+  const { appointment, business } = item;
   const style = statusStyle(appointment.status, colors);
   const canCancel = appointment.status === "PENDING" || appointment.status === "CONFIRMED";
+  const photo = business?.imageUrl ?? business?.logoUrl;
+  const hasRoute = business?.latitude != null && business?.longitude != null;
 
   const rows: { icon: IconName; label: string; value: string }[] = [
     { icon: "calendar", label: t("Data"), value: formatLongDate(item.date) },
     { icon: "time", label: t("Hora"), value: formatTime(item.date) },
-    { icon: "cut", label: t("Serviço"), value: item.service?.name ?? "—" },
     { icon: "hourglass", label: t("Duração"), value: item.service ? `${item.service.duration} min` : "—" },
     { icon: "person", label: t("Profissional"), value: item.professional?.name ?? "—" },
-    { icon: "location", label: t("Morada"), value: item.business?.address ?? "—" },
-    { icon: "cash", label: t("Preço"), value: formatPrice(appointment.price) },
+    { icon: "location", label: t("Morada"), value: business?.address ?? "—" },
   ];
 
   return (
     <Modal visible animationType="slide" presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"} onRequestClose={onClose}>
-      <SafeAreaView style={[styles.sheet, { backgroundColor: colors.background }]} edges={Platform.OS === "ios" ? [] : ["top"]}>
-        <View style={styles.sheetNav}>
-          <View style={styles.sheetNavSide} />
-          <Text style={[styles.sheetTitle, { color: colors.text }]}>{t("Marcação")}</Text>
-          <Pressable onPress={onClose} hitSlop={10} style={[styles.sheetNavSide, styles.sheetNavRight]}>
-            <Text style={[styles.sheetDone, { color: colors.primary }]}>{t("OK")}</Text>
-          </Pressable>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.sheetContent} showsVerticalScrollIndicator={false}>
-          <View style={[styles.statusBanner, { backgroundColor: style.background }]}>
-            <Ionicons name={style.icon} size={30} color={style.color} />
-            <View style={styles.flex}>
-              <Text style={[styles.statusBannerTitle, { color: style.color }]}>{t(style.label)}</Text>
-              <Text style={[styles.statusBannerText, { color: colors.text }]}>{t(STATUS_HINT[appointment.status])}</Text>
-            </View>
-          </View>
-
-          <Pressable onPress={onOpenSpace} accessibilityRole="button">
-            {({ pressed }) => (
-              <View style={[styles.spaceRow, { backgroundColor: pressed ? colors.backgroundSelected : colors.card }]}>
-                <View style={[styles.spaceImage, { backgroundColor: colors.input }]}>
-                  {item.business?.logoUrl || item.business?.imageUrl ? (
-                    <Image source={{ uri: item.business.logoUrl ?? item.business.imageUrl ?? undefined }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                  ) : (
-                    <Ionicons name="storefront-outline" size={22} color={colors.textSecondary} />
-                  )}
-                </View>
-                <View style={styles.flex}>
-                  <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
-                    {item.business?.name ?? t("Espaço")}
-                  </Text>
-                  <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {t("Ver o espaço")}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={17} color={colors.textTertiary} />
-              </View>
+      <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+        <ScrollView contentContainerStyle={styles.sheetContent} showsVerticalScrollIndicator={false} bounces>
+          {/* Capa com a fotografia do espaço, o serviço e o estado */}
+          <View style={[styles.cover, { backgroundColor: colors.backgroundSelected }]}>
+            {photo ? (
+              <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+            ) : (
+              <LinearGradient colors={["#0A84FF", "#5E5CE6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
             )}
-          </Pressable>
-
-          <View style={[styles.detailGroup, { backgroundColor: colors.card }]}>
-            {rows.map((row, index) => (
-              <View key={row.label}>
-                <View style={styles.detailRow}>
-                  <Ionicons name={row.icon} size={18} color={colors.textSecondary} />
-                  <Text style={[styles.detailLabel, { color: colors.text }]}>{t(row.label)}</Text>
-                  <Text style={[styles.detailValue, { color: colors.textSecondary }]} numberOfLines={2}>
-                    {row.value}
-                  </Text>
+            <LinearGradient
+              colors={["rgba(0,0,0,0.35)", "rgba(0,0,0,0)", "rgba(0,0,0,0.8)"]}
+              locations={[0, 0.35, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+            <SafeAreaView edges={Platform.OS === "ios" ? [] : ["top"]} style={styles.coverNav}>
+              <View style={styles.flex} />
+              <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t("Fechar")}>
+                <View style={styles.coverClose}>
+                  <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
                 </View>
-                {index < rows.length - 1 ? <View style={[styles.separator, { backgroundColor: colors.divider }]} /> : null}
+              </Pressable>
+            </SafeAreaView>
+            <View style={styles.coverText}>
+              <View style={[styles.coverStatus, { backgroundColor: style.color }]}>
+                <Ionicons name={style.icon} size={13} color="#FFFFFF" />
+                <Text style={styles.coverStatusText}>{t(style.label)}</Text>
               </View>
-            ))}
+              <Text style={styles.coverTitle} numberOfLines={2}>
+                {item.service?.name ?? t("Serviço")}
+              </Text>
+              <Text style={styles.coverSubtitle} numberOfLines={1}>
+                {business?.name ?? t("Espaço")}
+              </Text>
+            </View>
           </View>
 
-          {appointment.notes ? (
-            <View style={[styles.detailGroup, styles.notes, { backgroundColor: colors.card }]}>
-              <Text style={[styles.notesLabel, { color: colors.textSecondary }]}>{t("NOTAS")}</Text>
-              <Text style={[styles.notesText, { color: colors.text }]}>{appointment.notes}</Text>
-            </View>
-          ) : null}
+          <View style={styles.sheetBody}>
+            <Text style={[styles.statusHint, { color: colors.textSecondary }]}>{t(STATUS_HINT[appointment.status])}</Text>
 
-          {canCancel ? (
-            <Pressable onPress={onCancel} disabled={cancelling} accessibilityRole="button">
-              {({ pressed }) => (
-                <View style={[styles.cancelButton, { backgroundColor: pressed ? colors.backgroundSelected : colors.card }]}>
-                  {cancelling ? (
-                    <ActivityIndicator color={colors.error} />
-                  ) : (
-                    <Text style={[styles.cancelText, { color: colors.error }]}>{t("Cancelar marcação")}</Text>
-                  )}
+            <View style={styles.quickRow}>
+              <QuickAction icon="storefront" label={t("Ver o espaço")} onPress={onOpenSpace} />
+              {hasRoute ? <QuickAction icon="navigate" label={t("Como chegar")} onPress={onDirections} /> : null}
+              {business?.phone ? (
+                <QuickAction icon="call" label={t("Ligar")} onPress={() => void Linking.openURL(`tel:${business.phone}`)} />
+              ) : null}
+            </View>
+
+            <View style={[styles.detailGroup, { backgroundColor: colors.card }]}>
+              {rows.map((row, index) => (
+                <View key={row.label}>
+                  <View style={styles.detailRow}>
+                    <View style={[styles.detailIcon, { backgroundColor: colors.input }]}>
+                      <Ionicons name={row.icon} size={15} color={colors.textSecondary} />
+                    </View>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]} numberOfLines={2}>
+                      {row.value}
+                    </Text>
+                  </View>
+                  {index < rows.length - 1 ? <View style={[styles.separator, { backgroundColor: colors.divider }]} /> : null}
                 </View>
-              )}
-            </Pressable>
-          ) : null}
+              ))}
+            </View>
+
+            {/* O total em destaque, como num recibo */}
+            <View style={[styles.totalRow, { backgroundColor: colors.card }]}>
+              <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>{t("Preço")}</Text>
+              <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(appointment.price)}</Text>
+            </View>
+
+            {appointment.notes ? (
+              <View style={[styles.detailGroup, styles.notes, { backgroundColor: colors.card }]}>
+                <Text style={[styles.notesLabel, { color: colors.textSecondary }]}>{t("NOTAS")}</Text>
+                <Text style={[styles.notesText, { color: colors.text }]}>{appointment.notes}</Text>
+              </View>
+            ) : null}
+
+            {canCancel ? (
+              <Pressable onPress={onCancel} disabled={cancelling} accessibilityRole="button">
+                {({ pressed }) => (
+                  <View style={[styles.cancelButton, { backgroundColor: colors.errorBackground, opacity: pressed ? 0.7 : 1 }]}>
+                    {cancelling ? (
+                      <ActivityIndicator color={colors.error} />
+                    ) : (
+                      <>
+                        <Ionicons name="close-circle" size={18} color={colors.error} />
+                        <Text style={[styles.cancelText, { color: colors.error }]}>{t("Cancelar marcação")}</Text>
+                      </>
+                    )}
+                  </View>
+                )}
+              </Pressable>
+            ) : null}
+          </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
@@ -349,6 +442,7 @@ export default function AppointmentsScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
+  const scrollY = useRef(new Animated.Value(0)).current;
   const loadedBusinesses = useRef(new Set<string>());
   const pickedInitialTab = useRef(false);
 
@@ -526,114 +620,126 @@ export default function AppointmentsScreen() {
     CANCELLED: "Não tem marcações canceladas.",
   };
 
+  // "Como chegar" abre o caminho dentro da app, como na página do espaço.
+  const openDirections = () => {
+    const business = selected?.business;
+    if (!business || business.latitude == null || business.longitude == null) return;
+    setSelectedId(null);
+    router.push({
+      pathname: "/rota",
+      params: {
+        name: business.name,
+        address: business.address ?? "",
+        latitude: String(business.latitude),
+        longitude: String(business.longitude),
+      },
+    } as never);
+  };
+
+  const changeTab = (next: Tab) => {
+    if (next === tab) return;
+    tapFeedback();
+    setTab(next);
+  };
+
+  // A lista do separador escolhido, em grupos com título (dia ou mês).
+  const groups = useMemo(() => {
+    const upcomingTab = tab === "PENDING" || tab === "CONFIRMED";
+    const result: { label: string; items: AppointmentView[] }[] = [];
+    for (const item of visible) {
+      const label = groupLabel(item.date, upcomingTab);
+      const last = result[result.length - 1];
+      if (last && last.label === label) last.items.push(item);
+      else result.push({ label, items: [item] });
+    }
+    return result;
+  }, [visible, tab]);
+
+  const showClearHistory = (tab === "COMPLETED" || tab === "CANCELLED") && historyCount > 0;
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 56 }]}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.textSecondary} />}
       >
-        {/* As marcações abrem-se a partir do Perfil. */}
-        <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace("/profile" as never))}
-          accessibilityRole="button"
-          accessibilityLabel={t("Voltar")}
-          hitSlop={10}
-          style={[styles.back, { backgroundColor: colors.card }]}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-
         {next ? (
-          <Pressable onPress={() => setSelectedId(next.appointment.id)} accessibilityRole="button">
-            {({ pressed }) => (
-              <LinearGradient
-                colors={["#0A84FF", "#5E5CE6"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.hero, { opacity: pressed ? 0.9 : 1 }]}
-              >
-                <View style={styles.heroTop}>
-                  <Text style={styles.heroEyebrow}>{t("PRÓXIMA MARCAÇÃO")}</Text>
-                  <View style={styles.heroBadge}>
-                    <Text style={styles.heroBadgeText}>{t(statusStyle(next.appointment.status, colors).label)}</Text>
-                  </View>
-                </View>
-                <Text style={styles.heroTitle} numberOfLines={1}>
-                  {next.service?.name ?? t("Serviço")}
-                </Text>
-                <Text style={styles.heroSubtitle} numberOfLines={1}>
-                  {next.business?.name ?? t("Espaço")}
-                </Text>
-                <View style={styles.heroFooter}>
-                  <View style={styles.heroInfo}>
-                    <Ionicons name="calendar" size={15} color="#FFFFFF" />
-                    <Text style={styles.heroInfoText}>{relativeDay(next.date)}</Text>
-                  </View>
-                  <View style={styles.heroInfo}>
-                    <Ionicons name="time" size={15} color="#FFFFFF" />
-                    <Text style={styles.heroInfoText}>{formatTime(next.date)}</Text>
-                  </View>
-                  {next.professional ? (
-                    <View style={[styles.heroInfo, styles.flex]}>
-                      <Ionicons name="person" size={15} color="#FFFFFF" />
-                      <Text style={styles.heroInfoText} numberOfLines={1}>
-                        {next.professional.name}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              </LinearGradient>
-            )}
-          </Pressable>
+          <Reveal index={1}>
+            <View style={styles.hero}>
+              <UpcomingAppointmentCard item={next} onPress={() => setSelectedId(next.appointment.id)} />
+            </View>
+          </Reveal>
         ) : null}
 
-        <Segmented value={tab} counts={counts} onChange={setTab} />
-
-        {(tab === "COMPLETED" || tab === "CANCELLED") && historyCount > 0 ? (
-          <Pressable
-            onPress={confirmClearHistory}
-            disabled={clearingHistory}
-            accessibilityRole="button"
-            accessibilityLabel={t("Apagar histórico")}
-            style={({ pressed }) => [styles.clearHistory, { backgroundColor: colors.errorBackground, opacity: pressed || clearingHistory ? 0.7 : 1 }]}
-          >
-            {clearingHistory ? (
-              <ActivityIndicator size="small" color={colors.error} />
-            ) : (
-              <Ionicons name="trash-outline" size={17} color={colors.error} />
-            )}
-            <Text style={[styles.clearHistoryText, { color: colors.error }]}>{t("Apagar histórico")}</Text>
-          </Pressable>
-        ) : null}
+        <View style={styles.segmentedWrap}>
+          <Segmented value={tab} counts={counts} onChange={changeTab} />
+        </View>
 
         {loading ? (
-          <View style={styles.state}>
-            <ActivityIndicator color={colors.textSecondary} />
-          </View>
+          <ListSkeleton />
         ) : visible.length === 0 ? (
-          <View style={styles.state}>
-            <Ionicons name="calendar-outline" size={46} color={colors.textTertiary} />
-            <Text style={[styles.stateTitle, { color: colors.text }]}>{t("Nada por aqui")}</Text>
-            <Text style={[styles.stateText, { color: colors.textSecondary }]}>{t(emptyText[tab])}</Text>
-            {appointments.length === 0 ? (
-              <Pressable onPress={() => router.replace("/marcar" as never)} accessibilityRole="button">
-                {({ pressed }) => (
-                  <View style={[styles.newBooking, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}>
-                    <Text style={styles.exploreButtonText}>{t("Marcar um serviço")}</Text>
-                  </View>
-                )}
-              </Pressable>
-            ) : null}
-          </View>
+          <Reveal index={0} key={`empty-${tab}`}>
+            <View style={styles.state}>
+              <View style={[styles.stateIcon, { backgroundColor: colors.card }]}>
+                <Ionicons name={TAB_ICON[tab]} size={30} color={colors.textTertiary} />
+              </View>
+              <Text style={[styles.stateTitle, { color: colors.text }]}>{t("Nada por aqui")}</Text>
+              <Text style={[styles.stateText, { color: colors.textSecondary }]}>{t(emptyText[tab])}</Text>
+              {appointments.length === 0 ? (
+                <Pressable onPress={() => router.replace("/marcar" as never)} accessibilityRole="button">
+                  {({ pressed }) => (
+                    <View style={[styles.newBooking, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}>
+                      <Ionicons name="add" size={20} color="#FFFFFF" />
+                      <Text style={styles.newBookingText}>{t("Marcar um serviço")}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              ) : null}
+            </View>
+          </Reveal>
         ) : (
-          <View style={styles.list}>
-            {visible.map((item) => (
-              <AppointmentCard key={item.appointment.id} item={item} onPress={() => setSelectedId(item.appointment.id)} />
+          // A chave muda com o separador: a lista volta a entrar em cascata ao trocar.
+          <View key={tab} style={styles.groups}>
+            {groups.map((group, groupIndex) => (
+              <Reveal key={group.label} index={groupIndex}>
+                <View style={styles.group}>
+                  <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{group.label}</Text>
+                  <View style={styles.list}>
+                    {group.items.map((item) => (
+                      <AppointmentCard key={item.appointment.id} item={item} onPress={() => setSelectedId(item.appointment.id)} />
+                    ))}
+                  </View>
+                </View>
+              </Reveal>
             ))}
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
+
+      <CollapsingTopBar
+        scrollY={scrollY}
+        title=""
+        left={
+          // As marcações abrem-se a partir do Perfil.
+          <CircleButton
+            icon="chevron-back"
+            label={t("Voltar")}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/profile" as never))}
+          />
+        }
+        right={
+          showClearHistory ? (
+            clearingHistory ? (
+              <ActivityIndicator color={colors.error} />
+            ) : (
+              <CircleButton icon="trash-outline" tint={colors.error} label={t("Apagar histórico")} onPress={confirmClearHistory} />
+            )
+          ) : null
+        }
+      />
 
       <DetailsSheet
         item={selected}
@@ -641,6 +747,7 @@ export default function AppointmentsScreen() {
         onClose={() => setSelectedId(null)}
         onCancel={confirmCancel}
         onOpenSpace={() => selected && openSpace(selected.appointment.businessId)}
+        onDirections={openDirections}
       />
     </View>
   );
@@ -661,75 +768,24 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   hero: {
-    borderRadius: 22,
-    borderCurve: "continuous",
-    padding: 18,
-    marginBottom: 20,
+    marginTop: 4,
   },
-  heroTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-  heroEyebrow: {
-    ...Typography.caption1,
-    fontWeight: "700",
-    color: "rgba(255,255,255,0.8)",
-  },
-  heroBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: "rgba(255,255,255,0.22)",
-  },
-  heroBadgeText: {
-    ...Typography.caption1,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  heroTitle: {
-    ...Typography.title1,
-    color: "#FFFFFF",
-  },
-  heroSubtitle: {
-    ...Typography.body,
-    color: "rgba(255,255,255,0.85)",
-    marginTop: 2,
-  },
-  heroFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    marginTop: 18,
-    paddingTop: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "rgba(255,255,255,0.35)",
-  },
-  heroInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  heroInfoText: {
-    ...Typography.subheadline,
-    fontWeight: "600",
-    color: "#FFFFFF",
+  segmentedWrap: {
+    marginTop: 20,
   },
   segmented: {
-    height: 36,
-    borderRadius: 10,
+    height: 38,
+    borderRadius: 12,
     borderCurve: "continuous",
     padding: 2,
     flexDirection: "row",
-    marginBottom: 16,
   },
   segmentThumb: {
     position: "absolute",
     top: 2,
     bottom: 2,
     left: 2,
-    borderRadius: 8,
+    borderRadius: 10,
     borderCurve: "continuous",
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 3 },
@@ -756,68 +812,103 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     fontWeight: "700",
   },
-  list: {
-    gap: 12,
+  groups: {
+    marginTop: 8,
   },
-  clearHistory: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    height: 44,
-    borderRadius: 12,
-    borderCurve: "continuous",
-    marginBottom: 14,
+  group: {
+    marginTop: 18,
   },
-  clearHistoryText: {
-    ...Typography.subheadline,
+  groupLabel: {
+    ...Typography.footnote,
     fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  list: {
+    gap: 10,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: 18,
     borderCurve: "continuous",
-    padding: 12,
+    paddingVertical: 12,
+    paddingLeft: 16,
+    paddingRight: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    overflow: "hidden",
+  },
+  cardAccent: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
   },
   dateBlock: {
-    width: 62,
-    borderRadius: 12,
+    width: 54,
+    height: 60,
+    borderRadius: 14,
     borderCurve: "continuous",
-    paddingVertical: 8,
     alignItems: "center",
+    justifyContent: "center",
   },
   dateMonth: {
     ...Typography.caption2,
-    fontWeight: "700",
+    fontWeight: "800",
+    letterSpacing: 0.4,
   },
   dateDay: {
     ...Typography.title2,
-  },
-  dateTime: {
-    ...Typography.caption1,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   cardText: {
     flex: 1,
-    gap: 2,
+    gap: 3,
   },
   cardTitle: {
     ...Typography.headline,
   },
+  cardBusiness: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  cardLogo: {
+    width: 16,
+    height: 16,
+    borderRadius: 4,
+  },
   cardSubtitle: {
     ...Typography.subheadline,
+    flexShrink: 1,
   },
   cardFooter: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
+    marginTop: 4,
+  },
+  cardTime: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  cardTimeText: {
+    ...Typography.footnote,
+    fontWeight: "600",
+  },
+  cardEnd: {
+    alignItems: "flex-end",
     justifyContent: "space-between",
-    marginTop: 6,
+    alignSelf: "stretch",
+    paddingVertical: 2,
   },
   cardPrice: {
     ...Typography.subheadline,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   pill: {
     flexDirection: "row",
@@ -833,123 +924,175 @@ const styles = StyleSheet.create({
   },
   state: {
     alignItems: "center",
-    paddingTop: 56,
+    paddingTop: 48,
     paddingHorizontal: 24,
     gap: 8,
   },
+  stateIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
+  },
   stateTitle: {
     ...Typography.title3,
-    marginTop: 8,
+    fontWeight: "700",
   },
   stateText: {
     ...Typography.subheadline,
     textAlign: "center",
-    marginBottom: 12,
-  },
-  back: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: 14,
   },
   newBooking: {
     height: 50,
-    paddingHorizontal: 28,
+    paddingHorizontal: 26,
     borderRadius: 25,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
   },
-  exploreButtonText: {
+  newBookingText: {
     ...Typography.headline,
     color: "#FFFFFF",
   },
   sheet: {
     flex: 1,
   },
-  sheetNav: {
-    height: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  sheetNavSide: {
-    width: 60,
-  },
-  sheetNavRight: {
-    alignItems: "flex-end",
-  },
-  sheetTitle: {
-    ...Typography.headline,
-    flex: 1,
-    textAlign: "center",
-  },
-  sheetDone: {
-    ...Typography.body,
-    fontWeight: "600",
-  },
   sheetContent: {
-    paddingHorizontal: 16,
     paddingBottom: 48,
-    gap: 16,
   },
-  statusBanner: {
-    borderRadius: 16,
-    borderCurve: "continuous",
+  cover: {
+    height: 260,
+    justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  coverNav: {
+    flexDirection: "row",
     padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
   },
-  statusBannerTitle: {
-    ...Typography.headline,
-  },
-  statusBannerText: {
-    ...Typography.subheadline,
-    marginTop: 2,
-  },
-  spaceRow: {
-    borderRadius: 12,
-    borderCurve: "continuous",
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  spaceImage: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    borderCurve: "continuous",
+  coverClose: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.15)",
+  },
+  coverText: {
+    padding: 20,
+    gap: 4,
+  },
+  coverStatus: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 6,
+  },
+  coverStatusText: {
+    ...Typography.caption1,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  coverTitle: {
+    ...Typography.title1,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+    color: "#FFFFFF",
+  },
+  coverSubtitle: {
+    ...Typography.body,
+    color: "rgba(255,255,255,0.85)",
+  },
+  sheetBody: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 16,
+  },
+  statusHint: {
+    ...Typography.subheadline,
+    paddingHorizontal: 4,
+  },
+  quickRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  quickAction: {
+    borderRadius: 16,
+    borderCurve: "continuous",
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    gap: 6,
+  },
+  quickIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quickLabel: {
+    ...Typography.footnote,
+    fontWeight: "600",
   },
   detailGroup: {
-    borderRadius: 12,
+    borderRadius: 16,
     borderCurve: "continuous",
     overflow: "hidden",
   },
   detailRow: {
-    minHeight: 46,
+    minHeight: 50,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
+  detailIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   detailLabel: {
-    ...Typography.body,
+    ...Typography.subheadline,
   },
   detailValue: {
-    ...Typography.body,
+    ...Typography.subheadline,
+    fontWeight: "600",
     flex: 1,
     textAlign: "right",
   },
   separator: {
     height: StyleSheet.hairlineWidth,
-    marginLeft: 44,
+    marginLeft: 54,
+  },
+  totalRow: {
+    borderRadius: 16,
+    borderCurve: "continuous",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  totalLabel: {
+    ...Typography.subheadline,
+    fontWeight: "600",
+  },
+  totalValue: {
+    ...Typography.title2,
+    fontWeight: "800",
   },
   notes: {
     padding: 14,
@@ -964,12 +1107,14 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     height: 50,
-    borderRadius: 12,
+    borderRadius: 14,
     borderCurve: "continuous",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
   },
   cancelText: {
-    ...Typography.body,
+    ...Typography.headline,
   },
 });

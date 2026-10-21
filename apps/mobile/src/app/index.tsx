@@ -11,7 +11,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
@@ -20,12 +19,13 @@ import type { BusinessDTO } from "@slotix/types";
 
 import { useIOSColors } from "@/components/ios";
 import {
+  NotificationBell,
   Skeleton,
   UpcomingAppointmentCard,
   useReduceMotion,
-  useUnreadCount,
   useUpcomingAppointment,
 } from "@/components/HomeWidgets";
+import { CollapsingTopBar, Reveal } from "@/components/ScreenChrome";
 import { HeroSpaceCard, RowGroup, SectionTitle, SpaceRow, SpaceTile } from "@/components/SpaceCards";
 import { UserAvatar } from "@/components/UserAvatar";
 import { CATEGORIES } from "@/constants/categories";
@@ -61,53 +61,17 @@ function PopIn({ index, children }: { index: number; children: React.ReactNode }
   );
 }
 
-// "Bom dia", "Boa tarde" ou "Boa noite", conforme a hora do telemóvel.
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return "Bom dia";
-  if (hour >= 12 && hour < 19) return "Boa tarde";
-  return "Boa noite";
-}
-
-// Entrada em cascata: cada secção sobe e aparece um pouco depois da anterior.
-function Reveal({ index, children }: { index: number; children: React.ReactNode }) {
-  const progress = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.spring(progress, {
-      toValue: 1,
-      delay: 80 * index,
-      useNativeDriver: true,
-      speed: 10,
-      bounciness: 4,
-    }).start();
-  }, [index, progress]);
-
-  return (
-    <Animated.View
-      style={{
-        opacity: progress,
-        transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }],
-      }}
-    >
-      {children}
-    </Animated.View>
-  );
-}
-
 export default function HomeScreen() {
   const t = useT();
   const router = useRouter();
   const colors = useIOSColors();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { coordinates: myPosition, place: myPlace, requestPosition, chooseNearMe } = useSelectedLocation();
+  const { coordinates: myPosition, requestPosition, chooseNearMe } = useSelectedLocation();
   const reduceMotion = useReduceMotion();
-  const unread = useUnreadCount(isAuthenticated);
   const { upcoming, reload: reloadUpcoming } = useUpcomingAppointment(isAuthenticated);
-  const firstName = user?.name.trim().split(/\s+/)[0] ?? "";
 
   const [featured, setFeatured] = useState<BusinessDTO[]>([]);
   const [topRated, setTopRated] = useState<BusinessDTO[]>([]);
@@ -123,6 +87,7 @@ export default function HomeScreen() {
 
   const heroWidth = Math.min(width - 32, 560);
   const heroGap = 12;
+  const step = heroWidth + heroGap;
 
   // A posição arredondada (~1 km para as outras secções, ~100 m para "Perto de ti"): evita
   // repetir pedidos a cada pequena leitura do GPS.
@@ -149,7 +114,6 @@ export default function HomeScreen() {
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aroundLatitude, aroundLongitude]);
 
   useEffect(() => {
@@ -212,16 +176,16 @@ export default function HomeScreen() {
       if (heroDragging.current) return;
       setSlide((current) => {
         const next = (current + 1) % heroSpaces.length;
-        heroRef.current?.scrollTo({ x: next * (heroWidth + heroGap), animated: true });
+        heroRef.current?.scrollTo({ x: next * step, animated: true });
         return next;
       });
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [heroSpaces.length, heroWidth, reduceMotion]);
+  }, [heroSpaces.length, step, reduceMotion]);
 
   const onHeroEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const next = Math.round(event.nativeEvent.contentOffset.x / (heroWidth + heroGap));
+    const next = Math.round(event.nativeEvent.contentOffset.x / step);
     // Um toque leve só quando é a pessoa a mudar de cartão, não no avanço automático.
     if (heroDragging.current && next !== slide) tapFeedback();
     heroDragging.current = false;
@@ -231,104 +195,37 @@ export default function HomeScreen() {
   const openSpace = (space: BusinessDTO) =>
     router.push({ pathname: "/space", params: { businessId: space.id } } as never);
 
-  // Barra de topo translúcida que aparece quando a página sobe, como no iOS; o cabeçalho
-  // grande sobe e desvanece ao mesmo tempo, e o título passa para a barra.
-  const headerOpacity = scrollY.interpolate({ inputRange: [40, 90], outputRange: [0, 1], extrapolate: "clamp" });
-  const greetingOpacity = scrollY.interpolate({ inputRange: [0, 60], outputRange: [1, 0], extrapolate: "clamp" });
-  const greetingShift = scrollY.interpolate({ inputRange: [-80, 0, 60], outputRange: [12, 0, -10], extrapolate: "clamp" });
-
-  const step = heroWidth + heroGap;
+  // O cabeçalho sobe e desvanece com a página; o título passa para a barra de topo.
+  const headerOpacity = scrollY.interpolate({ inputRange: [0, 50], outputRange: [1, 0], extrapolate: "clamp" });
+  const headerShift = scrollY.interpolate({ inputRange: [-80, 0, 50], outputRange: [10, 0, -8], extrapolate: "clamp" });
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 6 }]}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.textSecondary} />}
       >
-        {/* Cabeçalho: saudação, onde a pessoa está, avisos e perfil */}
-        <Animated.View style={[styles.header, { opacity: greetingOpacity, transform: [{ translateY: greetingShift }] }]}>
-          <View style={styles.headerText}>
-            <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t(greeting())}</Text>
-            <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-              {firstName || t("Início")}
-            </Text>
+        {/* Cabeçalho: só os avisos e o perfil, à direita */}
+        <Animated.View style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerShift }] }]}>
+          <View style={styles.headerActions}>
+            <NotificationBell />
             <Pressable
-              onPress={myPosition ? undefined : () => void requestPosition()}
-              disabled={!!myPosition}
+              onPress={() => router.replace("/profile" as never)}
               hitSlop={6}
-              accessibilityRole={myPosition ? "text" : "button"}
+              accessibilityRole="button"
+              accessibilityLabel={t("Perfil")}
             >
               {({ pressed }) => (
-                <View style={[styles.place, { opacity: pressed ? 0.5 : 1 }]}>
-                  <Ionicons
-                    name={myPosition ? "location" : "location-outline"}
-                    size={13}
-                    color={myPosition ? colors.primary : colors.textSecondary}
-                  />
-                  <Text style={[styles.placeText, { color: myPosition ? colors.text : colors.primary }]} numberOfLines={1}>
-                    {myPosition ? (myPlace ?? t("Perto de ti")) : t("Ativar localização")}
-                  </Text>
+                <View style={[styles.avatarRing, { borderColor: colors.card, opacity: pressed ? 0.6 : 1 }]}>
+                  <UserAvatar size={36} />
                 </View>
               )}
             </Pressable>
           </View>
-
-          <Pressable
-            onPress={() => router.push("/perfil/notifications")}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel={unread > 0 ? t("Notificações, {0} por ler", [unread]) : t("Notificações")}
-          >
-            {({ pressed }) => (
-              <View style={[styles.circleButton, { backgroundColor: colors.card, opacity: pressed ? 0.6 : 1 }]}>
-                <Ionicons name={unread > 0 ? "notifications" : "notifications-outline"} size={20} color={colors.text} />
-                {unread > 0 ? (
-                  <View style={[styles.badge, { borderColor: colors.background }]}>
-                    <Text style={styles.badgeText}>{unread > 9 ? "9+" : unread}</Text>
-                  </View>
-                ) : null}
-              </View>
-            )}
-          </Pressable>
-          <Pressable
-            onPress={() => router.replace("/profile" as never)}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel={t("Perfil")}
-          >
-            {({ pressed }) => (
-              <View style={{ opacity: pressed ? 0.6 : 1 }}>
-                <UserAvatar size={40} />
-              </View>
-            )}
-          </Pressable>
         </Animated.View>
-
-        {/* Pesquisa e atalho para o mapa */}
-        <Reveal index={0}>
-          <View style={styles.searchRow}>
-            <Pressable onPress={() => router.push("/search")} style={styles.flex} accessibilityRole="search">
-              {({ pressed }) => (
-                <View style={[styles.searchBar, { backgroundColor: colors.card, opacity: pressed ? 0.7 : 1 }]}>
-                  <Ionicons name="search" size={18} color={colors.textSecondary} />
-                  <Text style={[styles.searchPlaceholder, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {t("Serviços, espaços, zonas…")}
-                  </Text>
-                </View>
-              )}
-            </Pressable>
-            <Pressable onPress={() => router.push("/mapa" as never)} accessibilityLabel={t("Ver os espaços no mapa")} hitSlop={6}>
-              {({ pressed }) => (
-                <View style={[styles.mapButton, { backgroundColor: colors.card, opacity: pressed ? 0.7 : 1 }]}>
-                  <Ionicons name="map" size={19} color={colors.primary} />
-                </View>
-              )}
-            </Pressable>
-          </View>
-        </Reveal>
 
         {upcoming ? (
           <Reveal index={1}>
@@ -339,8 +236,8 @@ export default function HomeScreen() {
         ) : null}
 
         {loading && heroSpaces.length === 0 ? (
-          <View style={styles.heroSpacing}>
-            <Skeleton width={heroWidth} height={heroWidth * 1.08} radius={22} />
+          <View style={styles.heroSkeleton}>
+            <Skeleton width={heroWidth} height={heroWidth * 1.08} radius={24} />
           </View>
         ) : heroSpaces.length > 0 ? (
           <Reveal index={2}>
@@ -360,12 +257,11 @@ export default function HomeScreen() {
               scrollEventThrottle={16}
             >
               {heroSpaces.map((space, index) => {
-                // Os cartões laterais ficam ligeiramente mais pequenos: profundidade ao deslizar.
-                const scale = heroScrollX.interpolate({
-                  inputRange: [(index - 1) * step, index * step, (index + 1) * step],
-                  outputRange: [0.94, 1, 0.94],
-                  extrapolate: "clamp",
-                });
+                const inputRange = [(index - 1) * step, index * step, (index + 1) * step];
+                // Os cartões laterais ficam ligeiramente mais pequenos e a fotografia desliza
+                // mais devagar do que o cartão: profundidade ao deslizar.
+                const scale = heroScrollX.interpolate({ inputRange, outputRange: [0.93, 1, 0.93], extrapolate: "clamp" });
+                const parallax = heroScrollX.interpolate({ inputRange, outputRange: [-36, 0, 36], extrapolate: "clamp" });
                 return (
                   <Animated.View key={space.id} style={{ marginRight: heroGap, transform: [{ scale }] }}>
                     <HeroSpaceCard
@@ -376,6 +272,7 @@ export default function HomeScreen() {
                       favorite={isFavorite(space.id)}
                       onFavorite={() => void toggleFavorite(space.id)}
                       onPress={() => openSpace(space)}
+                      parallax={parallax}
                     />
                   </Animated.View>
                 );
@@ -393,8 +290,8 @@ export default function HomeScreen() {
                         styles.dot,
                         {
                           backgroundColor: colors.text,
-                          width: heroScrollX.interpolate({ inputRange, outputRange: [7, 20, 7], extrapolate: "clamp" }),
-                          opacity: heroScrollX.interpolate({ inputRange, outputRange: [0.25, 1, 0.25], extrapolate: "clamp" }),
+                          width: heroScrollX.interpolate({ inputRange, outputRange: [7, 22, 7], extrapolate: "clamp" }),
+                          opacity: heroScrollX.interpolate({ inputRange, outputRange: [0.22, 1, 0.22], extrapolate: "clamp" }),
                         },
                       ]}
                     />
@@ -408,27 +305,33 @@ export default function HomeScreen() {
         <Reveal index={3}>
           <View style={styles.section}>
             <SectionTitle title={t("Categorias")} action={t("Ver tudo")} onAction={() => router.replace("/explore" as never)} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.bleed}
+              contentContainerStyle={styles.categories}
+            >
               {CATEGORIES.map((category, index) => (
                 <PopIn key={category.name} index={index}>
-                <Pressable
-                  onPress={() => {
-                    tapFeedback();
-                    router.replace({ pathname: "/explore", params: { category: category.name } } as never);
-                  }}
-                  accessibilityRole="button"
-                >
-                  {({ pressed }) => (
-                    <View style={[styles.category, { transform: [{ scale: pressed ? 0.94 : 1 }] }]}>
-                      <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
-                        <Image source={category.image} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+                  <Pressable
+                    onPress={() => {
+                      tapFeedback();
+                      router.replace({ pathname: "/explore", params: { category: category.name } } as never);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(category.name)}
+                  >
+                    {({ pressed }) => (
+                      <View style={[styles.category, { transform: [{ scale: pressed ? 0.94 : 1 }] }]}>
+                        <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
+                          <Image source={category.image} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+                        </View>
+                        <Text style={[styles.categoryLabel, { color: colors.text }]} numberOfLines={2}>
+                          {t(category.name)}
+                        </Text>
                       </View>
-                      <Text style={[styles.categoryLabel, { color: colors.text }]} numberOfLines={2}>
-                        {t(category.name)}
-                      </Text>
-                    </View>
-                  )}
-                </Pressable>
+                    )}
+                  </Pressable>
                 </PopIn>
               ))}
             </ScrollView>
@@ -436,10 +339,10 @@ export default function HomeScreen() {
         </Reveal>
 
         {loading ? (
-          // Lugar guardado para "Perto de ti" e "Mais bem avaliados" enquanto os dados chegam.
+          // Lugar guardado para "Perto de ti" enquanto os dados chegam.
           <View style={styles.section}>
             <Skeleton width={140} height={24} radius={8} />
-            <View style={[styles.tiles, styles.skeletonRow]}>
+            <View style={styles.skeletonRow}>
               {[0, 1].map((key) => (
                 <View key={key} style={styles.skeletonTile}>
                   <Skeleton width={220} height={158} radius={16} />
@@ -462,7 +365,14 @@ export default function HomeScreen() {
                 }}
               />
               {nearbySpaces.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tiles}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.bleed}
+                  contentContainerStyle={styles.tiles}
+                  snapToInterval={234}
+                  decelerationRate="fast"
+                >
                   {nearbySpaces.map((space) => (
                     <SpaceTile
                       key={space.id}
@@ -475,7 +385,9 @@ export default function HomeScreen() {
                 </ScrollView>
               ) : (
                 <View style={[styles.nearbyNote, { backgroundColor: colors.card }]}>
-                  <Ionicons name={myPosition ? "location-outline" : "navigate-outline"} size={22} color={colors.textSecondary} />
+                  <View style={[styles.nearbyIcon, { backgroundColor: colors.infoBackground }]}>
+                    <Ionicons name={myPosition ? "location" : "navigate"} size={18} color={colors.primary} />
+                  </View>
                   <Text style={[styles.nearbyNoteText, { color: colors.textSecondary }]}>
                     {myPosition
                       ? t("Ainda não há espaços a menos de {0} km de ti.", [NEARBY_RADIUS_KM])
@@ -484,7 +396,9 @@ export default function HomeScreen() {
                   {!myPosition ? (
                     <Pressable onPress={() => void requestPosition()} hitSlop={8} accessibilityRole="button">
                       {({ pressed }) => (
-                        <Text style={[styles.nearbyNoteAction, { color: colors.primary, opacity: pressed ? 0.4 : 1 }]}>{t("Ativar")}</Text>
+                        <View style={[styles.nearbyAction, { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 }]}>
+                          <Text style={styles.nearbyActionText}>{t("Ativar")}</Text>
+                        </View>
                       )}
                     </Pressable>
                   ) : null}
@@ -499,10 +413,11 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <SectionTitle title={t("Mais bem avaliados")} />
               <RowGroup>
-                {bestSpaces.map((space) => (
+                {bestSpaces.map((space, index) => (
                   <SpaceRow
                     key={space.id}
                     space={space}
+                    rank={index + 1}
                     favorite={isFavorite(space.id)}
                     onFavorite={() => void toggleFavorite(space.id)}
                     onPress={() => openSpace(space)}
@@ -515,10 +430,10 @@ export default function HomeScreen() {
 
         {!loading && heroSpaces.length === 0 && bestSpaces.length === 0 ? (
           <View style={styles.empty}>
-            <Ionicons name="storefront-outline" size={44} color={colors.textTertiary} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {t("Ainda sem espaços registados")}
-            </Text>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.card }]}>
+              <Ionicons name="storefront" size={34} color={colors.textTertiary} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t("Ainda sem espaços registados")}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {t("Volte mais tarde para descobrir novos espaços.")}
             </Text>
@@ -527,12 +442,7 @@ export default function HomeScreen() {
       </Animated.ScrollView>
 
       {/* Barra translúcida no topo ao fazer scroll */}
-      <Animated.View pointerEvents="none" style={[styles.topBar, { height: insets.top + 44, opacity: headerOpacity }]}>
-        <BlurView intensity={80} tint="systemChromeMaterial" style={StyleSheet.absoluteFill} />
-        <Text style={[styles.topBarTitle, { color: colors.text, marginTop: insets.top }]}>{t("Início")}</Text>
-        <View style={[styles.topBarBorder, { backgroundColor: colors.divider }]} />
-      </Animated.View>
-
+      <CollapsingTopBar scrollY={scrollY} title="" />
     </View>
   );
 }
@@ -545,132 +455,65 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 140,
   },
-  flex: {
-    flex: 1,
-  },
   header: {
+    height: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  headerActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  headerText: {
-    flex: 1,
-  },
-  greeting: {
-    ...Typography.subheadline,
-    fontWeight: "500",
-  },
-  name: {
-    ...Typography.largeTitle,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-  },
-  place: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 2,
-  },
-  placeText: {
-    ...Typography.footnote,
-    fontWeight: "600",
-    flexShrink: 1,
-  },
-  circleButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  badge: {
-    position: "absolute",
-    top: -3,
-    right: -3,
-    minWidth: 19,
-    height: 19,
-    paddingHorizontal: 4,
-    borderRadius: 10,
+  avatarRing: {
+    borderRadius: 22,
     borderWidth: 2,
-    backgroundColor: "#FF3B30",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 18,
-  },
-  searchBar: {
-    height: 46,
-    borderRadius: 14,
-    borderCurve: "continuous",
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  searchPlaceholder: {
-    ...Typography.body,
-    flex: 1,
-  },
-  mapButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    borderCurve: "continuous",
-    alignItems: "center",
-    justifyContent: "center",
   },
   upcoming: {
-    marginTop: 20,
+    marginTop: 14,
   },
+  heroSkeleton: {
+    marginTop: 18,
+  },
+  // O carrossel vai até à borda do ecrã; o primeiro cartão alinha com o resto da página.
   heroSpacing: {
-    marginTop: 24,
-  },
-  skeletonRow: {
-    flexDirection: "row",
-    marginTop: 12,
-    overflow: "hidden",
-  },
-  skeletonTile: {
-    gap: 8,
+    marginTop: 18,
+    marginHorizontal: -16,
   },
   heroList: {
-    paddingRight: 4,
+    paddingHorizontal: 16,
   },
   dots: {
     flexDirection: "row",
     justifyContent: "center",
     gap: 6,
-    marginTop: 12,
+    marginTop: 14,
   },
   dot: {
     height: 7,
     borderRadius: 4,
   },
   section: {
-    marginTop: 32,
+    marginTop: 34,
+  },
+  // As filas horizontais vão até à borda do ecrã, como na App Store.
+  bleed: {
+    marginHorizontal: -16,
   },
   categories: {
-    gap: 18,
-    paddingRight: 16,
+    gap: 16,
+    paddingHorizontal: 16,
   },
   category: {
     alignItems: "center",
     gap: 8,
-    width: 84,
+    width: 80,
   },
   categoryIcon: {
     width: 72,
     height: 72,
-    borderRadius: 20,
+    borderRadius: 22,
     borderCurve: "continuous",
     overflow: "hidden",
     alignItems: "center",
@@ -683,23 +526,47 @@ const styles = StyleSheet.create({
   },
   tiles: {
     gap: 14,
-    paddingRight: 16,
+    paddingHorizontal: 16,
+  },
+  skeletonRow: {
+    flexDirection: "row",
+    gap: 14,
+    marginTop: 14,
+    overflow: "hidden",
+  },
+  skeletonTile: {
+    gap: 8,
   },
   nearbyNote: {
-    borderRadius: 16,
+    borderRadius: 18,
     borderCurve: "continuous",
-    padding: 16,
+    padding: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  nearbyIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
   },
   nearbyNoteText: {
     ...Typography.subheadline,
     flex: 1,
   },
-  nearbyNoteAction: {
+  nearbyAction: {
+    height: 32,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nearbyActionText: {
     ...Typography.subheadline,
     fontWeight: "600",
+    color: "#FFFFFF",
   },
   empty: {
     alignItems: "center",
@@ -707,32 +574,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 8,
   },
+  emptyIcon: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
+  },
   emptyTitle: {
     ...Typography.title3,
     textAlign: "center",
-    marginTop: 8,
   },
   emptyText: {
     ...Typography.subheadline,
     textAlign: "center",
-  },
-  topBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  topBarBorder: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: StyleSheet.hairlineWidth,
-  },
-  topBarTitle: {
-    ...Typography.headline,
   },
 });

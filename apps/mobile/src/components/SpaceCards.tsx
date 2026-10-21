@@ -96,6 +96,7 @@ export function HeroSpaceCard({
   onFavorite,
   onPress,
   eyebrow,
+  parallax,
 }: {
   space: BusinessDTO;
   width: number;
@@ -104,6 +105,8 @@ export function HeroSpaceCard({
   onFavorite: () => void;
   onPress: () => void;
   eyebrow?: string;
+  // Deslocamento horizontal da fotografia dentro do cartão (efeito de profundidade no carrossel).
+  parallax?: Animated.AnimatedInterpolation<number>;
 }) {
   const t = useT();
   const press = usePressScale(0.98);
@@ -113,11 +116,18 @@ export function HeroSpaceCard({
     <Pressable onPress={onPress} onPressIn={press.onPressIn} onPressOut={press.onPressOut} accessibilityRole="button">
       <Animated.View style={[styles.hero, { width, height, transform: [{ scale: press.scale }] }]}>
         {space.imageUrl ? (
-          <Image source={{ uri: space.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
+          // A fotografia é um pouco mais larga do que o cartão, para poder deslizar sem mostrar as bordas.
+          <Animated.View style={[styles.heroImage, parallax ? { transform: [{ translateX: parallax }] } : null]}>
+            <Image source={{ uri: space.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
+          </Animated.View>
         ) : (
           <Placeholder size={44} />
         )}
-        <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.72)']} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient
+          colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.78)']}
+          locations={[0, 0.25, 0.5, 1]}
+          style={StyleSheet.absoluteFill}
+        />
 
         <View style={styles.heroTop}>
           {eyebrow ? (
@@ -211,12 +221,15 @@ export function SpaceRow({
   onFavorite,
   onPress,
   subtitle,
+  rank,
 }: {
   space: BusinessDTO;
   favorite: boolean;
   onFavorite: () => void;
   onPress: () => void;
   subtitle?: string;
+  // Posição numa lista ordenada ("Mais bem avaliados"), mostrada antes da miniatura.
+  rank?: number;
 }) {
   const t = useT();
   const colors = useIOSColors();
@@ -232,6 +245,9 @@ export function SpaceRow({
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={space.name}>
       {({ pressed }) => (
         <View style={[styles.row, pressed && { backgroundColor: colors.backgroundSelected }]}>
+          {rank !== undefined ? (
+            <Text style={[styles.rowRank, { color: rank <= 3 ? colors.text : colors.textTertiary }]}>{rank}</Text>
+          ) : null}
           <View style={styles.rowImage}>
             {space.imageUrl ? (
               <Image source={{ uri: space.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
@@ -301,6 +317,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.12)',
   },
+  heroImage: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: -40,
+    right: -40,
+  },
   hero: {
     borderRadius: 22,
     borderCurve: 'continuous',
@@ -336,6 +359,8 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     ...Typography.title1,
+    fontWeight: '800',
+    letterSpacing: -0.4,
     color: '#FFFFFF',
   },
   heroMeta: {
@@ -384,6 +409,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  rowRank: {
+    ...Typography.title3,
+    fontWeight: '700',
+    width: 18,
+    textAlign: 'center',
   },
   rowImage: {
     width: 64,
