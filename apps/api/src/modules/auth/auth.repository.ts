@@ -29,6 +29,10 @@ export const authRepository = {
     });
   },
 
+  setAvatarUrl(id: string, avatarUrl: string) {
+    return prisma.user.update({ where: { id }, data: { avatarUrl } });
+  },
+
   createRefreshToken(data: { userId: string; tokenHash: string; expiresAt: Date }) {
     return prisma.refreshToken.create({ data });
   },

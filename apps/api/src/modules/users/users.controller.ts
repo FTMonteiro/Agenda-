@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { ValidationError } from "../../shared/errors";
 import { sendSuccess } from "../../shared/utils/apiResponse";
 import { usersService } from "./users.service";
 import type { ChangePasswordInput, UpdateLocationInput, UpdateProfileInput } from "./users.schema";
@@ -11,6 +12,20 @@ export const usersController = {
 
   async updateMe(req: Request, res: Response) {
     const profile = await usersService.updateProfile(req.user!.id, req.body as UpdateProfileInput);
+    sendSuccess(res, profile);
+  },
+
+  async uploadAvatar(req: Request, res: Response) {
+    if (!req.file) {
+      throw new ValidationError("Nenhum ficheiro enviado (campo \"file\").", "USER_AVATAR_FILE_REQUIRED");
+    }
+
+    const profile = await usersService.uploadAvatar(req.user!.id, req.file);
+    sendSuccess(res, profile);
+  },
+
+  async removeAvatar(req: Request, res: Response) {
+    const profile = await usersService.removeAvatar(req.user!.id);
     sendSuccess(res, profile);
   },
 

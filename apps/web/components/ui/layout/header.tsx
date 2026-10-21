@@ -31,7 +31,6 @@ interface CurrentUser {
   email: string;
   role: string;
   businessId: string;
-  logo?: string | null;
   avatar?: string | null;
 }
 
@@ -159,30 +158,7 @@ export function Header({
   }, []);
 
   useEffect(() => {
-    function handleBusinessUpdated(
-      event: Event,
-    ) {
-      const customEvent =
-        event as CustomEvent<{
-          logo?: string | null;
-          name?: string;
-        }>;
-
-      setUser((currentUser) => {
-        if (!currentUser) {
-          return currentUser;
-        }
-
-        return {
-          ...currentUser,
-          logo:
-            customEvent.detail.logo ??
-            null,
-        };
-      });
-    }
-
-    function handleEmployeeUpdated(
+    function handleProfileUpdated(
       event: Event,
     ) {
       const customEvent =
@@ -209,24 +185,14 @@ export function Header({
     }
 
     window.addEventListener(
-      "business-profile-updated",
-      handleBusinessUpdated,
-    );
-
-    window.addEventListener(
-      "employee-profile-updated",
-      handleEmployeeUpdated,
+      "profile-updated",
+      handleProfileUpdated,
     );
 
     return () => {
       window.removeEventListener(
-        "business-profile-updated",
-        handleBusinessUpdated,
-      );
-
-      window.removeEventListener(
-        "employee-profile-updated",
-        handleEmployeeUpdated,
+        "profile-updated",
+        handleProfileUpdated,
       );
     };
   }, []);
@@ -307,12 +273,9 @@ export function Header({
       .charAt(0)
       .toUpperCase();
 
-  // An owner is shown as their business: its logo wins over their own profile photo.
+  // The person's own photo; the business logo is only shown in the app.
   const profileImage =
-    (user?.role === "OWNER"
-      ? user?.logo || user?.avatar
-      : user?.avatar || user?.logo) ||
-    null;
+    user?.avatar || null;
 
   function formatRole(
     role?: string,
@@ -618,7 +581,7 @@ export function Header({
                           onClick={() => {
                             setOpenProfile(false);
                             window.location.href =
-                              "/configuracoes";
+                              "/configuracoes?tab=perfil";
                           }}
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-secondary)]"
                         >

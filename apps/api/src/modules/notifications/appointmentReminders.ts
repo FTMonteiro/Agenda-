@@ -1,11 +1,14 @@
 import { env } from "../../config/env";
+import { announceAppointmentChange } from "../appointments";
 import { notificationsRepository } from "./notifications.repository";
+import { notificationsService } from "./notifications.service";
 
 /*
  * Avisos ligados à data de um agendamento, para o cliente que o marcou:
  *   - na véspera:        "Falta um dia…"
  *   - no próprio dia:    "Hoje é o dia…", com a hora marcada
- *   - depois de passar:  "…expirou", se ninguém o concluiu nem cancelou
+ * e, passado o dia marcado sem ninguém o concluir nem cancelar, o agendamento fica
+ * "Não compareceu" (NO_SHOW) — ver markMissedAppointments.
  *
  * Não há eventos para isto (nada acontece no sistema quando o relógio avança), por isso um
  * ciclo verifica de minuto a minuto. Cada aviso só é criado uma vez: antes de gravar,
@@ -16,7 +19,7 @@ import { notificationsRepository } from "./notifications.repository";
 const CHECK_EVERY_MS = 60_000;
 const DAY_MS = 24 * 60 * 60_000;
 
-export type ReminderKind = "APPOINTMENT_REMINDER_TOMORROW" | "APPOINTMENT_REMINDER_TODAY" | "APPOINTMENT_EXPIRED";
+export type ReminderKind = "APPOINTMENT_REMINDER_TOMORROW" | "APPOINTMENT_REMINDER_TODAY";
 
 // O dia do calendário (AAAA-MM-DD) no fuso da aplicação — "amanhã" e "hoje" são os do
 // cliente, não os do servidor (que corre em UTC).
@@ -34,12 +37,8 @@ export function reminderKindFor(
   now: Date,
   timeZone: string,
 ): ReminderKind | null {
-  const start = appointment.scheduledAt.getTime();
-  const end = start + appointment.durationMinutes * 60_000;
-
-  // Só expira depois de a hora marcada acabar: durante o atendimento ainda está a decorrer.
-  if (end <= now.getTime()) return "APPOINTMENT_EXPIRED";
-  if (start <= now.getTime()) return null;
+  // Depois da hora marcada não há lembrete; o que fica por fazer trata-o o fim do dia.
+  if (appointment.scheduledAt.getTime() <= now.getTime()) return null;
 
   const days = daysBetween(localDay(now, timeZone), localDay(appointment.scheduledAt, timeZone));
   if (days === 1) return "APPOINTMENT_REMINDER_TOMORROW";
@@ -61,9 +60,51 @@ export function reminderText(
       return { title: "Falta um dia", message: `Falta um dia para o seu agendamento em ${what}: amanhã, ${day}, às ${time}.` };
     case "APPOINTMENT_REMINDER_TODAY":
       return { title: "É hoje o seu agendamento", message: `Hoje é o dia do seu agendamento em ${what}, às ${time}.` };
-    case "APPOINTMENT_EXPIRED":
-      return { title: "Agendamento expirado", message: `O seu agendamento em ${what}, de ${day} às ${time}, expirou.` };
   }
+}
+
+export function noShowText(
+  appointment: { scheduledAt: Date; business: { name: string }; service: { name: string } },
+  timeZone: string,
+): { title: string; message: string } {
+  const day = new Intl.DateTimeFormat("pt-PT", { timeZone, day: "2-digit", month: "2-digit" }).format(appointment.scheduledAt);
+  const time = new Intl.DateTimeFormat("pt-PT", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(appointment.scheduledAt);
+
+  return {
+    title: "Não compareceu",
+    message: `Não compareceu ao agendamento em ${appointment.business.name} (${appointment.service.name}) de ${day} às ${time}. O agendamento foi cancelado.`,
+  };
+}
+
+// O dia marcado já acabou (no fuso da aplicação) — não basta a hora ter passado: até ao
+// fim do dia o espaço ainda pode registar o atendimento.
+export function isPastDay(scheduledAt: Date, now: Date, timeZone: string): boolean {
+  return localDay(scheduledAt, timeZone) < localDay(now, timeZone);
+}
+
+// Os agendamentos que ficaram por concluir, cancelar ou marcar até ao fim do dia passam a
+// "Não compareceu": saem da agenda como por fazer, e o painel e a app veem-no logo (realtime).
+// O cliente é avisado, mas só dos do último dia — os antigos que já estavam por fechar
+// quando isto entrou mudam de estado sem notificação.
+export async function markMissedAppointments(now: Date = new Date()): Promise<number> {
+  const timeZone = env.APP_TIMEZONE;
+  const open = await notificationsRepository.findOpenAppointmentsBefore(now);
+
+  let marked = 0;
+  for (const appointment of open) {
+    if (!isPastDay(appointment.scheduledAt, now, timeZone)) continue;
+    if (!(await notificationsRepository.markNoShow(appointment.id))) continue;
+    marked++;
+
+    await announceAppointmentChange(appointment.id, "no_show");
+
+    const recent = now.getTime() - appointment.scheduledAt.getTime() < 2 * DAY_MS;
+    if (appointment.clientId && recent) {
+      const { title, message } = noShowText(appointment, timeZone);
+      await notificationsService.notify(appointment.clientId, "APPOINTMENT_NO_SHOW", title, message);
+    }
+  }
+  return marked;
 }
 
 // Uma passagem: devolve quantos avisos novos criou.
@@ -101,6 +142,7 @@ export function startAppointmentReminders(): void {
     if (running) return;
     running = true;
     try {
+      await markMissedAppointments();
       await sendDueAppointmentReminders();
     } catch (error) {
       console.error("Avisos de agendamento: a verificação falhou, repete no próximo minuto.", error);

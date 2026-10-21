@@ -83,6 +83,8 @@ async function signInByVerifiedEmail(
   if (mode === "login") {
     const user = await authRepository.findUserByEmail(profile.email);
     if (!user) throw new AuthenticationError("Esta conta ainda não está registada. Crie uma conta primeiro.", "SOCIAL_NOT_REGISTERED");
+    // An account without a photo takes the Google one; a photo the person chose stays.
+    if (!user.avatarUrl && profile.picture) return authRepository.setAvatarUrl(user.id, profile.picture);
     return user;
   }
 

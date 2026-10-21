@@ -4,14 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Building2,
   Clock,
+  UserRound,
   Users,
   UsersRound,
   Scissors,
   CalendarDays,
-  UserRound,
-  Mail,
-  Phone,
-  BriefcaseBusiness,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,9 +21,9 @@ import {
 } from "./BusinessHours";
 
 import {
-  EmployeeSettings,
-  type EmployeeProfile,
-} from "./EmployeeSettings";
+  ProfileSettings,
+  type UserProfile,
+} from "./ProfileSettings";
 
 interface BusinessForm {
   name: string;
@@ -75,7 +72,7 @@ const EMPTY_HOURS: HoursForm = {
   rules: "",
 };
 
-const EMPTY_EMPLOYEE: EmployeeProfile = {
+const EMPTY_PROFILE: UserProfile = {
   id: "",
   name: "",
   email: "",
@@ -85,7 +82,24 @@ const EMPTY_EMPLOYEE: EmployeeProfile = {
   active: true,
 };
 
-type Tab = "dados" | "horario";
+type Tab = "dados" | "horario" | "perfil";
+
+// "Meu perfil" no cabeçalho e o cartão da Sidebar abrem /configuracoes?tab=perfil.
+// As abas só aparecem depois de carregar, por isso o servidor nunca as desenha.
+function tabFromUrl(): Tab {
+  if (typeof window === "undefined") {
+    return "dados";
+  }
+
+  const tab = new URLSearchParams(
+    window.location.search,
+  ).get("tab");
+
+  return tab === "horario" ||
+    tab === "perfil"
+    ? tab
+    : "dados";
+}
 
 export function SettingsPage() {
   const [role, setRole] = useState<
@@ -98,9 +112,9 @@ export function SettingsPage() {
   const [saved, setSaved] =
     useState<BusinessForm>(EMPTY_FORM);
 
-  const [employee, setEmployee] =
-    useState<EmployeeProfile>(
-      EMPTY_EMPLOYEE,
+  const [profile, setProfile] =
+    useState<UserProfile>(
+      EMPTY_PROFILE,
     );
 
   const [hours, setHours] =
@@ -110,7 +124,7 @@ export function SettingsPage() {
     useState<HoursForm>(EMPTY_HOURS);
 
   const [tab, setTab] =
-    useState<Tab>("dados");
+    useState<Tab>(tabFromUrl);
 
   const [counts, setCounts] =
     useState<BusinessCounts | null>(null);
@@ -179,76 +193,38 @@ export function SettingsPage() {
 
       /*
       |--------------------------------------------------------------------------
-      | FUNCIONÁRIO
+      | PERFIL (OWNER E FUNCIONÁRIO)
       |--------------------------------------------------------------------------
       */
 
+      const profileResponse =
+        await fetch(
+          "/api/profile",
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+          },
+        );
+
+      const profileData =
+        await profileResponse
+          .json()
+          .catch(() => null);
+
+      if (
+        !profileResponse.ok ||
+        !profileData?.profile
+      ) {
+        throw new Error(
+          profileData?.error ||
+            "Não foi possível carregar o perfil.",
+        );
+      }
+
+      setProfile(profileData.profile);
+
       if (data.role === "EMPLOYEE") {
-        const profileResponse =
-          await fetch(
-            "/api/profile",
-            {
-              method: "GET",
-              credentials: "include",
-              cache: "no-store",
-            },
-          );
-
-        const profileContentType =
-          profileResponse.headers.get(
-            "content-type",
-          );
-
-        if (
-          !profileContentType?.includes(
-            "application/json",
-          )
-        ) {
-          throw new Error(
-            "A API /api/profile não devolveu JSON.",
-          );
-        }
-
-        const profileData =
-          await profileResponse.json();
-
-        if (!profileResponse.ok) {
-          throw new Error(
-            profileData?.error ||
-              "Não foi possível carregar o perfil.",
-          );
-        }
-
-        if (!profileData.profile) {
-          throw new Error(
-            "Perfil profissional não encontrado.",
-          );
-        }
-
-        setEmployee({
-          id:
-            profileData.profile.id ??
-            "",
-          name:
-            profileData.profile.name ??
-            "",
-          email:
-            profileData.profile.email ??
-            "",
-          phone:
-            profileData.profile.phone ??
-            "",
-          specialty:
-            profileData.profile.specialty ??
-            "",
-          avatar:
-            profileData.profile.avatar ??
-            null,
-          active:
-            profileData.profile.active ??
-            true,
-        });
-
         return;
       }
 
@@ -340,18 +316,6 @@ export function SettingsPage() {
           null,
       );
 
-      window.dispatchEvent(
-        new CustomEvent(
-          "business-profile-updated",
-          {
-            detail: {
-              logo:
-                form.logo || null,
-              name: form.name,
-            },
-          },
-        ),
-      );
     } catch (caught) {
       console.error(
         "Erro ao carregar configurações:",
@@ -548,21 +512,6 @@ export function SettingsPage() {
           null,
       );
 
-      window.dispatchEvent(
-        new CustomEvent(
-          "business-profile-updated",
-          {
-            detail: {
-              logo:
-                businessData.logo ??
-                null,
-              name:
-                businessData.name ??
-                "",
-            },
-          },
-        ),
-      );
 
       toast.success(
         "Alterações salvas.",
@@ -632,9 +581,10 @@ export function SettingsPage() {
           |--------------------------------------------------------------------------
           */
 
-          <EmployeeSettings
-            employee={employee}
-            setEmployee={setEmployee}
+          <ProfileSettings
+            profile={profile}
+            setProfile={setProfile}
+            isOwner={false}
           />
 
         ) : (
@@ -724,6 +674,21 @@ export function SettingsPage() {
                 label="Horário e regras"
               />
 
+              <TabButton
+                active={
+                  tab === "perfil"
+                }
+                onClick={() =>
+                  setTab("perfil")
+                }
+                icon={
+                  <UserRound
+                    size={17}
+                  />
+                }
+                label="Perfil"
+              />
+
             </div>
 
             {tab === "dados" ? (
@@ -733,16 +698,25 @@ export function SettingsPage() {
                   setBusiness
                 }
               />
-            ) : (
+            ) : tab === "horario" ? (
               <BusinessHours
                 hours={hours}
                 setHours={setHours}
+              />
+            ) : (
+              // A foto guarda-se logo ao ser escolhida; as datas e a barra de baixo são
+              // só do estabelecimento.
+              <ProfileSettings
+                profile={profile}
+                setProfile={setProfile}
+                isOwner
               />
             )}
 
             {/* DATAS */}
 
-            {(createdAt ||
+            {tab !== "perfil" &&
+              (createdAt ||
               updatedAt) && (
               <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
 
@@ -779,6 +753,7 @@ export function SettingsPage() {
 
             {/* BARRA */}
 
+            {tab !== "perfil" && (
             <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur sm:-mx-6">
               <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 
@@ -830,6 +805,7 @@ export function SettingsPage() {
                 </div>
               </div>
             </div>
+            )}
           </>
         )}
       </div>

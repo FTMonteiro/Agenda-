@@ -1,54 +1,69 @@
 import type { ProfessionalDTO, UserDTO } from "@slotix/types";
-import { requireStaff } from "@/lib/auth";
+import { requireOwner, requireStaff, type AuthUser } from "@/lib/auth";
 import { apiCall, errorJson, errorResponse, jsonBody } from "@/lib/dashboard-api";
 
-// The signed-in employee's own professional profile. An OWNER has none, and gets the
-// API's 404 passed through.
-async function loadProfile() {
-  const [professional, account] = await Promise.all([
-    apiCall<ProfessionalDTO>("/professionals/me"),
+// The signed-in user's own profile: their name, contact and photo — never the business
+// logo, which only identifies the space in the app. An employee also has their
+// professional record (specialty, the photo the owner picked when creating them).
+async function loadProfile(user: AuthUser) {
+  const [account, professional] = await Promise.all([
     apiCall<UserDTO>("/users/me"),
+    user.role === "EMPLOYEE" ? apiCall<ProfessionalDTO>("/professionals/me") : null,
   ]);
 
   return {
-    id: professional.id,
-    name: professional.name,
+    id: professional?.id ?? account.id,
+    name: professional?.name ?? account.name,
     email: account.email,
-    phone: account.phone,
-    specialty: professional.specialty,
-    avatar: account.avatarUrl ?? professional.imageUrl,
-    active: professional.active,
-    emailVerified: false,
-    businessId: professional.businessId,
-    userId: professional.userId,
-    createdAt: professional.createdAt,
-    updatedAt: professional.updatedAt,
+    phone: account.phone ?? "",
+    specialty: professional?.specialty ?? "",
+    avatar: account.avatarUrl ?? professional?.imageUrl ?? null,
+    active: professional?.active ?? true,
   };
 }
 
 export async function GET() {
   try {
-    await requireStaff();
-    return Response.json({ success: true, profile: await loadProfile() });
+    const user = await requireStaff();
+    return Response.json({ success: true, profile: await loadProfile(user) });
   } catch (error) {
     return errorResponse(error, "Não foi possível carregar o perfil.");
   }
 }
 
-// The only thing the profile screen edits is the photo, and the API stores it as a URL —
-// it has no upload for avatars, so a picture picked from disk can't be saved yet.
+// The owner's own name and phone (not the space's — those are in Dados do estabelecimento).
+export async function PATCH(request: Request) {
+  try {
+    const user = await requireOwner();
+    const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+    const name = typeof body?.name === "string" ? body.name.trim() : "";
+    const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
+
+    if (name.length < 2) return errorJson("O nome deve ter pelo menos 2 caracteres.", 400);
+
+    await apiCall<UserDTO>("/users/me", jsonBody("PATCH", { name, phone }));
+    return Response.json({ success: true, profile: await loadProfile(user) });
+  } catch (error) {
+    return errorResponse(error, "Não foi possível guardar o perfil.");
+  }
+}
+
+// The photo arrives as a data URL (already reduced in the browser); the API stores the
+// file and makes it the account's avatarUrl.
 export async function PUT(request: Request) {
   try {
-    await requireStaff();
+    const user = await requireStaff();
     const body = (await request.json()) as { avatar?: unknown };
     const avatar = typeof body.avatar === "string" ? body.avatar.trim() : "";
 
-    if (!/^https?:\/\//.test(avatar)) {
-      return errorJson("Ainda não é possível carregar uma foto: a API só aceita o endereço (URL) de uma imagem já publicada.", 400);
-    }
+    if (!avatar.startsWith("data:image/")) return errorJson("Escolha uma imagem PNG, JPG ou WebP.", 400);
 
-    await apiCall<UserDTO>("/users/me", jsonBody("PATCH", { avatarUrl: avatar }));
-    return Response.json({ success: true, profile: await loadProfile() });
+    const image = await (await fetch(avatar)).blob();
+    const upload = new FormData();
+    upload.append("file", image, `avatar.${image.type.split("/")[1] ?? "jpg"}`);
+
+    await apiCall<UserDTO>("/users/me/avatar", { method: "POST", body: upload });
+    return Response.json({ success: true, profile: await loadProfile(user) });
   } catch (error) {
     return errorResponse(error, "Não foi possível atualizar a foto.");
   }
@@ -56,8 +71,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE() {
   try {
-    await requireStaff();
-    return errorJson("Ainda não é possível remover a foto: a API não permite limpar o avatar.", 400);
+    const user = await requireStaff();
+    await apiCall<UserDTO>("/users/me/avatar", { method: "DELETE" });
+    return Response.json({ success: true, profile: await loadProfile(user) });
   } catch (error) {
     return errorResponse(error, "Não foi possível remover a foto.");
   }

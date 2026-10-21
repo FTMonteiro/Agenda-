@@ -161,6 +161,13 @@ function formatTime(value: string): string {
   }).format(date);
 }
 
+/* Antes da hora marcada não se recebe o pagamento (a API também o recusa). */
+function isBeforeTime(value: string, now: number): boolean {
+  const time = new Date(value).getTime();
+
+  return !Number.isNaN(time) && now < time;
+}
+
 function getInitials(name: string): string {
   return (
     name
@@ -217,6 +224,23 @@ export function ReceivePayment({
     useState(false);
 
   const closeTimer = useRef<number | undefined>(undefined);
+
+  /* Hora atual, para saber que agendamentos já chegaram à hora marcada. Com a janela
+     aberta avança sozinha, e um agendamento desbloqueia no minuto em que começa. */
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const tick = () => setNow(Date.now());
+    const first = window.setTimeout(tick, 0);
+    const timer = window.setInterval(tick, 15_000);
+
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(timer);
+    };
+  }, [isOpen]);
 
   /* CARREGAR AGENDAMENTOS */
 
@@ -380,6 +404,7 @@ export function ReceivePayment({
   const canSubmit =
     !isSubmitting &&
     !!selectedAppointment &&
+    !isBeforeTime(selectedAppointment.date, now) &&
     selectedPrice > 0 &&
     !isCashShort;
 
@@ -692,6 +717,10 @@ export function ReceivePayment({
                                 selectedAppointmentId
                               }
                               disabled={isSubmitting}
+                              tooEarly={isBeforeTime(
+                                appointment.date,
+                                now,
+                              )}
                               onSelect={() =>
                                 handleAppointmentChange(
                                   appointment.id,
@@ -918,11 +947,13 @@ function AppointmentOption({
   appointment,
   selected,
   disabled,
+  tooEarly,
   onSelect,
 }: {
   appointment: PaymentAppointment;
   selected: boolean;
   disabled: boolean;
+  tooEarly: boolean;
   onSelect: () => void;
 }) {
   const price = getNumericPrice(
@@ -934,7 +965,12 @@ function AppointmentOption({
       type="button"
       role="radio"
       aria-checked={selected}
-      disabled={disabled}
+      disabled={disabled || tooEarly}
+      title={
+        tooEarly
+          ? `O pagamento só pode ser feito a partir das ${formatTime(appointment.date)}.`
+          : undefined
+      }
       onClick={onSelect}
       className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-60 ${
         selected
@@ -988,6 +1024,12 @@ function AppointmentOption({
             ? formatPrice(price)
             : "Sem preço"}
         </span>
+
+        {tooEarly && (
+          <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+            A partir das {formatTime(appointment.date)}
+          </span>
+        )}
 
         <span
           className={`flex h-4 w-4 items-center justify-center rounded-full border transition-all ${

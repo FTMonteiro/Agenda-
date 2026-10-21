@@ -29,7 +29,6 @@ interface CurrentUser {
   email: string;
   role: string;
   businessId: string;
-  logo?: string | null;
   avatar?: string | null;
 }
 
@@ -113,6 +112,19 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   }, []);
 
   /*
+   * FOTO OU NOME ALTERADOS EM CONFIGURAÇÕES › PERFIL
+   */
+  useEffect(() => {
+    function handleProfileUpdated(event: Event) {
+      const { avatar, name } = (event as CustomEvent<{ avatar?: string | null; name?: string }>).detail;
+      setUser((current) => (current ? { ...current, avatar: avatar ?? null, name: name ?? current.name } : current));
+    }
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdated);
+  }, []);
+
+  /*
    * FECHAR MENU COM ESC E BLOQUEAR O SCROLL NO MOBILE
    */
   useEffect(() => {
@@ -143,7 +155,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     .filter((group) => group.items.length > 0);
 
   const userName = user?.name?.trim() || "Utilizador";
-  const profileImage = (isOwner ? user?.logo || user?.avatar : user?.avatar || user?.logo) || null;
+  const profileImage = user?.avatar || null;
 
   return (
     <>
@@ -239,7 +251,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="h-[68px] animate-pulse rounded-2xl bg-[var(--surface-secondary)]" />
           ) : (
             <Link
-              href="/configuracoes"
+              href="/configuracoes?tab=perfil"
               onClick={onClose}
               className="brand-sheen group flex items-center gap-3 rounded-2xl bg-gradient-to-br from-primary to-primary-deep p-3 text-white shadow-[0_14px_30px_-16px_var(--brand)] transition duration-300 hover:-translate-y-0.5"
             >

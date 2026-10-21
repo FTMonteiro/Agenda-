@@ -16,7 +16,12 @@ const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
   "image/gif": "gif",
 };
 
-export async function uploadGalleryImage(businessId: string, file: { buffer: Buffer; mimetype: string }): Promise<{ url: string; path: string }> {
+export function uploadGalleryImage(businessId: string, file: { buffer: Buffer; mimetype: string }): Promise<{ url: string; path: string }> {
+  return uploadImage(`businesses/${businessId}`, file);
+}
+
+// Same storage for any other picture (e.g. a user's profile photo), kept under `folder`.
+export async function uploadImage(folder: string, file: { buffer: Buffer; mimetype: string }): Promise<{ url: string; path: string }> {
   if (!isStorageConfigured()) {
     if (file.buffer.length > MAX_INLINE_BYTES) {
       throw new ValidationError(
@@ -29,7 +34,7 @@ export async function uploadGalleryImage(businessId: string, file: { buffer: Buf
 
   const client = getStorageClient();
   const extension = EXTENSION_BY_MIME_TYPE[file.mimetype] ?? "bin";
-  const path = `businesses/${businessId}/${randomUUID()}.${extension}`;
+  const path = `${folder}/${randomUUID()}.${extension}`;
 
   const { error } = await client.storage.from(GALLERY_BUCKET).upload(path, file.buffer, { contentType: file.mimetype });
   if (error) {

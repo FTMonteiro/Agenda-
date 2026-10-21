@@ -72,7 +72,7 @@ const STATUS_HINT: Record<AppointmentStatus, string> = {
   CONFIRMED: "O espaço confirmou. Esperamos por si à hora marcada.",
   COMPLETED: "Serviço realizado e pagamento registado pelo espaço.",
   CANCELLED: "Esta marcação foi cancelada.",
-  NO_SHOW: "O espaço registou que não compareceu.",
+  NO_SHOW: "Não compareceu no dia marcado, por isso o agendamento foi cancelado.",
 };
 
 interface AppointmentView {

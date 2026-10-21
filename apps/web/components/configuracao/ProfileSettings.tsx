@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { shrinkImage } from "@/lib/shrink-image";
 
 import { ChangePasswordCard } from "./ChangePasswordCard";
+import { DeleteAccountCard } from "./DeleteAccountCard";
+import { OwnerProfileForm } from "./OwnerProfileForm";
 
 // The signed-in person's own profile (owner or employee). The photo here is theirs — the
 // one from Google, or one they pick — and is what the dashboard shows for them; the
@@ -288,7 +290,7 @@ export function ProfileSettings({
 
           <p className="mt-1 text-sm text-[var(--muted)]">
             {isOwner
-              ? "A sua foto e os dados da sua conta. A logo do estabelecimento fica em Dados do estabelecimento e só aparece na app."
+              ? "A sua foto, o seu nome e o seu telefone. A logo e o telefone do espaço ficam em Dados do estabelecimento."
               : "Gerencie a sua foto e consulte as informações associadas à sua conta profissional."}
           </p>
         </div>
@@ -390,61 +392,66 @@ export function ProfileSettings({
 
           {/*INFORMAÇÕES */}
 
-          <div className="grid flex-1 gap-4 sm:grid-cols-2">
-            <InfoField
-              icon={
-                <UserRound size={18} />
-              }
-              label="Nome"
-              value={profile.name}
+          {isOwner ? (
+            <OwnerProfileForm
+              profile={profile}
+              setProfile={setProfile}
             />
-
-            <InfoField
-              icon={
-                <Mail size={18} />
-              }
-              label="E-mail"
-              value={profile.email}
-            />
-
-            <InfoField
-              icon={
-                <Phone size={18} />
-              }
-              label="Telefone"
-              value={
-                profile.phone ||
-                "Não informado"
-              }
-            />
-
-            {!isOwner && (
+          ) : (
+            <div className="grid flex-1 gap-4 sm:grid-cols-2">
               <InfoField
                 icon={
-                  <BriefcaseBusiness
-                    size={18}
-                  />
+                  <UserRound size={18} />
                 }
-                label="Especialidade"
+                label="Nome"
+                value={profile.name}
+              />
+
+              <InfoField
+                icon={
+                  <Mail size={18} />
+                }
+                label="E-mail"
+                value={profile.email}
+              />
+
+              <InfoField
+                icon={
+                  <Phone size={18} />
+                }
+                label="Telefone"
                 value={
-                  profile.specialty ||
-                  "Não informada"
+                  profile.phone ||
+                  "Não informado"
                 }
               />
-            )}
-          </div>
+
+              {!isOwner && (
+                <InfoField
+                  icon={
+                    <BriefcaseBusiness
+                      size={18}
+                    />
+                  }
+                  label="Especialidade"
+                  value={
+                    profile.specialty ||
+                    "Não informada"
+                  }
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* SENHA */}
 
-      <ChangePasswordCard
-        description={
-          isOwner
-            ? "Mude a senha que usa para entrar no painel."
-            : undefined
-        }
-      />
+      {isOwner ? (
+        <DeleteAccountCard />
+      ) : (
+        <ChangePasswordCard />
+      )}
     </div>
   );
 }

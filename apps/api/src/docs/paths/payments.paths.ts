@@ -21,7 +21,7 @@ registry.registerPath({
   tags: ["Payments"],
   summary: "Registar pagamento recebido presencialmente (staff, em nome do negócio)",
   description:
-    "Diferente de POST /payments (o cliente paga a própria marcação): aqui o staff regista um pagamento já recebido (dinheiro, cartão...). Fica PAID e o agendamento CONFIRMED conclui-se imediatamente, atomicamente. Exige que o agendamento esteja CONFIRMED, no mesmo dia, a partir de 15 minutos antes do horário marcado.",
+    "Diferente de POST /payments (o cliente paga a própria marcação): aqui o staff regista um pagamento já recebido (dinheiro, cartão...). Fica PAID e o agendamento CONFIRMED conclui-se imediatamente, atomicamente. Exige que o agendamento esteja CONFIRMED, no mesmo dia, a partir da hora marcada (nunca antes).",
   security: bearerAuth,
   request: { body: { content: { "application/json": { schema: createPaymentSchema } } } },
   responses: { 201: successResponse(paymentSchema), ...commonErrors, ...authErrors, ...forbiddenError },

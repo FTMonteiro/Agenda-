@@ -1,5 +1,6 @@
 import type { FinancialsSummaryDTO, PaymentDTO, PaymentMethod } from "@slotix/types";
 import type { CreatePaymentInput } from "@slotix/validation";
+import { env } from "../../config/env";
 import { AuthorizationError, ConflictError, NotFoundError, ValidationError } from "../../shared/errors";
 import { domainEvents } from "../../shared/events/domainEvents";
 import { DEFAULT_CURRENCY } from "../../shared/constants";
@@ -13,9 +14,19 @@ const PAYMENT_METHODS: PaymentMethod[] = ["CASH", "CARD", "MULTICAIXA", "BANK_TR
 
 type RequesterRole = "CUSTOMER" | "OWNER" | "EMPLOYEE" | "ADMIN";
 
-// Same-day, from 15 minutes before the scheduled time onward (no upper bound — arbitrarily
-// late is fine). Mirrors the old dashboard's "receive payment" window exactly.
-const EARLY_PAYMENT_WINDOW_MINUTES = 15;
+// Nothing is paid before the scheduled time: from that minute on it can be (at the time
+// or any time later that day — once the day is over it becomes "Não compareceu").
+function assertPaymentTimeReached(scheduledAt: Date, now: Date = new Date()): void {
+  if (now >= scheduledAt) return;
+
+  const time = new Intl.DateTimeFormat("pt-PT", { timeZone: env.APP_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: false }).format(scheduledAt);
+  throw new ConflictError(`O pagamento só pode ser feito a partir da hora marcada (${time}).`, "PAYMENT_TOO_EARLY");
+}
+
+// The calendar day in the app's time zone (the server runs in UTC).
+function localDay(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: env.APP_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+}
 
 const APPOINTMENT_STATUS_MESSAGES: Record<string, string> = {
   PENDING: "Este agendamento ainda não foi confirmado.",
@@ -102,6 +113,7 @@ export const paymentsService = {
     if (appointment.status === "CANCELLED") {
       throw new ValidationError("Não é possível pagar um agendamento cancelado.", "PAYMENT_APPOINTMENT_CANCELLED");
     }
+    assertPaymentTimeReached(appointment.scheduledAt);
 
     const existing = await paymentsRepository.findByAppointmentId(input.appointmentId);
     if (existing) {
@@ -142,21 +154,10 @@ export const paymentsService = {
     }
 
     const now = new Date();
-    const scheduledAt = appointment.scheduledAt;
-    const sameDay =
-      now.getFullYear() === scheduledAt.getFullYear() && now.getMonth() === scheduledAt.getMonth() && now.getDate() === scheduledAt.getDate();
-    if (!sameDay) {
+    if (localDay(now) !== localDay(appointment.scheduledAt)) {
       throw new ConflictError("Só é possível receber o pagamento no dia do agendamento.", "PAYMENT_NOT_SAME_DAY");
     }
-
-    const earliestAllowed = new Date(scheduledAt.getTime() - EARLY_PAYMENT_WINDOW_MINUTES * 60_000);
-    if (now < earliestAllowed) {
-      const remainingMinutes = Math.ceil((earliestAllowed.getTime() - now.getTime()) / 60_000);
-      throw new ConflictError(
-        `Só pode receber o pagamento a partir de ${EARLY_PAYMENT_WINDOW_MINUTES} minutos antes do horário marcado (faltam ${remainingMinutes} min).`,
-        "PAYMENT_TOO_EARLY",
-      );
-    }
+    assertPaymentTimeReached(appointment.scheduledAt, now);
 
     const payment = await paymentsRepository.receivePayment({
       appointmentId: appointment.id,

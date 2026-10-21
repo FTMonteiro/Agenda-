@@ -10,10 +10,10 @@ export interface AuthUser {
   email: string;
   role: AuthRole;
   businessId: string;
-  // What the header shows in the profile icon: an employee's own photo (the one the owner
-  // picked when creating the account, until they set another), an owner's business logo.
+  // What the header shows in the profile icon: the person's own photo (Google's, or one
+  // they chose in Configurações › Perfil; for an employee, until then, the one the owner
+  // picked when creating the account). Never the business logo — that one is for the app.
   avatar: string | null;
-  logo: string | null;
 }
 
 // Reconstructs the old dashboard's AuthUser (id, name, email, role, businessId) on top
@@ -30,13 +30,11 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   let businessId: string | null = null;
   let avatar: string | null = user.avatarUrl ?? null;
-  let logo: string | null = null;
 
   if (user.role === "OWNER") {
     const bizResponse = await apiProxyFetch("/businesses/mine");
     const bizJson = await bizResponse.json();
     businessId = bizJson.success ? (bizJson.data[0]?.id ?? null) : null;
-    logo = bizJson.success ? (bizJson.data[0]?.logoUrl ?? null) : null;
   } else {
     const profResponse = await apiProxyFetch("/professionals/me");
     const profJson = await profResponse.json();
@@ -46,7 +44,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   if (!businessId) return null;
 
-  return { id: user.id, name: user.name, email: user.email, role: user.role, businessId, avatar, logo };
+  return { id: user.id, name: user.name, email: user.email, role: user.role, businessId, avatar };
 }
 
 // Every route below throws a plain Error with one of these two messages — the same

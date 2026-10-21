@@ -45,6 +45,34 @@ registry.registerPath({
 
 registry.registerPath({
   method: "post",
+  path: "/users/me/avatar",
+  tags: ["Users"],
+  summary: "Carregar a foto de perfil (multipart, campo \"file\": JPEG, PNG ou WEBP)",
+  security: bearerAuth,
+  request: {
+    body: { content: { "multipart/form-data": { schema: z.object({ file: z.string().openapi({ format: "binary" }) }) } } },
+  },
+  responses: {
+    200: successResponse(userSchema),
+    ...commonErrors,
+    ...authErrors,
+  },
+});
+
+registry.registerPath({
+  method: "delete",
+  path: "/users/me/avatar",
+  tags: ["Users"],
+  summary: "Remover a foto de perfil",
+  security: bearerAuth,
+  responses: {
+    200: successResponse(userSchema),
+    ...authErrors,
+  },
+});
+
+registry.registerPath({
+  method: "post",
   path: "/users/me/password",
   tags: ["Users"],
   summary: "Alterar a própria senha",

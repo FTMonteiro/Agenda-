@@ -29,6 +29,29 @@ export const notificationsRepository = {
     });
   },
 
+  // Still open (nobody completed, cancelled or marked it) and booked before `before`.
+  findOpenAppointmentsBefore(before: Date) {
+    return prisma.appointment.findMany({
+      where: { status: { in: ["PENDING", "CONFIRMED"] }, scheduledAt: { lt: before } },
+      select: {
+        id: true,
+        clientId: true,
+        scheduledAt: true,
+        business: { select: { name: true } },
+        service: { select: { name: true } },
+      },
+    });
+  },
+
+  // Only if it is still open: staff may have completed or cancelled it meanwhile.
+  async markNoShow(id: string): Promise<boolean> {
+    const { count } = await prisma.appointment.updateMany({
+      where: { id, status: { in: ["PENDING", "CONFIRMED"] } },
+      data: { status: "NO_SHOW" },
+    });
+    return count > 0;
+  },
+
   // Who to tell about an appointment on the business side, and what to tell them.
   findAppointmentForNotice(id: string) {
     return prisma.appointment.findUnique({
