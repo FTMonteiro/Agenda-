@@ -34,6 +34,10 @@ interface AppointmentListProps {
   appointments?: Appointment[];
   onDelete?: (id: string) => void;
   onEdit?: (appointment: Appointment) => void;
+  /* Ordem da lista — o histórico mostra os mais recentes primeiro. */
+  order?: "asc" | "desc";
+  emptyTitle?: string;
+  emptyDescription?: string;
 }
 
 type AppointmentWithPayment = Appointment & {
@@ -80,7 +84,16 @@ export function AppointmentList({
   appointments: externalAppointments,
   onDelete,
   onEdit,
+  order = "asc",
+  emptyTitle = "Nenhum agendamento futuro",
+  emptyDescription = "Os agendamentos de hoje e dos próximos dias aparecerão aqui automaticamente.",
 }: AppointmentListProps) {
+  /*
+   * Quando a página passa a lista, é ela que decide o que aparece (dia, histórico,
+   * filtros) e que a recarrega — a lista não busca nem filtra por conta própria.
+   */
+  const isControlled = externalAppointments !== undefined;
+
   const [appointments, setAppointments] = useState<
     AppointmentWithPayment[]
   >((externalAppointments as AppointmentWithPayment[]) ?? []);
@@ -210,6 +223,11 @@ export function AppointmentList({
    */
 
   useEffect(() => {
+    if (isControlled) {
+      setLoading(false);
+      return;
+    }
+
     loadAppointments();
   }, []);
 
@@ -218,6 +236,10 @@ export function AppointmentList({
    */
 
   useEffect(() => {
+    if (isControlled) {
+      return;
+    }
+
     function handleAppointmentsChanged() {
       loadAppointments(true);
     }
@@ -268,6 +290,10 @@ export function AppointmentList({
   */
 
   const visibleAppointments = useMemo(() => {
+    if (isControlled) {
+      return appointments;
+    }
+
     return appointments.filter((appointment) => {
       if (!appointment.date) {
         return false;
@@ -275,7 +301,7 @@ export function AppointmentList({
 
       return !isPastDate(appointment.date);
     });
-  }, [appointments, today]);
+  }, [appointments, today, isControlled]);
 
   /* 
      ORDENAÇÃO
@@ -286,9 +312,11 @@ export function AppointmentList({
       const dateTimeA = `${a.date ?? ""} ${a.time ?? ""}`;
       const dateTimeB = `${b.date ?? ""} ${b.time ?? ""}`;
 
-      return dateTimeA.localeCompare(dateTimeB);
+      return order === "desc"
+        ? dateTimeB.localeCompare(dateTimeA)
+        : dateTimeA.localeCompare(dateTimeB);
     });
-  }, [visibleAppointments]);
+  }, [visibleAppointments, order]);
 
   /* 
      PODE EDITAR?
@@ -1022,13 +1050,11 @@ export function AppointmentList({
           </div>
 
           <h3 className="mt-4 text-sm font-semibold text-gray-900">
-            Nenhum agendamento futuro
+            {emptyTitle}
           </h3>
 
           <p className="mt-1 text-sm text-gray-500">
-            Os agendamentos de hoje e dos
-            próximos dias aparecerão aqui
-            automaticamente.
+            {emptyDescription}
           </p>
         </div>
       ) : (

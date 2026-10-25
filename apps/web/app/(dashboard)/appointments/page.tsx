@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock3,
   CircleCheckBig,
+  History,
   type LucideIcon,
 } from "lucide-react";
 import { StatCard, type StatTone } from "@/components/ui/StatCard";
@@ -21,6 +22,12 @@ import { useCategoryExamples } from "@/lib/category-examples";
 import { Appointment } from "@/types/appointment";
 
 type Filter = "all" | "confirmed" | "pending" | "completed";
+
+/*
+ * "today": o dia de trabalho — é o que o funcionário vê para fazer o fecho.
+ * "history": todos os atendimentos concluídos, só para o proprietário.
+ */
+type View = "today" | "history";
 
 /*
  * Opção de dropdown. `label` é o que aparece na tela e `id` é o que vai para a
@@ -53,6 +60,13 @@ const WEEKDAY_NAMES = [
 
 const WEEKDAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
+/* Data local de hoje no mesmo formato que a API devolve (YYYY-MM-DD). */
+function todayKey() {
+  const now = new Date();
+
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
 function toMinutes(time: string) {
   const [hours, minutes] = time.split(":").map(Number);
 
@@ -65,6 +79,10 @@ export default function AppointmentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
+
+  const [view, setView] = useState<View>("today");
+
+  const [isOwner, setIsOwner] = useState(false);
 
   const [search, setSearch] = useState("");
 
@@ -154,6 +172,15 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
     loadAppointments();
+  }, []);
+
+  /* PAPEL: só o proprietário tem acesso ao histórico de concluídos. */
+
+  useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => setIsOwner(data?.user?.role?.toUpperCase() === "OWNER"))
+      .catch(() => setIsOwner(false));
   }, []);
 
   /* TEMPO REAL: agendamento novo pela app, confirmado, cancelado... aparece na hora. */
@@ -458,9 +485,26 @@ export default function AppointmentsPage() {
 
   /* FILTROS*/
 
-  const filteredAppointments = appointments.filter((appointment) => {
+  const today = todayKey();
+
+  const showHistory = isOwner && view === "history";
+
+  // Hoje: tudo o que está marcado para o dia. Histórico: concluídos de qualquer data.
+  const todayAppointments = appointments.filter(
+    (appointment) => appointment.date === today,
+  );
+
+  const historyAppointments = appointments.filter(
+    (appointment) => appointment.status === "completed",
+  );
+
+  const filteredAppointments = (
+    showHistory ? historyAppointments : todayAppointments
+  ).filter((appointment) => {
     const matchesFilter =
-      activeFilter === "all" || appointment.status === activeFilter;
+      showHistory ||
+      activeFilter === "all" ||
+      appointment.status === activeFilter;
 
     const searchText = search.toLowerCase().trim();
 
@@ -475,15 +519,15 @@ export default function AppointmentsPage() {
 
   /*CONTADORES*/
 
-  const confirmedCount = appointments.filter(
+  const confirmedCount = todayAppointments.filter(
     (item) => item.status === "confirmed",
   ).length;
 
-  const pendingCount = appointments.filter(
+  const pendingCount = todayAppointments.filter(
     (item) => item.status === "pending",
   ).length;
 
-  const completedCount = appointments.filter(
+  const completedCount = todayAppointments.filter(
     (item) => item.status === "completed",
   ).length;
 
@@ -491,7 +535,7 @@ export default function AppointmentsPage() {
     {
       value: "all" as const,
       label: "Todos",
-      count: appointments.length,
+      count: todayAppointments.length,
     },
     {
       value: "confirmed" as const,
@@ -527,9 +571,9 @@ export default function AppointmentsPage() {
         <Metric
           index={0}
           icon={CalendarDays}
-          title="Total"
-          value={appointments.length}
-          description="Agendamentos registados"
+          title="Hoje"
+          value={todayAppointments.length}
+          description="Agendamentos do dia"
         />
 
         <Metric
@@ -556,16 +600,54 @@ export default function AppointmentsPage() {
           tone="brand"
           title="Concluídos"
           value={completedCount}
-          description="Atendimentos concluídos"
+          description="Concluídos hoje"
         />
       </section>
+
+      {/* VISTA: DIA / HISTÓRICO (PROPRIETÁRIO) */}
+
+      {isOwner && (
+        <div className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-sm">
+          {(
+            [
+              { value: "today", label: "Hoje", icon: CalendarDays },
+              { value: "history", label: "Histórico de concluídos", icon: History },
+            ] as const
+          ).map((option) => {
+            const active = view === option.value;
+            const Icon = option.icon;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setView(option.value)}
+                className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition duration-200 ${
+                  active
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* FILTROS */}
 
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap gap-2">
-            {filters.map((filter) => {
+            {showHistory ? (
+              <p className="text-sm text-gray-600">
+                {historyAppointments.length} atendimento
+                {historyAppointments.length === 1 ? "" : "s"} concluído
+                {historyAppointments.length === 1 ? "" : "s"} no total
+              </p>
+            ) : filters.map((filter) => {
               const active = activeFilter === filter.value;
 
               return (
@@ -621,7 +703,9 @@ export default function AppointmentsPage() {
 
       <section>
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-950">Agendamentos</h2>
+          <h2 className="text-lg font-semibold text-gray-950">
+            {showHistory ? "Histórico de concluídos" : "Agendamentos de hoje"}
+          </h2>
 
           <p className="mt-1 text-sm text-gray-500">
             {filteredAppointments.length} resultado
@@ -639,6 +723,17 @@ export default function AppointmentsPage() {
             appointments={filteredAppointments}
             onDelete={handleDeleteAppointment}
             onEdit={handleEditAppointment}
+            order={showHistory ? "desc" : "asc"}
+            emptyTitle={
+              showHistory
+                ? "Nenhum atendimento concluído"
+                : "Nenhum agendamento para hoje"
+            }
+            emptyDescription={
+              showHistory
+                ? "Os atendimentos concluídos aparecerão aqui."
+                : "Os agendamentos do dia aparecerão aqui automaticamente."
+            }
           />
         )}
       </section>
