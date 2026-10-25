@@ -513,6 +513,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   segmented: {
+    marginTop: 16,
     height: 36,
     borderRadius: 11,
     borderCurve: "continuous",
