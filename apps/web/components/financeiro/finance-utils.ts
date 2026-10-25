@@ -20,7 +20,7 @@ export type FinancePayment = {
   method: PaymentMethod;
   status: "PAID";
   paidAt: string | null;
-  client: { id: string; name: string };
+  client: { id: string; name: string; avatarUrl?: string | null };
   service: { id: string; name: string };
   professional: { id: string; name: string };
   appointment: { id: string; date: string; status: string };

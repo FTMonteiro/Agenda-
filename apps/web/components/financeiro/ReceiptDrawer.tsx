@@ -29,7 +29,7 @@ export type ReceiptData = {
   } | null;
   payment: { id: string; amount: number; method: string; status: string; paidAt: string };
   appointment: { id: string; date: string; status: string; notes: string | null };
-  client: { name: string; email: string | null; phone: string | null };
+  client: { name: string; email: string | null; phone: string | null; avatarUrl?: string | null };
   professional: { name: string; specialty: string | null };
   service: { name: string; price: number; duration: number };
   total: number;
@@ -267,7 +267,13 @@ export function ReceiptDrawer({ appointmentId, preview, onClose }: Props) {
                 </div>
                 <div className="min-w-0">
                   <dt className="text-xs text-[var(--muted)]">Cliente</dt>
-                  <dd className="mt-0.5 truncate font-medium text-[var(--foreground)]">{receipt.client.name}</dd>
+                  <dd className="mt-0.5 flex min-w-0 items-center gap-2 font-medium text-[var(--foreground)]">
+                    {receipt.client.avatarUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={receipt.client.avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+                    )}
+                    <span className="truncate">{receipt.client.name}</span>
+                  </dd>
                   {receipt.client.phone && <dd className="truncate text-xs text-[var(--muted)]">{receipt.client.phone}</dd>}
                   {receipt.client.email && <dd className="truncate text-xs text-[var(--muted)]">{receipt.client.email}</dd>}
                 </div>

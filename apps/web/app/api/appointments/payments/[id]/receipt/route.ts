@@ -58,6 +58,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
           name: client?.name ?? "Cliente",
           email: client?.email ?? null,
           phone: client?.phone ?? null,
+          avatarUrl: client?.avatarUrl ?? null,
         },
         professional: {
           id: appointment.professionalId,

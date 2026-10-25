@@ -55,7 +55,7 @@ export const paymentsRepository = {
     return prisma.payment.findMany({
       where: { businessId, status: "PAID", paidAt: { gte: start, lt: end } },
       include: {
-        user: { select: { name: true } },
+        user: { select: { name: true, avatarUrl: true } },
         walkInClient: { select: { name: true } },
         appointment: {
           select: {

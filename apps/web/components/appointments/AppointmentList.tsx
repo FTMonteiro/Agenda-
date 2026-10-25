@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Appointment } from "@/types/appointment";
@@ -120,6 +121,8 @@ export function AppointmentList({
   } | null>(null);
 
   const [validationError, setValidationError] = useState("");
+
+  const router = useRouter();
 
   const [loadingReceipt, setLoadingReceipt] = useState<string | null>(
     null
@@ -367,37 +370,13 @@ export function AppointmentList({
       return;
     }
 
-    try {
-      setLoadingReceipt(appointment.id);
-
-      const receiptPage =
-        `/pagamentos?receipt=${encodeURIComponent(
-          appointment.id
-        )}`;
-
-      const newWindow = window.open(
-        receiptPage,
-        "_blank",
-        "noopener,noreferrer"
-      );
-
-      if (!newWindow) {
-        toast.error(
-          "O navegador bloqueou a abertura do recibo. Permita pop-ups para este sistema."
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Erro ao abrir recibo:",
-        error
-      );
-
-      toast.error(
-        "Não foi possível abrir o recibo."
-      );
-    } finally {
-      setLoadingReceipt(null);
-    }
+    // Abre na mesma aba: a página de Finanças desce até ao pagamento do cliente e mostra o recibo.
+    setLoadingReceipt(appointment.id);
+    router.push(
+      `/financeiro?receipt=${encodeURIComponent(
+        appointment.id
+      )}`
+    );
   }
 
   /* 

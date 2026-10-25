@@ -75,6 +75,11 @@ export default function FinanceiroPage({
     typeof requestedReceipt === "string" ? requestedReceipt : null,
   );
   const [receiptPreview, setReceiptPreview] = useState<ReceiptPreview | null>(null);
+  // Vindo da agenda, a página desce até ao pagamento do recibo pedido (só uma vez).
+  const [focusId, setFocusId] = useState<string | null>(
+    typeof requestedReceipt === "string" ? requestedReceipt : null,
+  );
+  const clearFocus = useCallback(() => setFocusId(null), []);
 
   // O pedido atual ainda sem resposta: noutro mês mostra o esqueleto; no mesmo mês
   // (atualizar) os dados anteriores ficam visíveis enquanto o ícone gira.
@@ -276,6 +281,8 @@ export default function FinanceiroPage({
           method={method}
           onMethodChange={setMethod}
           activeAppointmentId={receiptId}
+          focusAppointmentId={focusId}
+          onFocused={clearFocus}
           onOpenReceipt={openReceipt}
           onExport={() => downloadPaymentsCsv(payments, month)}
         />

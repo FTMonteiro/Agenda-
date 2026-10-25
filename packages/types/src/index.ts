@@ -409,6 +409,7 @@ export interface FinancialsPaymentDTO {
   appointmentId: string;
   scheduledAt: string;
   clientName: string;
+  clientAvatarUrl: string | null;
   serviceName: string;
   professionalName: string;
 }

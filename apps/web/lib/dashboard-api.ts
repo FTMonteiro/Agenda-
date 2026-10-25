@@ -107,6 +107,8 @@ export interface ClientSummary {
   name: string;
   email: string | null;
   phone: string | null;
+  // Só quem tem conta na app tem foto.
+  avatarUrl?: string | null;
 }
 
 export interface BusinessLookups {
@@ -134,7 +136,7 @@ export async function loadLookups(businessId: string): Promise<BusinessLookups> 
 
   const clients = new Map<string, ClientSummary>();
   for (const client of walkIns) clients.set(client.id, client);
-  for (const client of registered) clients.set(client.userId, { id: client.userId, name: client.name, email: client.email, phone: client.phone });
+  for (const client of registered) clients.set(client.userId, { id: client.userId, name: client.name, email: client.email, phone: client.phone, avatarUrl: client.avatarUrl });
 
   return {
     services: new Map(services.map((service) => [service.id, service])),

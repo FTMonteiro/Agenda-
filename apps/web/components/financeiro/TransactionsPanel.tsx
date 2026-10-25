@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowDownUp, ChevronRight, Download, ReceiptText, Search, X } from "lucide-react";
 import {
   METHOD_META,
@@ -44,6 +44,9 @@ type Props = {
   method: PaymentMethod | "ALL";
   onMethodChange: (method: PaymentMethod | "ALL") => void;
   activeAppointmentId: string | null;
+  // Pagamento a mostrar ao entrar (recibo aberto a partir da agenda): a página desce até ele.
+  focusAppointmentId?: string | null;
+  onFocused?: () => void;
   onOpenReceipt: (payment: FinancePayment) => void;
   onExport: () => void;
 };
@@ -54,6 +57,8 @@ export function TransactionsPanel({
   method,
   onMethodChange,
   activeAppointmentId,
+  focusAppointmentId,
+  onFocused,
   onOpenReceipt,
   onExport,
 }: Props) {
@@ -102,11 +107,20 @@ export function TransactionsPanel({
     return [...map.values()];
   }, [filtered, sort]);
 
+  // Desce até à linha do pagamento assim que a lista a tiver; se não estiver neste mês, fica pelo painel.
+  useEffect(() => {
+    if (!focusAppointmentId || loading) return;
+    const row = document.querySelector(`[data-appointment-id="${CSS.escape(focusAppointmentId)}"]`);
+    const target = row ?? document.getElementById("transacoes");
+    target?.scrollIntoView({ behavior: "smooth", block: row ? "center" : "start" });
+    onFocused?.();
+  }, [focusAppointmentId, loading, groups, onFocused]);
+
   const filteredTotal = sumAmounts(filtered);
   const hasFilters = search.trim().length > 0 || method !== "ALL";
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+    <section id="transacoes" className="scroll-mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
       {/* CABEÇALHO */}
       <div className="flex flex-col gap-4 border-b border-[var(--border)] p-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
@@ -267,7 +281,7 @@ export function TransactionsPanel({
                   const active = activeAppointmentId === payment.appointment.id;
 
                   return (
-                    <li key={payment.id}>
+                    <li key={payment.id} data-appointment-id={payment.appointment.id}>
                       <button
                         type="button"
                         onClick={() => onOpenReceipt(payment)}
@@ -276,7 +290,12 @@ export function TransactionsPanel({
                         }`}
                       >
                         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                          {initials(payment.client.name)}
+                          {payment.client.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={payment.client.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+                          ) : (
+                            initials(payment.client.name)
+                          )}
                           <span
                             className="absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full ring-2 ring-[var(--surface)]"
                             style={{ background: meta.color }}

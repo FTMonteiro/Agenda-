@@ -299,6 +299,8 @@ export const paymentsService = {
         appointmentId: payment.appointment.id,
         scheduledAt: payment.appointment.scheduledAt.toISOString(),
         clientName: payment.user?.name ?? payment.walkInClient?.name ?? "Cliente",
+        // Só os clientes com conta na app têm foto.
+        clientAvatarUrl: payment.user?.avatarUrl ?? null,
         serviceName: payment.appointment.service.name,
         professionalName: payment.appointment.professional.user.name,
       })),

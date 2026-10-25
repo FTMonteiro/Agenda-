@@ -58,7 +58,7 @@ export async function GET(request: Request) {
         paidAt: payment.paidAt,
         createdAt: payment.paidAt,
         reference: "",
-        client: { id: "", name: payment.clientName },
+        client: { id: "", name: payment.clientName, avatarUrl: payment.clientAvatarUrl ?? null },
         service: { id: "", name: payment.serviceName },
         professional: { id: "", name: payment.professionalName },
         appointment: { id: payment.appointmentId, date: payment.scheduledAt, status: "COMPLETED" },

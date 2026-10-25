@@ -274,6 +274,7 @@ export const financialsPaymentSchema = registry.register(
     appointmentId: z.string().uuid(),
     scheduledAt: z.string().datetime(),
     clientName: z.string(),
+    clientAvatarUrl: z.string().nullable(),
     serviceName: z.string(),
     professionalName: z.string(),
   }),
