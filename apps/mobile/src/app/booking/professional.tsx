@@ -569,8 +569,8 @@ const createStyles = (tc: ThemeRoles) =>
     },
 
     progressActive: {
-      width: "50%",
-      height: "100%",
+      width: "50%" as const,
+      height: "100%" as const,
       borderRadius: 2,
       borderCurve: "continuous",
     },

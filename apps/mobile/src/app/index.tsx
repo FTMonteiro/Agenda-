@@ -37,6 +37,7 @@ import { NEAR_ME_RADIUS_KM, useSelectedLocation } from "../contexts/LocationCont
 import { listBusinesses } from "../services/businesses";
 import { useT } from "@/i18n";
 
+import type { ScrollViewInstance } from "react-native";
 // A secção "Perto de ti" mostra só os espaços até esta distância de onde a pessoa está agora.
 const NEARBY_RADIUS_KM = NEAR_ME_RADIUS_KM;
 
@@ -82,7 +83,7 @@ export default function HomeScreen() {
 
   const scrollY = useRef(new Animated.Value(0)).current;
   const heroScrollX = useRef(new Animated.Value(0)).current;
-  const heroRef = useRef<ScrollView>(null);
+  const heroRef = useRef<ScrollViewInstance>(null);
   const heroDragging = useRef(false);
 
   const heroWidth = Math.min(width - 32, 560);

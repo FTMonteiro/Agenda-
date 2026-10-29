@@ -30,6 +30,7 @@ import { useFavorites } from "../contexts/FavoritesContext";
 import { useSelectedLocation } from "../contexts/LocationContext";
 import { useT } from "@/i18n";
 
+import type { TextInputInstance } from "react-native";
 type Filter = "recommended" | "nearest" | "topRated" | "bestPrice";
 
 const FILTERS: { value: Filter; label: string }[] = [
@@ -199,7 +200,7 @@ export default function SearchScreen() {
   const t = useT();
   const router = useRouter();
   const colors = useIOSColors();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const [query, setQuery] = useState("");

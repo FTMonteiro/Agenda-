@@ -382,7 +382,7 @@ export default function SpacesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
       <View style={styles.container}>
         {/* HEADER — SOMENTE PESQUISA */}
@@ -967,8 +967,8 @@ const createStyles = (tc: ThemeRoles) =>
     },
 
     cardImage: {
-      width: "100%",
-      height: "100%",
+      width: "100%" as const,
+      height: "100%" as const,
     },
 
     imageFallback: {

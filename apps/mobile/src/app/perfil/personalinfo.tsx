@@ -444,7 +444,7 @@ export default function PersonalInfoScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
         <View style={[styles.keyboardView, styles.loadingContainer]}>
           <ActivityIndicator size="large" color={tc.fg(COLORS.black)} />
@@ -455,7 +455,7 @@ export default function PersonalInfoScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
       <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView

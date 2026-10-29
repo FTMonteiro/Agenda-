@@ -228,7 +228,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
         <View style={[styles.container, styles.loadingContainer]}>
           <ActivityIndicator size="large" color={tc.fg(COLORS.black)} />
@@ -239,7 +239,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
       <View style={styles.container}>
         {/* HEADER */}

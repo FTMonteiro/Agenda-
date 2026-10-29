@@ -17,6 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useT } from "@/i18n";
 
+import type { ScrollViewInstance } from "react-native";
 const HEIGHT = 410;
 const SLIDE_MS = 4500;
 
@@ -45,7 +46,7 @@ export function PhotoCarousel({ photos, name, location, likes, favorite, onFavor
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const progress = useRef(new Animated.Value(0)).current;
   const heart = useRef(new Animated.Value(1)).current;
 

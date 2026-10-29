@@ -1,18 +1,9 @@
 import { describe, expect, it } from "vitest";
 // The mobile app's real filter (apps/mobile/src/services/incomingLinks.ts): a plain module.
 import { isSafeIncomingLink } from "../../mobile/src/services/incomingLinks";
-// The vulnerable decoder the app ships (via expo-router → query-string), to show the
-// filter removes exactly its slow path.
-import decodeUriComponent from "decode-uri-component";
-import { parse } from "query-string";
-
-const time = (f: () => unknown) => {
-  const start = performance.now();
-  f();
-  return performance.now() - start;
-};
-
-describe("deep links recebidos pela app (decode-uri-component 0.2)", () => {
+// Since Expo SDK 58 the app no longer ships decode-uri-component (expo-router dropped
+// query-string); the filter stays as defence in depth for links that open the app.
+describe("deep links recebidos pela app", () => {
   it.each([
     "slotix://auth?handoff=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.abc_-123&verifier=x",
     "slotix://auth?error=GOOGLE_CANCELLED",
@@ -31,15 +22,5 @@ describe("deep links recebidos pela app (decode-uri-component 0.2)", () => {
     ["demasiado longo", "slotix://space?x=" + "a".repeat(3000)],
   ])("recusa %s", (_label, link) => {
     expect(isSafeIncomingLink(link)).toBe(false);
-  });
-
-  it("o padrão recusado é de facto lento no decoder vulnerável; o aceite é rápido", () => {
-    const malicious = "x=" + "%ff".repeat(300);
-    expect(isSafeIncomingLink(malicious)).toBe(false);
-    expect(time(() => decodeUriComponent(malicious))).toBeGreaterThan(50);
-
-    const accepted = "x=" + "%C3%A3".repeat(120);
-    expect(isSafeIncomingLink(accepted)).toBe(true);
-    expect(time(() => parse(accepted))).toBeLessThan(50);
   });
 });

@@ -30,6 +30,7 @@ import { ApiRequestError } from "../../services/api-client";
 import { register } from "../../services/auth";
 import { useT, translate } from "@/i18n";
 
+import type { TextInputInstance } from "react-native";
 // A API exige pelo menos 8 caracteres — validar o mesmo aqui evita um erro só depois de enviar.
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -79,10 +80,10 @@ export default function CadastroScreen() {
   const [loading, setLoading] = useState(false);
   const [socialBusy, setSocialBusy] = useState(false);
 
-  const emailRef = useRef<TextInput>(null);
-  const phoneRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
-  const confirmRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInputInstance>(null);
+  const phoneRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
+  const confirmRef = useRef<TextInputInstance>(null);
 
   // Corrigir um campo apaga logo o erro desse campo (validação em linha, não só ao enviar).
   const setField = (field: Field) => (text: string) => {

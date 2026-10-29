@@ -28,6 +28,7 @@ import { NEAR_ME_RADIUS_KM, useSelectedLocation } from "../contexts/LocationCont
 import { listBusinesses } from "../services/businesses";
 import { useT } from "@/i18n";
 
+import type { ScrollViewInstance } from "react-native";
 type SortMode = Extract<BusinessSortBy, "recommended" | "nearest" | "topRated">;
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -134,8 +135,8 @@ export default function ExploreScreen() {
   // Onde começa o bloco dos filtros na página: a partir daí ficam presos no topo.
   const [filtersY, setFiltersY] = useState(0);
 
-  const scrollRef = useRef<ScrollView>(null);
-  const chipsRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const chipsRef = useRef<ScrollViewInstance>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollOffset = useRef(0);
   // Onde está cada categoria na fila (para a manter à vista).
