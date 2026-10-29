@@ -1,4 +1,7 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+
+import { assertSafeApiPath } from "./api-path";
+import { clientIpFrom, internalProxyHeaders } from "./internal-proxy";
 
 import {
   SESSION_COOKIE,
@@ -34,7 +37,9 @@ export async function clearSession(): Promise<void> {
 // An expired access token (15 minutes) is renewed once with the refresh token and the
 // call retried, so the dashboard session lasts as long as the refresh token does.
 export async function apiProxyFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  assertSafeApiPath(path);
   const session = await readSession();
+  const clientIp = clientIpFrom(await headers());
 
   const send = (tokens: SessionTokens | null) =>
     fetch(`${API_URL}${path}`, {
@@ -43,6 +48,7 @@ export async function apiProxyFetch(path: string, init: RequestInit = {}): Promi
         ...(init.body && typeof init.body === "string" ? { "Content-Type": "application/json" } : {}),
         ...(tokens ? { Authorization: `Bearer ${tokens.accessToken}` } : {}),
         ...init.headers,
+        ...internalProxyHeaders(clientIp),
       },
       cache: "no-store",
     });
@@ -50,8 +56,16 @@ export async function apiProxyFetch(path: string, init: RequestInit = {}): Promi
   const response = await send(session);
   if (response.status !== 401 || !session) return response;
 
-  const renewed = await refreshSession(session);
-  if (!renewed) return response;
+  const renewed = await refreshSession(session, clientIp);
+  if (renewed === "invalid") return response;
+  if (renewed === "unavailable") {
+    // Not a signed-out user: the refresh couldn't be done right now. A 503 keeps the
+    // dashboard from treating it as "session expired" and sending the user to the login.
+    return Response.json(
+      { success: false, error: { code: "SESSION_REFRESH_UNAVAILABLE", message: "Serviço temporariamente indisponível. Tente novamente." } },
+      { status: 503 },
+    );
+  }
 
   await writeSession(renewed);
   return send(renewed);

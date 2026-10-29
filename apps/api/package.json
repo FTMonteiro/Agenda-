@@ -16,13 +16,16 @@
     "lint": "eslint src tests",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "test:integration": "vitest run -c vitest.integration.config.ts",
+    "test:all": "vitest run && vitest run -c vitest.integration.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json"
   },
   "license": "ISC",
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^7.3.4",
-    "@prisma/adapter-pg": "^7.10.0",
-    "@prisma/client": "^7.10.0",
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@slotix/types": "1.0.0",
     "@slotix/validation": "1.0.0",
     "@supabase/supabase-js": "^2.112.4",
@@ -31,12 +34,12 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^2.0.1",
+    "multer": "^2.5.0",
     "pg": "^8.23.0",
-    "prisma": "^7.10.0",
+    "prisma": "^7.10.1",
     "swagger-ui-express": "^5.0.1",
     "tsx": "^4.23.13",
-    "zod": "^3.24.1"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
@@ -47,10 +50,12 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.20.2",
     "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
     "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^9.17.0",
+    "supertest": "^7.3.1",
     "typescript": "^7.0.2",
     "typescript-eslint": "^8.18.0",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.12"
   }
 }

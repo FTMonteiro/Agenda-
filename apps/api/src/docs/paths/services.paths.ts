@@ -3,8 +3,8 @@ import { createServiceSchema, updateServiceSchema } from "../../modules/services
 import { authErrors, bearerAuth, commonErrors, forbiddenError, registry, successResponse } from "../registry";
 import { serviceSchema } from "../schemas";
 
-const idParam = z.object({ id: z.string().uuid() });
-const businessIdQuery = z.object({ businessId: z.string().uuid() });
+const idParam = z.object({ id: z.guid() });
+const businessIdQuery = z.object({ businessId: z.guid() });
 
 registry.registerPath({
   method: "get",

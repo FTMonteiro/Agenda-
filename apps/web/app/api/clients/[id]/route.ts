@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: Context) {
     await requireAuth();
     const { id } = await params;
 
-    return Response.json(await apiCall<WalkInClientDTO>(`/clients/walk-in/${id}`));
+    return Response.json(await apiCall<WalkInClientDTO>(`/clients/walk-in/${encodeURIComponent(id)}`));
   } catch (error) {
     return errorResponse(error, "Não foi possível carregar o cliente.");
   }
@@ -40,7 +40,7 @@ export async function PUT(request: Request, { params }: Context) {
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return errorJson("Informe um email válido.", 400);
 
     const client = await apiCall<WalkInClientDTO>(
-      `/clients/walk-in/${id}`,
+      `/clients/walk-in/${encodeURIComponent(id)}`,
       jsonBody("PUT", {
         name,
         phone,
@@ -60,7 +60,7 @@ export async function DELETE(_request: Request, { params }: Context) {
     await requireOwner();
     const { id } = await params;
 
-    await apiCall(`/clients/walk-in/${id}`, { method: "DELETE" });
+    await apiCall(`/clients/walk-in/${encodeURIComponent(id)}`, { method: "DELETE" });
     return Response.json({ success: true, message: "Cliente excluído com sucesso." });
   } catch (error) {
     // The clients table shows a dedicated message for this case, keyed on `reason`.

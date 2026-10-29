@@ -1,19 +1,20 @@
 import { z } from "zod";
 import { BUSINESS_CATEGORIES } from "@slotix/types";
+import { imageUrl, longText, phone, shortText } from "../../shared/validation/fields";
 
 // Region names come from OpenStreetMap (see modules/geo), never from a fixed list; null
 // clears one that no longer applies after the pin moves.
 const regionName = z.string().trim().min(1).max(120).nullable().optional();
 
 export const createBusinessSchema = z.object({
-  name: z.string().min(2),
-  description: z.string().optional(),
-  address: z.string().optional(),
-  phone: z.string().optional(),
+  name: shortText(120).pipe(z.string().min(2)),
+  description: longText(2000).optional(),
+  address: shortText(300).optional(),
+  phone: phone.optional(),
   // One of the shared space types: it's what the app files the business under, so free
   // text here would leave the business out of every category.
   category: z.enum(BUSINESS_CATEGORIES, { message: "Tipo de espaço inválido." }).optional(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: imageUrl.optional(),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
   provincia: regionName,
@@ -26,13 +27,13 @@ export const createBusinessSchema = z.object({
 export const updateBusinessSchema = createBusinessSchema.partial();
 
 export const listBusinessesQuerySchema = z.object({
-  category: z.string().optional(),
+  category: z.string().max(60).optional(),
   // Locality filters, matched (case-insensitively) against the region stored with each
   // business.
-  provincia: z.string().optional(),
-  municipio: z.string().optional(),
-  bairro: z.string().optional(),
-  search: z.string().optional(),
+  provincia: z.string().max(120).optional(),
+  municipio: z.string().max(120).optional(),
+  bairro: z.string().max(120).optional(),
+  search: z.string().max(200).optional(),
   minRating: z.coerce.number().min(0).max(5).optional(),
   minPrice: z.coerce.number().nonnegative().optional(),
   maxPrice: z.coerce.number().nonnegative().optional(),

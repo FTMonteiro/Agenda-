@@ -5,7 +5,7 @@ import { apiCall, errorJson, errorResponse, formatAppointment, jsonBody, loadLoo
 type Context = { params: Promise<{ id: string }> };
 
 async function getOwnAppointment(id: string, businessId: string): Promise<AppointmentDTO | null> {
-  const appointment = await apiCall<AppointmentDTO>(`/appointments/${id}`);
+  const appointment = await apiCall<AppointmentDTO>(`/appointments/${encodeURIComponent(id)}`);
   return appointment.businessId === businessId ? appointment : null;
 }
 
@@ -60,10 +60,10 @@ export async function PUT(request: Request, { params }: Context) {
 
     let updated = current;
     if (scheduledAt.getTime() !== new Date(current.scheduledAt).getTime()) {
-      updated = await apiCall<AppointmentDTO>(`/appointments/${id}/reschedule`, jsonBody("PATCH", { scheduledAt: scheduledAt.toISOString() }));
+      updated = await apiCall<AppointmentDTO>(`/appointments/${encodeURIComponent(id)}/reschedule`, jsonBody("PATCH", { scheduledAt: scheduledAt.toISOString() }));
     }
     if (status !== current.status && action) {
-      updated = await apiCall<AppointmentDTO>(`/appointments/${id}/${action}`, { method: "PATCH" });
+      updated = await apiCall<AppointmentDTO>(`/appointments/${encodeURIComponent(id)}/${action}`, { method: "PATCH" });
     }
 
     return Response.json({

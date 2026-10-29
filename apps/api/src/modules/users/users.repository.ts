@@ -1,4 +1,5 @@
 import { prisma } from "../../config/database";
+import { requireId } from "../../shared/utils/requireId";
 
 export const usersRepository = {
   // How many people use the app as customers — the ones who can favorite a business.
@@ -7,7 +8,7 @@ export const usersRepository = {
   },
 
   findById(id: string) {
-    return prisma.user.findFirst({ where: { id, deletedAt: null } });
+    return prisma.user.findFirst({ where: { id: requireId(id, "userId"), deletedAt: null } });
   },
 
   update(id: string, data: { name?: string; phone?: string; avatarUrl?: string | null }) {
@@ -27,6 +28,7 @@ export const usersRepository = {
   // user rows themselves stay, emptied of anything personal and with the email freed so
   // it can be registered again: appointments/reviews made as a client still point at them.
   async deleteAccount(id: string) {
+    requireId(id, "userId");
     const businesses = await prisma.business.findMany({ where: { ownerId: id }, select: { id: true } });
     const businessIds = businesses.map((business) => business.id);
     const employees = await prisma.professional.findMany({ where: { businessId: { in: businessIds } }, select: { userId: true } });
@@ -56,11 +58,12 @@ export const usersRepository = {
         }),
       ),
     ]);
+    return userIds;
   },
 
   revokeAllRefreshTokens(userId: string) {
     return prisma.refreshToken.updateMany({
-      where: { userId, revokedAt: null },
+      where: { userId: requireId(userId, "userId"), revokedAt: null },
       data: { revokedAt: new Date() },
     });
   },

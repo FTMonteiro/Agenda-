@@ -1,14 +1,13 @@
 import { defineConfig } from "vitest/config";
+import { testEnv } from "./vitest.shared";
 
+// Testes unitários: sem base de dados. Os de integração têm a sua própria configuração
+// (vitest.integration.config.ts) porque precisam de um PostgreSQL de teste.
 export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
-    env: {
-      NODE_ENV: "test",
-      DATABASE_URL: "postgresql://test:test@localhost:5432/slotix_test?schema=public",
-      JWT_ACCESS_SECRET: "test-access-secret",
-      JWT_REFRESH_SECRET: "test-refresh-secret",
-    },
+    exclude: ["tests/integration/**", "node_modules/**"],
+    env: testEnv,
   },
 });

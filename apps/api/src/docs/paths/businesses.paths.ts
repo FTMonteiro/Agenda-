@@ -9,7 +9,7 @@ import {
 import { authErrors, bearerAuth, commonErrors, forbiddenError, registry, successResponse, listSuccessResponse } from "../registry";
 import { authTokensSchema, businessHoursEntrySchema, businessSchema, financialsSummarySchema, professionalSchema, serviceSchema } from "../schemas";
 
-const idParam = z.object({ id: z.string().uuid() });
+const idParam = z.object({ id: z.guid() });
 
 registry.registerPath({
   method: "get",

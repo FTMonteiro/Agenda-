@@ -181,7 +181,12 @@ export const appointmentsService = {
   // otherwise identical to `create`, including slot-availability and future-date checks.
   async createForWalkIn(requesterId: string, input: CreateWalkInAppointmentInput): Promise<AppointmentDTO> {
     await assertStaffOfBusiness(input.businessId, requesterId);
-    await getWalkInClientOrThrow(input.walkInClientId);
+    // The walk-in client must be one of this business's own: staff of one space can't
+    // book (and so link, and later read in its financials) another space's client.
+    const walkIn = await getWalkInClientOrThrow(input.walkInClientId);
+    if (walkIn.businessId !== input.businessId) {
+      throw new NotFoundError("Cliente não encontrado.", "WALK_IN_CLIENT_NOT_FOUND");
+    }
 
     const { service } = await validateBookingContext(input.businessId, input.serviceId, input.professionalId);
 
@@ -237,7 +242,8 @@ export const appointmentsService = {
       throw new ConflictError("Este agendamento já não pode ser cancelado.", "APPOINTMENT_NOT_CANCELLABLE");
     }
 
-    const updated = await appointmentsRepository.update(id, { status: "CANCELLED" });
+    const updated = await appointmentsRepository.updateIfStatus(id, ["PENDING", "CONFIRMED"], { status: "CANCELLED" });
+    if (!updated) throw new ConflictError("Este agendamento já não pode ser cancelado.", "APPOINTMENT_NOT_CANCELLABLE");
     domainEvents.emitEvent("AppointmentCancelled", { ...toAppointmentDTO(updated), byClient: requesterRole === "CUSTOMER" });
     return announce(toAppointmentDTO(updated), "cancelled");
   },
@@ -250,7 +256,8 @@ export const appointmentsService = {
       throw new ConflictError("Só é possível confirmar agendamentos pendentes.", "APPOINTMENT_NOT_PENDING");
     }
 
-    const updated = await appointmentsRepository.update(id, { status: "CONFIRMED" });
+    const updated = await appointmentsRepository.updateIfStatus(id, ["PENDING"], { status: "CONFIRMED" });
+    if (!updated) throw new ConflictError("Só é possível confirmar agendamentos pendentes.", "APPOINTMENT_NOT_PENDING");
     domainEvents.emitEvent("AppointmentConfirmed", toAppointmentDTO(updated));
     return announce(toAppointmentDTO(updated), "confirmed");
   },
@@ -270,7 +277,8 @@ export const appointmentsService = {
       throw new ConflictError("O agendamento só fica concluído depois de o pagamento ser registado.", "APPOINTMENT_NOT_PAID");
     }
 
-    const updated = await appointmentsRepository.update(id, { status: "COMPLETED" });
+    const updated = await appointmentsRepository.updateIfStatus(id, ["PENDING", "CONFIRMED"], { status: "COMPLETED" });
+    if (!updated) throw new ConflictError("Este agendamento não pode ser concluído.", "APPOINTMENT_NOT_COMPLETABLE");
     return announce(toAppointmentDTO(updated), "completed");
   },
 
@@ -282,7 +290,8 @@ export const appointmentsService = {
       throw new ConflictError("Este agendamento não pode ser marcado como falta.", "APPOINTMENT_NOT_NO_SHOWABLE");
     }
 
-    const updated = await appointmentsRepository.update(id, { status: "NO_SHOW" });
+    const updated = await appointmentsRepository.updateIfStatus(id, ["PENDING", "CONFIRMED"], { status: "NO_SHOW" });
+    if (!updated) throw new ConflictError("Este agendamento não pode ser marcado como falta.", "APPOINTMENT_NOT_NO_SHOWABLE");
     return announce(toAppointmentDTO(updated), "no_show");
   },
 
@@ -301,7 +310,9 @@ export const appointmentsService = {
 
     const updated = await appointmentsRepository.withProfessionalLock(appointment.professionalId, async (db) => {
       await assertSlotAvailable(db, appointment.businessId, appointment.professionalId, scheduledAt, appointment.durationMinutes, id);
-      return appointmentsRepository.update(id, { scheduledAt }, db);
+      const rescheduled = await appointmentsRepository.updateIfStatus(id, ["PENDING", "CONFIRMED"], { scheduledAt }, db);
+      if (!rescheduled) throw new ConflictError("Este agendamento não pode ser reagendado.", "APPOINTMENT_NOT_RESCHEDULABLE");
+      return rescheduled;
     });
     return announce(toAppointmentDTO(updated), "rescheduled");
   },

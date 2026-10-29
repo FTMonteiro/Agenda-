@@ -7,6 +7,8 @@ import { assertBusinessOwner, getBusinessOrThrow } from "../businesses";
 import { usersRepository } from "../users";
 import { professionalsRepository } from "./professionals.repository";
 import type { CreateBlockInput, CreateProfessionalInput, InviteProfessionalInput, UpdateProfessionalInput } from "./professionals.schema";
+import { normalizeEmail } from "../../shared/utils/email";
+import { endAllSessions } from "../auth/auth.service";
 
 // Base64url, no padding — short enough to read out loud, long enough to not be guessable
 // as a one-time credential the owner relays manually (chat, in person) to a new hire.
@@ -70,9 +72,9 @@ async function assertCanManageBlocks(professional: { businessId: string; userId:
 }
 
 export const professionalsService = {
-  async create(ownerId: string, input: CreateProfessionalInput): Promise<ProfessionalDTO> {
-    const business = await getBusinessOrThrow(input.businessId);
-    assertBusinessOwner(business, ownerId);
+  async create(_requesterId: string, input: CreateProfessionalInput): Promise<ProfessionalDTO> {
+    // Admin-only route (see professionals.routes.ts): the business only has to exist.
+    await getBusinessOrThrow(input.businessId);
 
     const user = await usersRepository.findById(input.userId);
     if (!user) throw new NotFoundError("Utilizador não encontrado.", "USER_NOT_FOUND");
@@ -95,8 +97,7 @@ export const professionalsService = {
     const business = await getBusinessOrThrow(input.businessId);
     assertBusinessOwner(business, ownerId);
 
-    const existing = await authRepository.findAnyByEmail(input.email);
-    if (existing) throw new ConflictError("Este email já está registado.", "EMAIL_ALREADY_REGISTERED");
+    if (await authRepository.isEmailTaken(input.email)) throw new ConflictError("Este email já está registado.", "EMAIL_ALREADY_REGISTERED");
 
     const temporaryPassword = generateTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, 10);
@@ -104,7 +105,7 @@ export const professionalsService = {
     const professional = await professionalsRepository.createWithNewUser({
       businessId: input.businessId,
       name: input.name,
-      email: input.email,
+      email: normalizeEmail(input.email),
       passwordHash,
       phone: input.phone,
       specialty: input.specialty,
@@ -124,7 +125,7 @@ export const professionalsService = {
 
     const temporaryPassword = generateTemporaryPassword();
     await usersRepository.updatePasswordHash(professional.userId, await bcrypt.hash(temporaryPassword, 10));
-    await usersRepository.revokeAllRefreshTokens(professional.userId);
+    await endAllSessions(professional.userId);
 
     return { temporaryPassword };
   },

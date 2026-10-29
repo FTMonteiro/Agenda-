@@ -9,7 +9,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const { id } = await params;
 
     const [appointment, lookups, business] = await Promise.all([
-      apiCall<AppointmentDTO>(`/appointments/${id}`),
+      apiCall<AppointmentDTO>(`/appointments/${encodeURIComponent(id)}`),
       loadLookups(user.businessId),
       // The receipt header names who issued it; without it the receipt still renders.
       apiCall<BusinessDTO>(`/businesses/${user.businessId}`).catch(() => null),

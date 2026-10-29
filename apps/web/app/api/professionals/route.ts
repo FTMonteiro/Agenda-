@@ -1,3 +1,4 @@
+import { isAcceptedImageUrl, UNSUPPORTED_IMAGE_MESSAGE } from "@/lib/image-formats";
 import type { ProfessionalDTO } from "@slotix/types";
 import { requireOwner, requireStaff } from "@/lib/auth";
 import { apiCall, errorJson, errorResponse, formatProfessional, jsonBody } from "@/lib/dashboard-api";
@@ -30,7 +31,8 @@ export async function POST(request: Request) {
     const phone = typeof body.phone === "string" ? body.phone.trim() : "";
     const specialty = typeof body.specialty === "string" ? body.specialty.trim() : "";
     // A small square JPEG as a data URL, prepared by the form (see PhotoField).
-    const photo = typeof body.photo === "string" && body.photo.startsWith("data:image/") ? body.photo : "";
+    const photo = typeof body.photo === "string" ? body.photo.trim() : "";
+    if (photo && !isAcceptedImageUrl(photo)) return errorJson(UNSUPPORTED_IMAGE_MESSAGE, 400);
 
     if (name.length < 2) return errorJson("O nome do profissional é obrigatório.", 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return errorJson("Informe um email válido.", 400);

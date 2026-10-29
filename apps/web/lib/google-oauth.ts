@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 
+import { clientIpFrom, internalProxyHeaders } from "./internal-proxy";
+
 // What the dashboard remembers between sending the browser to Google and getting it back:
 // the anti-forgery state, and what the user was doing (signing in, or creating a space).
 export const GOOGLE_OAUTH_COOKIE = "slotix_google_oauth";
@@ -20,11 +22,15 @@ export function googleRedirectUri(request: NextRequest): string {
 
 // Called without the session's token on purpose: apiProxyFetch retries a 401 after
 // refreshing a stale session, and Google's one-time code can't be sent twice.
-export function googleApiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+export function googleApiFetch(request: NextRequest, path: string, init: RequestInit = {}): Promise<Response> {
   const apiUrl = process.env.NEXT_API_URL ?? "http://localhost:3000/api/v1";
   return fetch(`${apiUrl}${path}`, {
     ...init,
-    headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers },
+    headers: {
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...init.headers,
+      ...internalProxyHeaders(clientIpFrom(request.headers)),
+    },
     cache: "no-store",
   });
 }

@@ -1,4 +1,4 @@
-import { createHash, createPublicKey, randomBytes, type JsonWebKey } from "node:crypto";
+import { createHash, createPublicKey, randomBytes, randomUUID, type JsonWebKey } from "node:crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import ms from "../../shared/utils/ms";
@@ -6,7 +6,9 @@ import type { LoginInput, RegisterInput } from "@slotix/validation";
 import { matchBusinessCategory, type AuthTokensDTO, type LoginResponse, type UserDTO } from "@slotix/types";
 import { env } from "../../config/env";
 import { AppError, AuthenticationError, ConflictError, ValidationError } from "../../shared/errors";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../shared/utils/jwt";
+import { signAccessToken, signRefreshToken, signTemporaryToken, verifyRefreshToken, verifyTemporaryToken } from "../../shared/utils/jwt";
+import { normalizeEmail } from "../../shared/utils/email";
+import { forgetAllSessions, forgetSession } from "../../shared/sessionUsers";
 import { authRepository } from "./auth.repository";
 import type { AppleAuthInput, GoogleAuthInput, GoogleMobileExchangeInput, GoogleMobileStartInput } from "./auth.schema";
 
@@ -50,6 +52,9 @@ interface MobileState {
 
 // The deep link back into the app, carrying either a handoff or an error code.
 function appReturnUrl(returnUrl: string, params: Record<string, string>): string {
+  // Already checked when the flow started and carried in the signed state; checked again
+  // here so this redirect can never point anywhere but the app, whatever changes upstream.
+  assertAppReturnUrl(returnUrl);
   const url = new URL(returnUrl);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   return url.toString();
@@ -57,7 +62,7 @@ function appReturnUrl(returnUrl: string, params: Record<string, string>): string
 
 // Short-lived and useless without the verifier the app kept (see googleMobileExchange).
 function signHandoff(userId: string, challenge: string): string {
-  return jwt.sign({ sub: userId, challenge }, env.JWT_ACCESS_SECRET, { audience: MOBILE_HANDOFF_AUDIENCE, expiresIn: "2m" });
+  return signTemporaryToken({ sub: userId, challenge }, MOBILE_HANDOFF_AUDIENCE, "2m");
 }
 
 // The session is handed to whatever this link opens, so it must be the app itself: its own
@@ -88,13 +93,12 @@ async function signInByVerifiedEmail(
     return user;
   }
 
-  const existing = await authRepository.findAnyByEmail(profile.email);
-  if (existing) throw new ConflictError("Este email já está registado.", "EMAIL_ALREADY_REGISTERED");
+  if (await authRepository.isEmailTaken(profile.email)) throw new ConflictError("Este email já está registado.", "EMAIL_ALREADY_REGISTERED");
 
   // No password was chosen: a random one nobody knows keeps email+password login closed
   // for this account until a password is set some other way.
   const passwordHash = await bcrypt.hash(randomBytes(32).toString("hex"), 10);
-  const account = { name: profile.name, email: profile.email, passwordHash, avatarUrl: profile.picture };
+  const account = { name: profile.name, email: normalizeEmail(profile.email), passwordHash, avatarUrl: profile.picture };
 
   return business ? authRepository.createOwnerWithBusiness({ ...account, ...business }) : authRepository.createUser(account);
 }
@@ -143,7 +147,7 @@ async function verifyAppleIdentityToken(identityToken: string, audiences: string
   if (!claims.email || String(claims.email_verified) !== "true") {
     throw new AuthenticationError("A Apple não confirmou o email desta conta.", "APPLE_EMAIL_NOT_VERIFIED");
   }
-  return claims.email.trim().toLowerCase();
+  return normalizeEmail(claims.email);
 }
 
 interface GoogleProfile {
@@ -193,9 +197,19 @@ async function fetchGoogleProfile(code: string, redirectUri: string): Promise<Go
     throw new AuthenticationError("O Google não confirmou o email desta conta.", "GOOGLE_EMAIL_NOT_VERIFIED");
   }
 
-  const email = profile.email.trim().toLowerCase();
+  const email = normalizeEmail(profile.email);
   return { email, name: profile.name?.trim() || email.split("@")[0], picture: profile.picture };
 }
+
+const REFRESH_REUSE_GRACE_MS = 2 * 60_000;
+
+// Shared by password changes, account theft signals and "terminar todas as sessões".
+export async function endAllSessions(userId: string): Promise<void> {
+  await authRepository.endAllSessions(userId);
+  forgetAllSessions();
+}
+
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(randomBytes(16).toString("hex"), 10);
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -227,30 +241,33 @@ function toUserDTO(user: {
   };
 }
 
+function signPair(user: { id: string; role: UserDTO["role"] }, sessionId: string): AuthTokensDTO {
+  return {
+    accessToken: signAccessToken({ sub: user.id, role: user.role, sid: sessionId }),
+    refreshToken: signRefreshToken({ sub: user.id, role: user.role, sid: sessionId }),
+  };
+}
+
+const refreshExpiry = () => new Date(Date.now() + ms(env.JWT_REFRESH_EXPIRES_IN));
+
+// A new login starts a session: one refresh_tokens row whose id is the session id (sid).
 export async function issueTokens(user: { id: string; role: UserDTO["role"] }): Promise<AuthTokensDTO> {
-  const accessToken = signAccessToken({ sub: user.id, role: user.role });
-  const refreshToken = signRefreshToken({ sub: user.id, role: user.role });
-
-  await authRepository.createRefreshToken({
-    userId: user.id,
-    tokenHash: hashToken(refreshToken),
-    expiresAt: new Date(Date.now() + ms(env.JWT_REFRESH_EXPIRES_IN)),
-  });
-
-  return { accessToken, refreshToken };
+  const sessionId = randomUUID();
+  const tokens = signPair(user, sessionId);
+  await authRepository.createSession({ id: sessionId, userId: user.id, tokenHash: hashToken(tokens.refreshToken), expiresAt: refreshExpiry() });
+  return tokens;
 }
 
 export const authService = {
   async register(input: RegisterInput): Promise<LoginResponse> {
-    const existing = await authRepository.findAnyByEmail(input.email);
-    if (existing) {
+    if (await authRepository.isEmailTaken(input.email)) {
       throw new ConflictError("Este email já está registado.", "EMAIL_ALREADY_REGISTERED");
     }
 
     const passwordHash = await bcrypt.hash(input.password, 10);
     const user = await authRepository.createUser({
       name: input.name,
-      email: input.email,
+      email: normalizeEmail(input.email),
       passwordHash,
       phone: input.phone,
     });
@@ -261,12 +278,10 @@ export const authService = {
 
   async login(input: LoginInput): Promise<LoginResponse> {
     const user = await authRepository.findUserByEmail(input.email);
-    if (!user) {
-      throw new AuthenticationError();
-    }
-
-    const valid = await bcrypt.compare(input.password, user.passwordHash);
-    if (!valid) {
+    // An unknown email still pays for one bcrypt comparison, so the response time doesn't
+    // tell which addresses have an account.
+    const valid = await bcrypt.compare(input.password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user || !valid) {
       throw new AuthenticationError();
     }
 
@@ -317,10 +332,10 @@ export const authService = {
 
     const redirectUri = `${apiBaseUrl}${GOOGLE_MOBILE_CALLBACK_PATH}`;
     const verifier = randomBytes(32).toString("hex");
-    const state = jwt.sign(
-      { mode: input.mode, returnUrl: input.returnUrl, redirectUri, challenge: hashToken(verifier) },
-      env.JWT_ACCESS_SECRET,
-      { audience: MOBILE_STATE_AUDIENCE, expiresIn: "10m" },
+    const state = signTemporaryToken(
+      { mode: input.mode, returnUrl: input.returnUrl, redirectUri, challenge: hashToken(verifier) } satisfies MobileState,
+      MOBILE_STATE_AUDIENCE,
+      "10m",
     );
 
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -341,7 +356,7 @@ export const authService = {
   async googleMobileCallback(query: { code?: string; state?: string; error?: string }): Promise<string | null> {
     let state: MobileState;
     try {
-      state = jwt.verify(query.state ?? "", env.JWT_ACCESS_SECRET, { audience: MOBILE_STATE_AUDIENCE }) as MobileState;
+      state = verifyTemporaryToken<MobileState>(query.state ?? "", MOBILE_STATE_AUDIENCE);
     } catch {
       return null;
     }
@@ -367,7 +382,7 @@ export const authService = {
 
     let handoff: { sub: string; challenge: string };
     try {
-      handoff = jwt.verify(input.handoff, env.JWT_ACCESS_SECRET, { audience: MOBILE_HANDOFF_AUDIENCE }) as typeof handoff;
+      handoff = verifyTemporaryToken<typeof handoff>(input.handoff, MOBILE_HANDOFF_AUDIENCE);
     } catch {
       throw invalid;
     }
@@ -392,10 +407,7 @@ export const authService = {
     const redirectUri = `${apiBaseUrl}${APPLE_MOBILE_CALLBACK_PATH}`;
     const verifier = randomBytes(32).toString("hex");
     const challenge = hashToken(verifier);
-    const state = jwt.sign({ mode: input.mode, returnUrl: input.returnUrl, redirectUri, challenge } satisfies MobileState, env.JWT_ACCESS_SECRET, {
-      audience: APPLE_STATE_AUDIENCE,
-      expiresIn: "10m",
-    });
+    const state = signTemporaryToken({ mode: input.mode, returnUrl: input.returnUrl, redirectUri, challenge } satisfies MobileState, APPLE_STATE_AUDIENCE, "10m");
 
     const url = new URL("https://appleid.apple.com/auth/authorize");
     url.search = new URLSearchParams({
@@ -414,7 +426,7 @@ export const authService = {
   async appleMobileCallback(form: { id_token?: string; state?: string; error?: string; user?: string }): Promise<string | null> {
     let state: MobileState;
     try {
-      state = jwt.verify(form.state ?? "", env.JWT_ACCESS_SECRET, { audience: APPLE_STATE_AUDIENCE }) as MobileState;
+      state = verifyTemporaryToken<MobileState>(form.state ?? "", APPLE_STATE_AUDIENCE);
     } catch {
       return null;
     }
@@ -463,21 +475,62 @@ export const authService = {
       throw new AuthenticationError("Refresh token inválido ou expirado.");
     }
 
-    const stored = await authRepository.findActiveRefreshToken(hashToken(refreshToken));
-    if (!stored) {
-      throw new AuthenticationError("Refresh token inválido, expirado ou revogado.");
+    const invalid = new AuthenticationError("Refresh token inválido, expirado ou revogado.");
+    const presentedHash = hashToken(refreshToken);
+
+    if (payload.sid) {
+      const session = await authRepository.findSession(payload.sid);
+      if (!session || session.userId !== payload.sub || session.revokedAt || session.expiresAt <= new Date()) throw invalid;
+
+      if (session.tokenHash !== presentedHash) {
+        // An earlier token of this session, already rotated away. Coming back long after
+        // the rotation means two parties hold it — the user and whoever copied it — so
+        // every session of the account ends. Right after it, it's the dashboard's parallel
+        // requests refreshing twice, and only this request is refused.
+        const rotatedAt = session.expiresAt.getTime() - ms(env.JWT_REFRESH_EXPIRES_IN);
+        if (Date.now() - rotatedAt > REFRESH_REUSE_GRACE_MS) await endAllSessions(session.userId);
+        throw invalid;
+      }
+
+      const user = await authRepository.findUserById(payload.sub);
+      if (!user) throw invalid;
+
+      const tokens = signPair(user, session.id);
+      const rotated = await authRepository.rotateSession(session.id, presentedHash, { tokenHash: hashToken(tokens.refreshToken), expiresAt: refreshExpiry() });
+      if (!rotated) throw invalid;
+      return tokens;
+    }
+
+    // A token from before sessions existed: looked up by hash as it always was; a valid one
+    // is exchanged for a token of a new session.
+    const stored = await authRepository.findRefreshToken(presentedHash);
+    if (!stored || stored.revokedAt || stored.expiresAt <= new Date()) {
+      if (stored?.revokedAt && Date.now() - stored.revokedAt.getTime() > REFRESH_REUSE_GRACE_MS) {
+        await endAllSessions(stored.userId);
+      }
+      throw invalid;
     }
 
     const user = await authRepository.findUserById(payload.sub);
-    if (!user) {
-      throw new AuthenticationError();
-    }
+    if (!user) throw new AuthenticationError();
 
+    const tokens = await issueTokens(user);
     await authRepository.revokeRefreshToken(stored.id);
-    return issueTokens(user);
+    return tokens;
   },
 
-  async logout(userId: string): Promise<void> {
-    await authRepository.revokeAllUserRefreshTokens(userId);
+  // Ends only the session the request belongs to; other devices stay signed in.
+  async logout(userId: string, sessionId: string | undefined, refreshToken?: string): Promise<void> {
+    if (sessionId) {
+      await authRepository.revokeSession(userId, sessionId);
+      forgetSession(sessionId);
+    } else if (refreshToken) {
+      await authRepository.revokeRefreshTokenByHash(userId, hashToken(refreshToken));
+    }
+  },
+
+  // "Terminar todas as sessões": every device, access tokens included.
+  logoutAll(userId: string): Promise<void> {
+    return endAllSessions(userId);
   },
 };

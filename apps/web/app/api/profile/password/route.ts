@@ -1,4 +1,5 @@
 import { requireStaff } from "@/lib/auth";
+import { writeSession } from "@/lib/api-proxy";
 import { ApiCallError, apiCall, errorJson, errorResponse, jsonBody } from "@/lib/dashboard-api";
 
 // The signed-in user changing their own password — how an employee replaces the temporary
@@ -16,12 +17,19 @@ export async function POST(request: Request) {
     if (newPassword === currentPassword) return errorJson("A nova senha deve ser diferente da atual.", 400);
 
     try {
-      await apiCall<null>("/users/me/password", jsonBody("POST", { currentPassword, newPassword }));
+      // The API ends every other session and hands this one a fresh pair of tokens.
+      const tokens = await apiCall<{ accessToken?: string; refreshToken?: string }>("/users/me/password", jsonBody("POST", { currentPassword, newPassword }));
+      if (tokens?.accessToken && tokens.refreshToken) {
+        await writeSession({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
+      }
     } catch (error) {
       // The API answers a wrong current password with 401, which the dashboard would read
       // as "session expired"; the session is fine (requireStaff passed), so it's a 400 here.
       if (error instanceof ApiCallError && (error.status === 401 || error.status === 400)) {
         return errorJson("A senha atual está incorreta.", 400);
+      }
+      if (error instanceof ApiCallError && error.status === 429) {
+        return errorJson("Demasiadas tentativas. Aguarde alguns minutos e tente novamente.", 429);
       }
       throw error;
     }

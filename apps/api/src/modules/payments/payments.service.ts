@@ -122,7 +122,7 @@ export const paymentsService = {
 
     // amount/currency/userId/businessId always come from the appointment, never the
     // request body — the mobile app cannot influence what gets charged.
-    const payment = await paymentsRepository.create({
+    const payment = await paymentsRepository.createIfAppointmentPayable({
       appointmentId: appointment.id,
       userId: appointment.clientId ?? undefined,
       businessId: appointment.businessId,
@@ -130,6 +130,9 @@ export const paymentsService = {
       currency: DEFAULT_CURRENCY,
       method: input.method,
     });
+    if (!payment) {
+      throw new ConflictError("Não é possível pagar um agendamento cancelado.", "PAYMENT_APPOINTMENT_CANCELLED");
+    }
 
     domainEvents.emitEvent("PaymentCreated", toPaymentDTO(payment));
     return toPaymentDTO(payment);
@@ -168,6 +171,9 @@ export const paymentsService = {
       currency: DEFAULT_CURRENCY,
       method: input.method,
     });
+    if (!payment) {
+      throw new ConflictError("Este agendamento já não pode receber pagamento.", "PAYMENT_APPOINTMENT_NOT_CONFIRMED");
+    }
 
     domainEvents.emitEvent("PaymentPaid", toPaymentDTO(payment));
     await announceAppointmentChange(appointment.id, "completed");
@@ -215,7 +221,14 @@ export const paymentsService = {
     }
 
     // paidAt is always server-generated — never accepted from the client.
-    const updated = await paymentsRepository.updateStatus(id, { status: "PAID", paidAt: new Date() });
+    const result = await paymentsRepository.markPaidIfAppointmentActive(id, payment.appointmentId);
+    if (result.outcome === "appointment_cancelled") {
+      throw new ConflictError("O agendamento deste pagamento foi cancelado.", "PAYMENT_APPOINTMENT_CANCELLED");
+    }
+    if (result.outcome === "not_pending") {
+      throw new ConflictError("Só é possível marcar como pago um pagamento pendente.", "PAYMENT_INVALID_STATUS");
+    }
+    const updated = result.payment;
     domainEvents.emitEvent("PaymentPaid", toPaymentDTO(updated));
     return toPaymentDTO(updated);
   },
@@ -230,7 +243,8 @@ export const paymentsService = {
       throw new ConflictError("Só é possível marcar como falhado um pagamento pendente.", "PAYMENT_INVALID_STATUS");
     }
 
-    const updated = await paymentsRepository.updateStatus(id, { status: "FAILED" });
+    const updated = await paymentsRepository.updateStatusIfCurrent(id, "PENDING", { status: "FAILED" });
+    if (!updated) throw new ConflictError("Só é possível marcar como falhado um pagamento pendente.", "PAYMENT_INVALID_STATUS");
     domainEvents.emitEvent("PaymentFailed", toPaymentDTO(updated));
     return toPaymentDTO(updated);
   },
@@ -246,7 +260,8 @@ export const paymentsService = {
 
     // Keep the original paidAt — it's history, not the current state, and the row itself
     // is never deleted.
-    const updated = await paymentsRepository.updateStatus(id, { status: "REFUNDED" });
+    const updated = await paymentsRepository.updateStatusIfCurrent(id, "PAID", { status: "REFUNDED" });
+    if (!updated) throw new ConflictError("Só é possível reembolsar um pagamento pago.", "PAYMENT_INVALID_STATUS");
     domainEvents.emitEvent("PaymentRefunded", toPaymentDTO(updated));
     return toPaymentDTO(updated);
   },

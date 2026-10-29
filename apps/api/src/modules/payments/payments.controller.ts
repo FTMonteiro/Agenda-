@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import type { CreatePaymentInput } from "@slotix/validation";
 import { sendSuccess } from "../../shared/utils/apiResponse";
 import { paymentsService } from "./payments.service";
+import { queryId } from "../../shared/utils/queryId";
 
 export const paymentsController = {
   async create(req: Request, res: Response) {
@@ -15,7 +16,7 @@ export const paymentsController = {
   },
 
   async list(req: Request, res: Response) {
-    const businessId = req.query.businessId as string | undefined;
+    const businessId = queryId(req, "businessId");
 
     if (businessId) {
       const payments = await paymentsService.listByBusiness(businessId, req.user!.id);

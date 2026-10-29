@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   if (!code) return fail("google_code_missing");
 
   try {
-    const response = await googleApiFetch("/auth/google", {
+    const response = await googleApiFetch(request, "/auth/google", {
       method: "POST",
       body: JSON.stringify({
         code,

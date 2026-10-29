@@ -2,7 +2,7 @@ import { z } from "zod";
 import { authErrors, bearerAuth, commonErrors, listSuccessResponse, registry, successResponse } from "../registry";
 import { notificationSchema } from "../schemas";
 
-const idParam = z.object({ id: z.string().uuid() });
+const idParam = z.object({ id: z.guid() });
 
 registry.registerPath({
   method: "get",

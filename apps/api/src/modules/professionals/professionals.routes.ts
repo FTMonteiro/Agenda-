@@ -4,6 +4,7 @@ import { authorize } from "../../shared/middleware/authorize";
 import { validate } from "../../shared/middleware/validate";
 import { professionalsController } from "./professionals.controller";
 import { createBlockSchema, createProfessionalSchema, inviteProfessionalSchema, updateProfessionalSchema } from "./professionals.schema";
+import { byUser, rateLimit } from "../../shared/middleware/rateLimit";
 
 export const professionalsRoutes = Router();
 
@@ -12,12 +13,15 @@ professionalsRoutes.get("/", professionalsController.listByBusiness);
 professionalsRoutes.get("/me", authenticate, professionalsController.getMine);
 professionalsRoutes.get("/:id", professionalsController.getById);
 
-professionalsRoutes.post("/", authenticate, authorize("OWNER"), validate(createProfessionalSchema), professionalsController.create);
+// Linking an existing EMPLOYEE account is admin-only: any owner could otherwise claim an
+// employee that left another space (user ids are public in the professional DTOs). Owners
+// add staff through /invite, which creates the account itself.
+professionalsRoutes.post("/", authenticate, authorize("ADMIN"), validate(createProfessionalSchema), professionalsController.create);
 // Creates the User (role EMPLOYEE) too, unlike POST / which links an existing userId —
 // this is how an owner adds someone who has never signed up.
 professionalsRoutes.post("/invite", authenticate, authorize("OWNER"), validate(inviteProfessionalSchema), professionalsController.invite);
 // The owner can't see an employee's password, only replace it with a new temporary one.
-professionalsRoutes.post("/:id/reset-password", authenticate, authorize("OWNER"), professionalsController.resetPassword);
+professionalsRoutes.post("/:id/reset-password", authenticate, authorize("OWNER"), rateLimit("reset-password", { windowMs: 60 * 60_000, max: 30, key: byUser }), professionalsController.resetPassword);
 professionalsRoutes.patch("/:id", authenticate, authorize("OWNER"), validate(updateProfessionalSchema), professionalsController.update);
 professionalsRoutes.delete("/:id", authenticate, authorize("OWNER"), professionalsController.remove);
 

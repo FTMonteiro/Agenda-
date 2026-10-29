@@ -4,7 +4,7 @@ import { createWalkInAppointmentSchema } from "../../modules/appointments/appoin
 import { authErrors, bearerAuth, commonErrors, forbiddenError, listSuccessResponse, registry, successResponse } from "../registry";
 import { appointmentSchema, paymentSchema } from "../schemas";
 
-const idParam = z.object({ id: z.string().uuid() });
+const idParam = z.object({ id: z.guid() });
 
 registry.registerPath({
   method: "post",

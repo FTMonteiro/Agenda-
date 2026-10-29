@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { imageUrl, personName, phone } from "../../shared/validation/fields";
 
 export const updateProfileSchema = z.object({
-  name: z.string().min(2).optional(),
-  phone: z.string().optional(),
-  avatarUrl: z.string().url().optional(),
+  name: personName.optional(),
+  phone: phone.optional(),
+  avatarUrl: imageUrl.optional(),
 });
 
 export const updateLocationSchema = z.object({
@@ -12,8 +13,8 @@ export const updateLocationSchema = z.object({
 });
 
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(8),
-  newPassword: z.string().min(8),
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z.string().min(8).max(128),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

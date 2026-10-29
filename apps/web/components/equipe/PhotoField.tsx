@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useRef, useState } from "react";
 import { Camera, Trash2, UserRound } from "lucide-react";
+import { ACCEPTED_IMAGE_TYPES, UNSUPPORTED_IMAGE_MESSAGE } from "@/lib/image-formats";
 
 // A foto do profissional é reduzida no browser para um quadrado pequeno em JPEG e
 // guardada como texto (data URL), por isso cabe no pedido e não precisa de upload à parte.
@@ -43,8 +44,8 @@ export function PhotoField({ value, onChange, disabled, allowRemove = true }: Ph
     event.target.value = "";
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setError("Escolha um ficheiro de imagem.");
+    if (!ACCEPTED_IMAGE_TYPES.split(",").includes(file.type)) {
+      setError(UNSUPPORTED_IMAGE_MESSAGE);
       return;
     }
 
@@ -52,7 +53,7 @@ export function PhotoField({ value, onChange, disabled, allowRemove = true }: Ph
       setError("");
       onChange(await toSquarePhoto(file));
     } catch {
-      setError("Não foi possível ler esta imagem.");
+      setError(`Não foi possível ler esta imagem. ${UNSUPPORTED_IMAGE_MESSAGE}`);
     }
   }
 
@@ -94,7 +95,7 @@ export function PhotoField({ value, onChange, disabled, allowRemove = true }: Ph
           ) : null}
         </div>
 
-        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        <input ref={inputRef} type="file" accept={ACCEPTED_IMAGE_TYPES} className="hidden" onChange={handleFile} />
       </div>
 
       <p className="mt-2 text-xs text-gray-500">{error || "Aparece na app, na página do espaço e ao escolher o profissional."}</p>

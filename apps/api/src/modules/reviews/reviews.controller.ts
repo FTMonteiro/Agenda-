@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import type { CreateReviewInput } from "@slotix/validation";
-import { ValidationError } from "../../shared/errors";
 import { sendSuccess } from "../../shared/utils/apiResponse";
 import { reviewsService } from "./reviews.service";
+import { queryId } from "../../shared/utils/queryId";
 
 export const reviewsController = {
   async create(req: Request, res: Response) {
@@ -11,8 +11,7 @@ export const reviewsController = {
   },
 
   async listByBusiness(req: Request, res: Response) {
-    const businessId = req.query.businessId as string | undefined;
-    if (!businessId) throw new ValidationError("O parâmetro businessId é obrigatório.");
+    const businessId = queryId(req, "businessId", { required: true });
 
     const reviews = await reviewsService.listByBusiness(businessId);
     sendSuccess(res, reviews);

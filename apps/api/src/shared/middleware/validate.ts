@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
-import type { ZodTypeAny } from "zod";
+import type { ZodType } from "zod";
 import { ValidationError } from "../errors";
 
-export function validate(schema: ZodTypeAny) {
+export function validate(schema: ZodType) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.body);
 
@@ -19,7 +19,7 @@ export function validate(schema: ZodTypeAny) {
 
 // Express 5's req.query has no setter, so the parsed/coerced result is stashed on
 // req.validatedQuery instead of being written back onto req.query.
-export function validateQuery(schema: ZodTypeAny) {
+export function validateQuery(schema: ZodType) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.query);
 
@@ -29,7 +29,7 @@ export function validateQuery(schema: ZodTypeAny) {
       return;
     }
 
-    req.validatedQuery = result.data;
+    req.validatedQuery = result.data as Record<string, unknown>;
     next();
   };
 }

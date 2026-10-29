@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { UserDTO } from "@slotix/types";
-import { ApiRequestError, loadStoredAccessToken, setAccessToken } from "../services/api-client";
+import { ApiRequestError, apiFetch, loadStoredAccessToken, setAccessToken } from "../services/api-client";
 import { registerForPush, unregisterFromPush } from "../services/push";
 import { startRealtime, stopRealtime } from "../services/realtime";
 import { getMe } from "../services/users";
@@ -68,6 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Antes de apagar o token de sessão: o pedido para desligar o telemóvel precisa dele.
     await unregisterFromPush();
     stopRealtime();
+    // Termina esta sessão também no servidor (só esta: os outros dispositivos continuam).
+    // Sem rede, o token é apagado na mesma e expira sozinho.
+    await apiFetch("/auth/logout", { method: "POST" }).catch(() => undefined);
     await setAccessToken(null);
     setUser(null);
   }, []);

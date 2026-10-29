@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      # Base descartável só para os testes de integração (nunca a de produção).
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: agenda_test
+          POSTGRES_PASSWORD: agenda_test
+          POSTGRES_DB: agenda_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U agenda_test" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://agenda_test:agenda_test@localhost:5432/agenda_test
+      DOTENV_CONFIG_PATH: .env.ci-nao-existe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Tipos (código e testes)
+        run: npm run typecheck --workspace apps/api
+      - name: Lint
+        run: npm run lint --workspace apps/api
+      - name: Testes unitários
+        run: npm run test --workspace apps/api
+      - name: Testes de integração e autorização
+        run: npm run test:integration --workspace apps/api
+      - name: Build
+        run: npm run build --workspace apps/api
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Tipos
+        run: npx tsc -p apps/web/tsconfig.json --noEmit
+      - name: Build
+        run: npm run build --workspace apps/web
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      # Ainda há erros de lint anteriores a esta auditoria (react-hooks): informativo até serem corrigidos.
+      - name: Lint (informativo)
+        run: npm run lint --workspace apps/web
+        continue-on-error: true
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      # Informativo por agora: o npm inclui as devDependencies dos workspaces mesmo com
+      # --omit=dev, e as críticas restantes (vitest/tinypool, só testes) e altas (zod 3,
+      # expo) exigem atualizações major ainda por decidir. Passar a bloquear depois disso.
+      - name: Auditoria de dependências (informativo)
+        run: npm audit --omit=dev --audit-level=critical
+        continue-on-error: true
+      # Falsos positivos são suprimidos linha a linha (nosemgrep: <regra> -- motivo), nunca
+      # por ficheiro ou regra inteira; qualquer resultado novo faz o job falhar.
+      - name: Análise estática (Semgrep)
+        run: >-
+          docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep semgrep scan --metrics=off --error --timeout 60
+          --config p/javascript --config p/typescript --config p/nodejsscan --config p/secrets
+          --exclude node_modules --exclude .next --exclude dist --exclude package-lock.json apps packages

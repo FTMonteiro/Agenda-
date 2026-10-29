@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
-import { ValidationError } from "../../shared/errors";
 import { sendSuccess } from "../../shared/utils/apiResponse";
 import { servicesService } from "./services.service";
 import type { CreateServiceInput, UpdateServiceInput } from "./services.schema";
+import { queryId } from "../../shared/utils/queryId";
 
 export const servicesController = {
   async create(req: Request, res: Response) {
@@ -11,8 +11,7 @@ export const servicesController = {
   },
 
   async listByBusiness(req: Request, res: Response) {
-    const businessId = req.query.businessId as string | undefined;
-    if (!businessId) throw new ValidationError("O parâmetro businessId é obrigatório.");
+    const businessId = queryId(req, "businessId", { required: true });
 
     const services = await servicesService.listByBusiness(businessId);
     sendSuccess(res, services);

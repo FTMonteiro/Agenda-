@@ -45,7 +45,7 @@ export const notificationsService = {
   },
 
   async registerPushToken(userId: string, token: unknown): Promise<void> {
-    if (typeof token !== "string" || !/^(Exponent|Expo)PushToken\[.+\]$/.test(token)) {
+    if (typeof token !== "string" || !/^(Exponent|Expo)PushToken\[[A-Za-z0-9_-]{1,200}\]$/.test(token)) {
       throw new ValidationError("Token de notificações inválido.", "PUSH_TOKEN_INVALID");
     }
     await notificationsRepository.savePushToken(userId, token);

@@ -2,8 +2,8 @@ import { z } from "zod";
 import { authErrors, bearerAuth, commonErrors, forbiddenError, registry, successResponse } from "../registry";
 import { galleryImageSchema } from "../schemas";
 
-const businessIdParam = z.object({ businessId: z.string().uuid() });
-const imageParams = z.object({ businessId: z.string().uuid(), id: z.string().uuid() });
+const businessIdParam = z.object({ businessId: z.guid() });
+const imageParams = z.object({ businessId: z.guid(), id: z.guid() });
 
 registry.registerPath({
   method: "get",

@@ -1,3 +1,4 @@
+import { isAcceptedImageUrl, UNSUPPORTED_IMAGE_MESSAGE } from "@/lib/image-formats";
 import type { ProfessionalDTO } from "@slotix/types";
 import { requireOwner } from "@/lib/auth";
 import { apiCall, errorJson, errorResponse, formatProfessional, historyConflict, jsonBody } from "@/lib/dashboard-api";
@@ -6,7 +7,7 @@ type Context = { params: Promise<{ id: string }> };
 
 // The API looks professionals up by id alone, so the "is it one of mine" check is done here.
 async function getOwnProfessional(id: string, businessId: string): Promise<ProfessionalDTO | null> {
-  const professional = await apiCall<ProfessionalDTO>(`/professionals/${id}`);
+  const professional = await apiCall<ProfessionalDTO>(`/professionals/${encodeURIComponent(id)}`);
   return professional.businessId === businessId ? professional : null;
 }
 
@@ -39,7 +40,10 @@ export async function PUT(request: Request, { params }: Context) {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const phone = typeof body.phone === "string" ? body.phone.trim() : "";
     const specialty = typeof body.specialty === "string" ? body.specialty.trim() : "";
-    const photo = typeof body.photo === "string" && /^(data:image\/|https?:\/\/)/.test(body.photo) ? body.photo : "";
+    const photo = typeof body.photo === "string" ? body.photo.trim() : "";
+    // The current photo comes back unchanged with every edit and is never re-sent; a new one
+    // must be a format the API accepts.
+    if (photo && photo !== existing.imageUrl && !isAcceptedImageUrl(photo)) return errorJson(UNSUPPORTED_IMAGE_MESSAGE, 400);
 
     if (name && name !== existing.name) {
       return errorJson("O nome pertence à conta do profissional e só ele o pode alterar. Aqui só é possível editar a especialidade e a foto.", 400);
@@ -49,7 +53,7 @@ export async function PUT(request: Request, { params }: Context) {
     }
 
     const updated = await apiCall<ProfessionalDTO>(
-      `/professionals/${id}`,
+      `/professionals/${encodeURIComponent(id)}`,
       jsonBody("PATCH", { specialty, ...(photo && photo !== existing.imageUrl ? { imageUrl: photo } : {}) }),
     );
 
@@ -75,7 +79,7 @@ export async function PATCH(request: Request, { params }: Context) {
     const existing = await getOwnProfessional(id, owner.businessId);
     if (!existing) return errorJson("Profissional não encontrado.", 404);
 
-    const updated = await apiCall<ProfessionalDTO>(`/professionals/${id}`, jsonBody("PATCH", { active: body.active }));
+    const updated = await apiCall<ProfessionalDTO>(`/professionals/${encodeURIComponent(id)}`, jsonBody("PATCH", { active: body.active }));
 
     return Response.json({
       success: true,
@@ -99,7 +103,7 @@ export async function DELETE(_request: Request, { params }: Context) {
     const conflict = await historyConflict(owner.businessId, "professionalId", id, "profissional");
     if (conflict) return conflict;
 
-    await apiCall(`/professionals/${id}`, { method: "DELETE" });
+    await apiCall(`/professionals/${encodeURIComponent(id)}`, { method: "DELETE" });
 
     return Response.json({
       success: true,

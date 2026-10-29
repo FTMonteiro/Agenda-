@@ -1,9 +1,11 @@
 import bcrypt from "bcryptjs";
-import type { UserDTO } from "@slotix/types";
-import { AuthenticationError, NotFoundError, ValidationError } from "../../shared/errors";
+import type { AuthTokensDTO, UserDTO } from "@slotix/types";
+import { NotFoundError, ValidationError } from "../../shared/errors";
 import { uploadImage } from "../gallery/gallery.storage";
 import { usersRepository } from "./users.repository";
 import type { ChangePasswordInput, UpdateLocationInput, UpdateProfileInput } from "./users.schema";
+import { endAllSessions, issueTokens } from "../auth/auth.service";
+import { forgetSessionUser } from "../../shared/sessionUsers";
 
 function toUserDTO(user: {
   id: string;
@@ -65,15 +67,21 @@ export const usersService = {
     return toUserDTO(user);
   },
 
-  async changePassword(userId: string, input: ChangePasswordInput): Promise<void> {
+  // Every other session (refresh token) ends: whoever knew the old password is signed out.
+  // The caller gets a fresh pair so the device that made the change stays signed in.
+  async changePassword(userId: string, input: ChangePasswordInput): Promise<AuthTokensDTO> {
     const user = await usersRepository.findById(userId);
     if (!user) throw new NotFoundError("Utilizador não encontrado.");
 
     const valid = await bcrypt.compare(input.currentPassword, user.passwordHash);
-    if (!valid) throw new AuthenticationError("Password atual incorreta.");
+    // 400, not 401: the session is fine — a 401 here made the dashboard's proxy renew the
+    // session and resend the request, rotating the refresh token on every wrong attempt.
+    if (!valid) throw new ValidationError("Password atual incorreta.", "CURRENT_PASSWORD_INCORRECT");
 
     const passwordHash = await bcrypt.hash(input.newPassword, 10);
     await usersRepository.updatePasswordHash(userId, passwordHash);
+    await endAllSessions(userId);
+    return issueTokens(user);
   },
 
   // The row stays (appointments/reviews made as a client keep referencing it) but is
@@ -83,6 +91,7 @@ export const usersService = {
     const user = await usersRepository.findById(userId);
     if (!user) throw new NotFoundError("Utilizador não encontrado.");
 
-    await usersRepository.deleteAccount(userId);
+    const removedUserIds = await usersRepository.deleteAccount(userId);
+    forgetSessionUser(...removedUserIds);
   },
 };

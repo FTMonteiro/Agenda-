@@ -7,6 +7,7 @@ import {
   parseSession,
   refreshSession,
 } from "@/lib/session";
+import { clientIpFrom } from "@/lib/internal-proxy";
 
 // Páginas do painel: sem sessão, vão para o login.
 const DASHBOARD_PREFIXES = [
@@ -42,9 +43,12 @@ export async function proxy(request: NextRequest) {
   let clearCookie = false;
 
   if (session && accessTokenExpiresSoon(session.accessToken)) {
-    const renewed = await refreshSession(session);
+    const renewed = await refreshSession(session, clientIpFrom(request.headers));
 
-    if (renewed) {
+    if (renewed === "unavailable") {
+      // The API couldn't answer (busy, rate limited, down): keep the session as it is. The
+      // page's own requests retry the refresh; nobody is signed out for the API's sake.
+    } else if (renewed !== "invalid") {
       session = renewed;
       renewedCookie = JSON.stringify(renewed);
       // Os pedidos que esta navegação gerar no servidor já levam a sessão nova.

@@ -57,6 +57,7 @@ export const authController = {
   // Apple posts a form here from the phone's browser. 303 turns that POST into a plain
   // navigation to the app's deep link.
   async appleMobileCallback(req: Request, res: Response) {
+    // nosemgrep: ajinabraham.njsscan.redirect.open_redirect.express_open_redirect -- o destino vem do state assinado pela API e o esquema é revalidado em appReturnUrl.
     const target = await authService.appleMobileCallback((req.body ?? {}) as Record<string, string | undefined>);
 
     if (!target) {
@@ -83,7 +84,13 @@ export const authController = {
   },
 
   async logout(req: Request, res: Response) {
-    await authService.logout(req.user!.id);
+    const refreshToken = (req.body as { refreshToken?: unknown } | undefined)?.refreshToken;
+    await authService.logout(req.user!.id, req.tokenSessionId, typeof refreshToken === "string" ? refreshToken : undefined);
+    sendSuccess(res, { loggedOut: true });
+  },
+
+  async logoutAll(req: Request, res: Response) {
+    await authService.logoutAll(req.user!.id);
     sendSuccess(res, { loggedOut: true });
   },
 

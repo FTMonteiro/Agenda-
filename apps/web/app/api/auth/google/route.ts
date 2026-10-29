@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const query = new URLSearchParams({ redirectUri: googleRedirectUri(request), state: pending.state });
-    const response = await googleApiFetch(`/auth/google/url?${query}`);
+    const response = await googleApiFetch(request, `/auth/google/url?${query}`);
     const json = await response.json().catch(() => null);
 
     if (!response.ok || !json?.success) {

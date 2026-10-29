@@ -1,3 +1,5 @@
+import { internalProxyHeaders } from "./internal-proxy";
+
 // Session pieces shared by lib/api-proxy.ts (route handlers) and proxy.ts (runs before
 // every page). Nothing here touches next/headers, so both can import it.
 
@@ -52,33 +54,40 @@ export function accessTokenExpiresSoon(token: string, marginSeconds = 60): boole
 // same token must share one call, or all but the first would fail and log the user out.
 // Kept on globalThis: each route handler and proxy.ts is its own bundle, so a plain
 // module-level Map would not be shared between them.
+// What a refresh attempt ended in. Only "invalid" — the API refused the refresh token
+// itself (401) — means the session is over. "unavailable" (rate limited, API error or
+// unreachable) says nothing about the session: it must be kept and tried again later,
+// or one busy moment would sign out every dashboard user at once.
+export type RefreshResult = SessionTokens | "invalid" | "unavailable";
+
 const globalForRefresh = globalThis as typeof globalThis & {
-  __slotixPendingRefreshes?: Map<string, Promise<SessionTokens | null>>;
+  __slotixPendingRefreshes?: Map<string, Promise<RefreshResult>>;
 };
 const pendingRefreshes = (globalForRefresh.__slotixPendingRefreshes ??= new Map());
 
-export function refreshSession(session: SessionTokens): Promise<SessionTokens | null> {
+export function refreshSession(session: SessionTokens, clientIp?: string): Promise<RefreshResult> {
   const existing = pendingRefreshes.get(session.refreshToken);
   if (existing) return existing;
 
-  const pending = (async () => {
+  const pending = (async (): Promise<RefreshResult> => {
     const response = await fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...internalProxyHeaders(clientIp) },
       body: JSON.stringify({ refreshToken: session.refreshToken }),
       cache: "no-store",
     });
     const json = await response.json().catch(() => null);
-    if (!response.ok || !json?.success) return null;
-
-    return { accessToken: json.data.accessToken, refreshToken: json.data.refreshToken } as SessionTokens;
-  })().catch(() => null);
+    if (response.ok && json?.success) {
+      return { accessToken: json.data.accessToken, refreshToken: json.data.refreshToken } as SessionTokens;
+    }
+    return response.status === 401 || response.status === 400 ? "invalid" : "unavailable";
+  })().catch((): RefreshResult => "unavailable");
 
   pendingRefreshes.set(session.refreshToken, pending);
   // A success is kept for a while after it settles: requests already in flight still carry
   // the old cookie. A failure is dropped at once, so the next request tries again.
-  void pending.then((tokens) => {
-    if (!tokens) pendingRefreshes.delete(session.refreshToken);
+  void pending.then((result) => {
+    if (typeof result === "string") pendingRefreshes.delete(session.refreshToken);
     else setTimeout(() => pendingRefreshes.delete(session.refreshToken), 60_000);
   });
 

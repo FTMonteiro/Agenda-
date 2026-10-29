@@ -10,7 +10,7 @@ export async function POST(_request: Request, { params }: Context) {
     await requireOwner();
     const { id } = await params;
 
-    const { temporaryPassword } = await apiCall<{ temporaryPassword: string }>(`/professionals/${id}/reset-password`, { method: "POST" });
+    const { temporaryPassword } = await apiCall<{ temporaryPassword: string }>(`/professionals/${encodeURIComponent(id)}/reset-password`, { method: "POST" });
 
     return Response.json({ success: true, temporaryPassword });
   } catch (error) {

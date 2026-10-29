@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/confirm-action";
 
 const inputClass =
   "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 pr-12 text-sm outline-none transition focus:border-primary disabled:opacity-60";
@@ -15,6 +17,26 @@ export function ChangePasswordCard() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [endingSessions, setEndingSessions] = useState(false);
+  const router = useRouter();
+
+  // Every device signed in to this account is signed out, this one included.
+  async function handleEndAllSessions() {
+    if (!(await confirmAction("Todos os dispositivos com sessão iniciada nesta conta, incluindo este, vão ter de entrar novamente.", "Terminar sessões"))) return;
+
+    try {
+      setEndingSessions(true);
+      const response = await fetch("/api/auth/logout-all", { method: "POST", credentials: "include" });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "Não foi possível terminar as sessões.");
+      // The session cookie is already gone: refresh drops any cached dashboard data.
+      router.replace("/login");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível terminar as sessões.");
+      setEndingSessions(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,7 +137,17 @@ export function ChangePasswordCard() {
           </label>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={handleEndAllSessions}
+            disabled={saving || endingSessions}
+            className="flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-[var(--surface-secondary)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {endingSessions && <Loader2 size={18} className="animate-spin" />}
+            Terminar todas as sessões
+          </button>
+
           <button
             type="submit"
             disabled={saving}

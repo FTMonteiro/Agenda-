@@ -1,0 +1,13 @@
+{
+  // Type-checks the tests too (tsconfig.json covers src only, for the build). rootDir is the
+  // apps folder because some tests import the web dashboard's plain modules (apps/web/lib).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // DOM types for the web modules the tests import (fetch's RequestInit.cache, Response.json).
+    "lib": ["ES2022", "DOM"],
+    "rootDir": ".."
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,5 +1,6 @@
 import { prisma } from "../../config/database";
 import type { Prisma } from "@prisma/client";
+import { requireId } from "../../shared/utils/requireId";
 
 export interface BusinessFilters {
   category?: string;
@@ -157,7 +158,7 @@ export const businessesRepository = {
   },
 
   findByOwner(ownerId: string) {
-    return prisma.business.findMany({ where: { ownerId }, include: businessInclude, orderBy: { createdAt: "asc" } });
+    return prisma.business.findMany({ where: { ownerId: requireId(ownerId, "ownerId") }, include: businessInclude, orderBy: { createdAt: "asc" } });
   },
 
   update(

@@ -35,8 +35,8 @@ export const usersController = {
   },
 
   async changePassword(req: Request, res: Response) {
-    await usersService.changePassword(req.user!.id, req.body as ChangePasswordInput);
-    sendSuccess(res, { changed: true });
+    const tokens = await usersService.changePassword(req.user!.id, req.body as ChangePasswordInput);
+    sendSuccess(res, { changed: true, ...tokens });
   },
 
   async deleteMe(req: Request, res: Response) {

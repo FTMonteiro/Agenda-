@@ -1,21 +1,19 @@
 import type { Request, Response } from "express";
-import { ValidationError } from "../../shared/errors";
 import { sendSuccess } from "../../shared/utils/apiResponse";
 import { clientsService } from "./clients.service";
 import type { CreateWalkInClientInput, UpdateWalkInClientInput } from "./clients.schema";
+import { queryId } from "../../shared/utils/queryId";
 
 export const clientsController = {
   async listByBusiness(req: Request, res: Response) {
-    const businessId = req.query.businessId as string | undefined;
-    if (!businessId) throw new ValidationError("O parâmetro businessId é obrigatório.");
+    const businessId = queryId(req, "businessId", { required: true });
 
     const clients = await clientsService.listByBusiness(businessId, req.user!.id, req.query.includeBookers === "true");
     sendSuccess(res, clients);
   },
 
   async getOne(req: Request<{ userId: string }>, res: Response) {
-    const businessId = req.query.businessId as string | undefined;
-    if (!businessId) throw new ValidationError("O parâmetro businessId é obrigatório.");
+    const businessId = queryId(req, "businessId", { required: true });
 
     const client = await clientsService.getByBusinessAndUser(businessId, req.user!.id, req.params.userId);
     sendSuccess(res, client);
@@ -27,8 +25,7 @@ export const clientsController = {
   },
 
   async listWalkIns(req: Request, res: Response) {
-    const businessId = req.query.businessId as string | undefined;
-    if (!businessId) throw new ValidationError("O parâmetro businessId é obrigatório.");
+    const businessId = queryId(req, "businessId", { required: true });
 
     const clients = await clientsService.listWalkInsByBusiness(businessId, req.user!.id);
     sendSuccess(res, clients);

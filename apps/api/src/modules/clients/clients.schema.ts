@@ -1,16 +1,17 @@
 import { z } from "zod";
+import { personName, phone } from "../../shared/validation/fields";
 
 export const createWalkInClientSchema = z.object({
-  businessId: z.string().uuid(),
-  name: z.string().min(2),
-  phone: z.string().min(1),
-  email: z.string().email().optional(),
+  businessId: z.guid(),
+  name: personName,
+  phone: phone.pipe(z.string().min(1)),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
 });
 
 export const updateWalkInClientSchema = z.object({
-  name: z.string().min(2).optional(),
-  phone: z.string().min(1).optional(),
-  email: z.string().email().optional(),
+  name: personName.optional(),
+  phone: phone.pipe(z.string().min(1)).optional(),
+  email: z.string().trim().toLowerCase().email().max(254).optional(),
   active: z.boolean().optional(),
 });
 

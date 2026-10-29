@@ -7,6 +7,7 @@ import { compareNearest, compareRecommended, compareTopRated, weightedRating } f
 import { uploadGalleryImage } from "../gallery/gallery.storage";
 import { businessesRepository } from "./businesses.repository";
 import type { CreateBusinessInput, ListBusinessesQuery, SetBusinessHoursInput, UpdateBusinessInput } from "./businesses.schema";
+import { forgetSessionUser } from "../../shared/sessionUsers";
 
 export interface Coordinates {
   latitude: number;
@@ -118,6 +119,7 @@ export const businessesService = {
       user.role === "OWNER"
         ? await businessesRepository.create({ ownerId, ...input })
         : await businessesRepository.createAndPromoteOwner({ ownerId, ...input });
+    forgetSessionUser(ownerId);
 
     const tokens = await issueTokens({ id: ownerId, role: "OWNER" });
     return { business: toBusinessDTO(business), tokens };

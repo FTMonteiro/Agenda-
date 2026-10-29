@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
-import { ValidationError } from "../../shared/errors";
 import { sendSuccess } from "../../shared/utils/apiResponse";
 import { professionalsService } from "./professionals.service";
 import type { CreateBlockInput, CreateProfessionalInput, InviteProfessionalInput, UpdateProfessionalInput } from "./professionals.schema";
+import { queryId } from "../../shared/utils/queryId";
 
 export const professionalsController = {
   async create(req: Request, res: Response) {
@@ -21,8 +21,7 @@ export const professionalsController = {
   },
 
   async listByBusiness(req: Request, res: Response) {
-    const businessId = req.query.businessId as string | undefined;
-    if (!businessId) throw new ValidationError("O parâmetro businessId é obrigatório.");
+    const businessId = queryId(req, "businessId", { required: true });
 
     const professionals = await professionalsService.listByBusiness(businessId);
     sendSuccess(res, professionals);

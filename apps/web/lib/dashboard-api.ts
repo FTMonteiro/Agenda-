@@ -96,6 +96,7 @@ export function localTime(value: Date): string {
 }
 
 export function parseLocalDateTime(date: string, time: string): Date | null {
+  // nosemgrep: ajinabraham.njsscan.dos.regex_dos.regex_dos -- regex ancoradas e de comprimento fixo: sem retrocesso.
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null;
 
   const parsed = new Date(`${date}T${time}:00`);

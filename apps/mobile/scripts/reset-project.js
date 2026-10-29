@@ -48,6 +48,7 @@ const rl = readline.createInterface({
 });
 
 const moveDirectories = async (userInput) => {
+  // nosemgrep: ajinabraham.njsscan.generic.error_disclosure.generic_error_disclosure -- script local de desenvolvimento do modelo Expo; não vai para produção.
   try {
     if (userInput === "y") {
       // Create the app-example directory

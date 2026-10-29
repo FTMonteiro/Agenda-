@@ -8,7 +8,7 @@ export async function PATCH(_request: Request, { params }: { params: Promise<{ i
     const owner = await requireOwner();
     const { id } = await params;
 
-    const images = await apiCall<GalleryImageDTO[]>(`/businesses/${owner.businessId}/gallery/${id}/cover`, { method: "PATCH" });
+    const images = await apiCall<GalleryImageDTO[]>(`/businesses/${owner.businessId}/gallery/${encodeURIComponent(id)}/cover`, { method: "PATCH" });
     await syncBusinessImage(owner.businessId, images);
 
     return Response.json({ success: true, images: images.sort((a, b) => a.position - b.position).map(toPageImage) });

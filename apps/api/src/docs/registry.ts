@@ -1,5 +1,5 @@
 import { OpenAPIRegistry, extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
-import { z, type ZodTypeAny } from "zod";
+import { z, type ZodType } from "zod";
 
 // Must run once, before any `.openapi(...)` call anywhere in this module tree.
 extendZodWithOpenApi(z);
@@ -32,18 +32,18 @@ export const errorResponseSchema = registry.register(
   }),
 );
 
-function jsonContent(schema: ZodTypeAny) {
+function jsonContent(schema: ZodType) {
   return { content: { "application/json": { schema } } };
 }
 
-export function successResponse(schema: ZodTypeAny, description = "Sucesso") {
+export function successResponse(schema: ZodType, description = "Sucesso") {
   return {
     description,
     ...jsonContent(z.object({ success: z.literal(true), data: schema })),
   };
 }
 
-export function listSuccessResponse(schema: ZodTypeAny, description = "Sucesso") {
+export function listSuccessResponse(schema: ZodType, description = "Sucesso") {
   return {
     description,
     ...jsonContent(

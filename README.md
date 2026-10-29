@@ -233,4 +233,48 @@ por este caminho (criar negócio → aparece na pesquisa → `/availability`
 
 ## Deployment
 
-Ainda não configurado nesta fase (ver plano de migração para as fases seguintes).
+O alojamento ainda não está definido. Seja qual for, a configuração de segurança abaixo é
+obrigatória antes do lançamento. Nenhum destes valores deve ser escrito em ficheiros
+versionados (o `apps/web/.env.production` só tem URLs públicos).
+
+### API (`apps/api`)
+
+| Variável | Produção |
+|---|---|
+| `NODE_ENV` | `production` (liga HSTS, desliga o Swagger e o CORS aberto de desenvolvimento) |
+| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | 32+ caracteres aleatórios, **diferentes entre si** (a API avisa no arranque se não forem) |
+| `JWT_OAUTH_SECRET` | Opcional, 32+ caracteres; sem ele é derivado de `JWT_ACCESS_SECRET` |
+| `INTERNAL_PROXY_SECRET` | 32+ caracteres, diferente dos JWT, **igual ao da web** (ver abaixo) |
+| `WEB_URL` | Origem pública do painel, ex. `https://painel.exemplo.ao` (também usada no retorno do login Google) |
+| `CORS_ORIGINS` | Só se a versão **web** da app Expo for publicada: a sua origem. O painel e as apps nativas não precisam |
+| `TRUST_PROXY` | Número de proxies à frente da API (ex. `1`), só se a API não for acessível sem eles |
+| `ENABLE_API_DOCS` | Deixar vazio (Swagger desligado) |
+| `JWT_ACCESS_EXPIRES_IN` | `15m` recomendado. A app mobile antiga não renova tokens: um valor longo aumenta a janela de um token roubado |
+
+Variáveis definidas mas vazias contam como não definidas; valores inválidos impedem o arranque.
+
+### Painel web (`apps/web`) — variáveis de servidor, nunca `NEXT_PUBLIC_*`
+
+| Variável | Produção |
+|---|---|
+| `INTERNAL_PROXY_SECRET` | O mesmo valor da API. Assina os pedidos que o servidor do painel reencaminha, para a API contar os limites por IP de cada utilizador |
+| `TRUSTED_CLIENT_IP_HEADER` | O cabeçalho que a plataforma define com o IP real e que o cliente não consegue forjar (ex. `x-real-ip` na Vercel). Sem ele, os limites por IP não se aplicam aos pedidos do painel (os limites por conta continuam) |
+
+### Base de dados
+
+- Esta versão **não precisa de migrações**: funciona com o schema atual. As sessões usam a
+  tabela `refresh_tokens` que já existe (cada linha é uma sessão; o seu id vai nos tokens).
+- Verificações opcionais, só de leitura:
+  ```sql
+  -- contas cujo email só difere nas maiúsculas (o login recusa-as por ambiguidade)
+  SELECT lower(email), count(*) FROM users GROUP BY 1 HAVING count(*) > 1;
+  -- refresh tokens com o mesmo hash (anteriores ao jti)
+  SELECT "tokenHash", count(*) FROM refresh_tokens GROUP BY 1 HAVING count(*) > 1;
+  ```
+
+### App mobile
+
+O logout passa a terminar a sessão também no servidor; isso só chega aos utilizadores numa nova
+versão da app. "Terminar todas as sessões" (painel) e a mudança de password terminam as
+sessões iniciadas depois deste deploy. Tokens emitidos antes dele não pertencem a nenhuma
+sessão e só deixam de valer quando expiram (`JWT_ACCESS_EXPIRES_IN`).

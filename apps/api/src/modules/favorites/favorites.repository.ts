@@ -1,5 +1,6 @@
 import { prisma } from "../../config/database";
 import { businessInclude } from "../businesses/businesses.repository";
+import { requireId } from "../../shared/utils/requireId";
 
 export const favoritesRepository = {
   findByUserAndBusiness(userId: string, businessId: string) {
@@ -12,7 +13,7 @@ export const favoritesRepository = {
 
   findByUser(userId: string) {
     return prisma.favorite.findMany({
-      where: { userId },
+      where: { userId: requireId(userId, "userId") },
       include: { business: { include: businessInclude } },
       orderBy: { createdAt: "desc" },
     });

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { authErrors, bearerAuth, commonErrors, listSuccessResponse, registry, successResponse } from "../registry";
 import { favoriteSchema } from "../schemas";
 
-const businessIdParam = z.object({ businessId: z.string().uuid() });
+const businessIdParam = z.object({ businessId: z.guid() });
 
 registry.registerPath({
   method: "get",

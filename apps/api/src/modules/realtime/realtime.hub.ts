@@ -11,6 +11,10 @@ export type RealtimeEvent =
   | { type: "appointment"; data: { id: string; businessId: string; status: string; scheduledAt: string; change: string } };
 
 export const realtimeHub = {
+  count(userId: string): number {
+    return connections.get(userId)?.size ?? 0;
+  },
+
   add(userId: string, res: Response): () => void {
     let set = connections.get(userId);
     if (!set) {

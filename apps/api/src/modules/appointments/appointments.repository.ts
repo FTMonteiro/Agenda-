@@ -1,5 +1,6 @@
 import { prisma } from "../../config/database";
 import type { AppointmentStatus, Prisma } from "@prisma/client";
+import { requireId } from "../../shared/utils/requireId";
 
 const ACTIVE_STATUSES: AppointmentStatus[] = ["PENDING", "CONFIRMED"];
 
@@ -37,8 +38,16 @@ export const appointmentsRepository = {
     return prisma.appointment.findUnique({ where: { id } });
   },
 
+  // Updates only while the appointment is still in one of `from` — checked by the database
+  // in the same statement, so a concurrent change (a cancel racing a payment) can't be
+  // overwritten. Returns null when the status had already moved on.
+  async updateIfStatus(id: string, from: AppointmentStatus[], data: Prisma.AppointmentUpdateManyMutationInput, db: Db = prisma) {
+    const { count } = await db.appointment.updateMany({ where: { id, status: { in: from } }, data });
+    return count === 1 ? db.appointment.findUniqueOrThrow({ where: { id } }) : null;
+  },
+
   findByClient(clientId: string) {
-    return prisma.appointment.findMany({ where: { clientId }, orderBy: { scheduledAt: "desc" } });
+    return prisma.appointment.findMany({ where: { clientId: requireId(clientId, "clientId") }, orderBy: { scheduledAt: "desc" } });
   },
 
   findByWalkInClient(walkInClientId: string) {

@@ -254,6 +254,7 @@ export default function CadastroPage() {
 
     /* CONFIRMAR PASSWORD*/
 
+    // nosemgrep: ajinabraham.njsscan.crypto.timing_attack_node.node_timing_attack -- confirmação da password no browser, não comparação de um segredo do servidor.
     if (password !== confirmPassword) {
       setErrorMessage("As palavras-passe não coincidem.");
 

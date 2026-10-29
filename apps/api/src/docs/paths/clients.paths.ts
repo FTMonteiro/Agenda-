@@ -3,9 +3,9 @@ import { createWalkInClientSchema, updateWalkInClientSchema } from "../../module
 import { authErrors, bearerAuth, commonErrors, forbiddenError, listSuccessResponse, registry, successResponse } from "../registry";
 import { clientSchema, walkInClientSchema } from "../schemas";
 
-const userIdParam = z.object({ userId: z.string().uuid() });
-const idParam = z.object({ id: z.string().uuid() });
-const businessIdQuery = z.object({ businessId: z.string().uuid() });
+const userIdParam = z.object({ userId: z.guid() });
+const idParam = z.object({ id: z.guid() });
+const businessIdQuery = z.object({ businessId: z.guid() });
 
 registry.registerPath({
   method: "get",

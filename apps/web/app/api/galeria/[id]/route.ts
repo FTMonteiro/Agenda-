@@ -7,7 +7,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     const owner = await requireOwner();
     const { id } = await params;
 
-    await apiCall(`/businesses/${owner.businessId}/gallery/${id}`, { method: "DELETE" });
+    await apiCall(`/businesses/${owner.businessId}/gallery/${encodeURIComponent(id)}`, { method: "DELETE" });
 
     const images = await listGallery(owner.businessId);
     await syncBusinessImage(owner.businessId, images);

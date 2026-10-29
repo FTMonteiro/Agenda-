@@ -13,7 +13,7 @@ export const paymentMethodSchema = z.enum(["CASH", "CARD", "MULTICAIXA", "BANK_T
 export const userSchema = registry.register(
   "User",
   z.object({
-    id: z.string().uuid(),
+    id: z.guid(),
     email: z.string().email(),
     name: z.string(),
     phone: z.string().nullable(),
@@ -42,8 +42,8 @@ export const loginResponseSchema = registry.register(
 export const businessSchema = registry.register(
   "Business",
   z.object({
-    id: z.string().uuid(),
-    ownerId: z.string().uuid(),
+    id: z.guid(),
+    ownerId: z.guid(),
     name: z.string(),
     description: z.string().nullable(),
     address: z.string().nullable(),
@@ -81,8 +81,8 @@ export const businessHoursEntrySchema = registry.register(
 export const professionalBlockSchema = registry.register(
   "ProfessionalBlock",
   z.object({
-    id: z.string().uuid(),
-    professionalId: z.string().uuid(),
+    id: z.guid(),
+    professionalId: z.guid(),
     startAt: z.string().datetime(),
     endAt: z.string().datetime(),
     reason: z.string().nullable(),
@@ -99,8 +99,8 @@ export const availabilitySlotSchema = registry.register(
 export const serviceSchema = registry.register(
   "Service",
   z.object({
-    id: z.string().uuid(),
-    businessId: z.string().uuid(),
+    id: z.guid(),
+    businessId: z.guid(),
     name: z.string(),
     description: z.string().nullable(),
     price: z.number(),
@@ -116,9 +116,9 @@ export const serviceSchema = registry.register(
 export const professionalSchema = registry.register(
   "Professional",
   z.object({
-    id: z.string().uuid(),
-    businessId: z.string().uuid(),
-    userId: z.string().uuid(),
+    id: z.guid(),
+    businessId: z.guid(),
+    userId: z.guid(),
     name: z.string(),
     bio: z.string().nullable(),
     specialty: z.string().nullable(),
@@ -134,7 +134,7 @@ export const professionalSchema = registry.register(
 export const clientSchema = registry.register(
   "Client",
   z.object({
-    userId: z.string().uuid(),
+    userId: z.guid(),
     name: z.string(),
     email: z.string().email(),
     phone: z.string().nullable(),
@@ -148,8 +148,8 @@ export const clientSchema = registry.register(
 export const walkInClientSchema = registry.register(
   "WalkInClient",
   z.object({
-    id: z.string().uuid(),
-    businessId: z.string().uuid(),
+    id: z.guid(),
+    businessId: z.guid(),
     name: z.string(),
     phone: z.string(),
     email: z.string().email().nullable(),
@@ -165,12 +165,12 @@ export const walkInClientSchema = registry.register(
 export const appointmentSchema = registry.register(
   "Appointment",
   z.object({
-    id: z.string().uuid(),
-    businessId: z.string().uuid(),
-    clientId: z.string().uuid().nullable().openapi({ description: "Preenchido para uma marcação self-service; null para uma marcação walk-in." }),
-    walkInClientId: z.string().uuid().nullable(),
-    serviceId: z.string().uuid(),
-    professionalId: z.string().uuid(),
+    id: z.guid(),
+    businessId: z.guid(),
+    clientId: z.guid().nullable().openapi({ description: "Preenchido para uma marcação self-service; null para uma marcação walk-in." }),
+    walkInClientId: z.guid().nullable(),
+    serviceId: z.guid(),
+    professionalId: z.guid(),
     scheduledAt: z.string().datetime(),
     price: z.number(),
     status: appointmentStatusSchema,
@@ -183,8 +183,8 @@ export const appointmentSchema = registry.register(
 export const favoriteSchema = registry.register(
   "Favorite",
   z.object({
-    id: z.string().uuid(),
-    businessId: z.string().uuid(),
+    id: z.guid(),
+    businessId: z.guid(),
     business: businessSchema,
     createdAt: z.string().datetime(),
   }),
@@ -193,11 +193,11 @@ export const favoriteSchema = registry.register(
 export const reviewSchema = registry.register(
   "Review",
   z.object({
-    id: z.string().uuid(),
-    businessId: z.string().uuid(),
-    clientId: z.string().uuid(),
+    id: z.guid(),
+    businessId: z.guid(),
+    clientId: z.guid(),
     clientName: z.string(),
-    appointmentId: z.string().uuid(),
+    appointmentId: z.guid(),
     rating: z.number().int().min(1).max(5),
     comment: z.string().nullable(),
     createdAt: z.string().datetime(),
@@ -208,7 +208,7 @@ export const reviewSchema = registry.register(
 export const notificationSchema = registry.register(
   "Notification",
   z.object({
-    id: z.string().uuid(),
+    id: z.guid(),
     type: z.string(),
     title: z.string(),
     message: z.string(),
@@ -220,11 +220,11 @@ export const notificationSchema = registry.register(
 export const paymentSchema = registry.register(
   "Payment",
   z.object({
-    id: z.string().uuid(),
-    appointmentId: z.string().uuid(),
-    userId: z.string().uuid().nullable(),
-    walkInClientId: z.string().uuid().nullable(),
-    businessId: z.string().uuid(),
+    id: z.guid(),
+    appointmentId: z.guid(),
+    userId: z.guid().nullable(),
+    walkInClientId: z.guid().nullable(),
+    businessId: z.guid(),
     amount: z.number(),
     currency: z.string(),
     method: paymentMethodSchema,
@@ -238,8 +238,8 @@ export const paymentSchema = registry.register(
 export const galleryImageSchema = registry.register(
   "GalleryImage",
   z.object({
-    id: z.string().uuid(),
-    businessId: z.string().uuid(),
+    id: z.guid(),
+    businessId: z.guid(),
     url: z.string().url(),
     position: z.number().int(),
     caption: z.string().nullable(),
@@ -250,7 +250,7 @@ export const galleryImageSchema = registry.register(
 export const matchedServiceSchema = registry.register(
   "MatchedService",
   z.object({
-    id: z.string().uuid(),
+    id: z.guid(),
     name: z.string(),
     price: z.number(),
   }),
@@ -267,11 +267,11 @@ export const searchResultSchema = registry.register(
 export const financialsPaymentSchema = registry.register(
   "FinancialsPayment",
   z.object({
-    id: z.string().uuid(),
+    id: z.guid(),
     amount: z.number(),
     method: paymentMethodSchema,
     paidAt: z.string().datetime(),
-    appointmentId: z.string().uuid(),
+    appointmentId: z.guid(),
     scheduledAt: z.string().datetime(),
     clientName: z.string(),
     clientAvatarUrl: z.string().nullable(),

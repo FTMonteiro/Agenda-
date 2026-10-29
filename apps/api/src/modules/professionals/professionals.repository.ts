@@ -1,4 +1,5 @@
 import { prisma } from "../../config/database";
+import { requireId } from "../../shared/utils/requireId";
 
 const includeForDTO = {
   user: true,
@@ -42,7 +43,7 @@ export const professionalsRepository = {
   },
 
   findByUserId(userId: string) {
-    return prisma.professional.findUnique({ where: { userId } });
+    return prisma.professional.findUnique({ where: { userId: requireId(userId, "userId") } });
   },
 
   update(id: string, data: { bio?: string; specialty?: string; imageUrl?: string; active?: boolean }) {

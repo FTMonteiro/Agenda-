@@ -1,4 +1,5 @@
 import { prisma } from "../../config/database";
+import { requireId } from "../../shared/utils/requireId";
 
 export const notificationsRepository = {
   create(data: { userId: string; type: string; title: string; message: string }) {
@@ -71,7 +72,7 @@ export const notificationsRepository = {
   },
 
   deletePushToken(userId: string, token: string) {
-    return prisma.pushToken.deleteMany({ where: { userId, token } });
+    return prisma.pushToken.deleteMany({ where: { userId: requireId(userId, "userId"), token } });
   },
 
   deletePushTokens(tokens: string[]) {
@@ -79,11 +80,11 @@ export const notificationsRepository = {
   },
 
   findPushTokens(userId: string) {
-    return prisma.pushToken.findMany({ where: { userId }, select: { token: true } }).then((rows) => rows.map((row) => row.token));
+    return prisma.pushToken.findMany({ where: { userId: requireId(userId, "userId") }, select: { token: true } }).then((rows) => rows.map((row) => row.token));
   },
 
   findByUser(userId: string) {
-    return prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
+    return prisma.notification.findMany({ where: { userId: requireId(userId, "userId") }, orderBy: { createdAt: "desc" } });
   },
 
   findById(id: string) {
@@ -95,6 +96,6 @@ export const notificationsRepository = {
   },
 
   markAllRead(userId: string) {
-    return prisma.notification.updateMany({ where: { userId, read: false }, data: { read: true } });
+    return prisma.notification.updateMany({ where: { userId: requireId(userId, "userId"), read: false }, data: { read: true } });
   },
 };
