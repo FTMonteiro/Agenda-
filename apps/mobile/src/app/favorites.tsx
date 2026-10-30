@@ -607,6 +607,6 @@ const styles = StyleSheet.create({
   },
   toastAction: {
     ...Typography.headline,
-    color: "#5585C4",
+    color: "#1451D6",
   },
 });

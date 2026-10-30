@@ -33,7 +33,7 @@ const COLORS = {
   text: "#1C1C1E",
   secondary: "#636366",
   muted: "#AEAEB2",
-  blue: "#2E67B3",
+  blue: "#1451D6",
   blueSoft: "rgba(29, 99, 255, 0.07)",
   blueBorder: "rgba(29, 99, 255, 0.28)",
   gold: "#A2845E",

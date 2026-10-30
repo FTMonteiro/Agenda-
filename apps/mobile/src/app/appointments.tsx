@@ -329,7 +329,7 @@ function DetailsSheet({
             {photo ? (
               <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
             ) : (
-              <LinearGradient colors={["#5585C4", "#5E5CE6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+              <LinearGradient colors={["#1451D6", "#1451D6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
             )}
             <LinearGradient
               colors={["rgba(0,0,0,0.35)", "rgba(0,0,0,0)", "rgba(0,0,0,0.8)"]}

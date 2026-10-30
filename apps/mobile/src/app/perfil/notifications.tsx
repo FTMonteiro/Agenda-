@@ -65,8 +65,8 @@ const COLORS = {
   secondary: "#636366",
   muted: "#AEAEB2",
   border: "#E5E5EA",
-  blue: "#2E67B3",
-  blueSoft: "#E2EEFF",
+  blue: "#1451D6",
+  blueSoft: "#E5ECFA",
   green: "#34C759",
   greenSoft: "#EAF9EE",
   red: "#FF3B30",
@@ -320,7 +320,7 @@ export default function NotificationsScreen() {
                     onValueChange={setBookingNotifications}
                     trackColor={{
                       false: "#D1D1D6",
-                      true: "#E2EEFF",
+                      true: "#E5ECFA",
                     }}
                     thumbColor={bookingNotifications ? COLORS.blue : "#FFFFFF"}
                   />
@@ -344,7 +344,7 @@ export default function NotificationsScreen() {
                     onValueChange={setMessagesNotifications}
                     trackColor={{
                       false: "#D1D1D6",
-                      true: "#E2EEFF",
+                      true: "#E5ECFA",
                     }}
                     thumbColor={messagesNotifications ? COLORS.blue : "#FFFFFF"}
                   />
@@ -368,7 +368,7 @@ export default function NotificationsScreen() {
                     onValueChange={setFavoriteNotifications}
                     trackColor={{
                       false: "#D1D1D6",
-                      true: "#E2EEFF",
+                      true: "#E5ECFA",
                     }}
                     thumbColor={favoriteNotifications ? COLORS.blue : "#FFFFFF"}
                   />
@@ -516,8 +516,8 @@ const createStyles = (tc: ThemeRoles) =>
     },
 
     unreadCard: {
-      borderColor: tc.border("#E2EEFF"),
-      backgroundColor: tc.bg("#E2EEFF"),
+      borderColor: tc.border("#E5ECFA"),
+      backgroundColor: tc.bg("#E5ECFA"),
     },
 
     pressed: {

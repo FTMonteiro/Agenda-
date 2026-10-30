@@ -17,8 +17,8 @@ const COLORS = {
   muted: "#AEAEB2",
   border: "#E5E5EA",
 
-  blue: "#2E67B3",
-  blueSoft: "#E2EEFF",
+  blue: "#1451D6",
+  blueSoft: "#E5ECFA",
 
   green: "#34C759",
   greenSoft: "#EAF9EE",
@@ -489,7 +489,7 @@ const createStyles = (tc: ThemeRoles) =>
       borderCurve: "continuous",
       backgroundColor: tc.bg(COLORS.blueSoft),
       borderWidth: 1,
-      borderColor: tc.border("#E2EEFF"),
+      borderColor: tc.border("#E5ECFA"),
       flexDirection: "row",
       alignItems: "flex-start",
     },

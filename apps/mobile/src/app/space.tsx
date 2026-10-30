@@ -1110,7 +1110,7 @@ const createStyles = (tc: ThemeRoles) =>
 
     locationLink: {
       marginTop: 6,
-      color: tc.fg("#2E67B3"),
+      color: tc.fg("#1451D6"),
       fontSize: 13,
       fontWeight: "600",
     },

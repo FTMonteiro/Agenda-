@@ -21,7 +21,7 @@ import { Platform } from 'react-native';
    ========================================================= */
 
 // Base nas cores de sistema do iOS (Human Interface Guidelines), com as chaves que todos
-// os ecrãs já usam. `primary` é o azul da marca, mais sereno que o systemBlue, e é o
+// os ecrãs já usam. `primary` é o azul do logótipo (#1451D6), chapado, e é o
 // único destaque para tudo o que se toca; os fundos agrupados ficam atrás dos cartões.
 export const Colors = {
   light: {
@@ -37,7 +37,7 @@ export const Colors = {
     backgroundSelected: '#E5E5EA',
 
     /* Cor de destaque (azul da marca) */
-    primary: '#2E67B3',
+    primary: '#1451D6',
     primaryForeground: '#FFFFFF',
 
     /* Estados */
@@ -50,8 +50,8 @@ export const Colors = {
     error: '#FF3B30',
     errorBackground: 'rgba(255, 59, 48, 0.12)',
 
-    info: '#2E67B3',
-    infoBackground: 'rgba(46, 103, 179, 0.12)',
+    info: '#1451D6',
+    infoBackground: 'rgba(20, 81, 214, 0.12)',
 
     /* Separadores */
     border: 'rgba(60, 60, 67, 0.29)',
@@ -85,7 +85,7 @@ export const Colors = {
     backgroundSelected: '#2C2C2E',
 
     /* Cor de destaque */
-    primary: '#5585C4',
+    primary: '#1451D6',
     primaryForeground: '#FFFFFF',
 
     /* Estados */
@@ -98,8 +98,8 @@ export const Colors = {
     error: '#FF453A',
     errorBackground: 'rgba(255, 69, 58, 0.16)',
 
-    info: '#5585C4',
-    infoBackground: 'rgba(85, 133, 196, 0.16)',
+    info: '#1451D6',
+    infoBackground: 'rgba(20, 81, 214, 0.16)',
 
     /* Separadores */
     border: 'rgba(84, 84, 88, 0.6)',
