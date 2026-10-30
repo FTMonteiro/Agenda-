@@ -28,8 +28,8 @@ const COLORS = {
   muted: "#AEAEB2",
   border: "#E5E5EA",
 
-  blue: "#2E67B3",
-  blueSoft: "#E2EEFF",
+  blue: "#1451D6",
+  blueSoft: "#E5ECFA",
 
   green: "#34C759",
   greenSoft: "#EAF9EE",
@@ -201,7 +201,7 @@ export default function HelpScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {/* HEADER */}

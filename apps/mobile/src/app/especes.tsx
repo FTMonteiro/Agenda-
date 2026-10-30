@@ -54,8 +54,8 @@ const COLORS = {
   muted: "#8E8E93",
   softMuted: "#AEAEB2",
   line: "#E5E5EA",
-  blue: "#2E67B3",
-  blueSoft: "#E2EEFF",
+  blue: "#1451D6",
+  blueSoft: "#E5ECFA",
   success: "#34C759",
   gold: "#A2845E",
   goldSoft: "#FFFAE5",
@@ -382,7 +382,7 @@ export default function SpacesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
       <View style={styles.container}>
         {/* HEADER — SOMENTE PESQUISA */}
@@ -967,8 +967,8 @@ const createStyles = (tc: ThemeRoles) =>
     },
 
     cardImage: {
-      width: "100%",
-      height: "100%",
+      width: "100%" as const,
+      height: "100%" as const,
     },
 
     imageFallback: {
@@ -1140,7 +1140,7 @@ const createStyles = (tc: ThemeRoles) =>
       fontSize: 17,
       fontWeight: "600",
       letterSpacing: -0.41,
-      color: tc.fg("#2E67B3"),
+      color: tc.fg("#1451D6"),
     },
     searchCloseButton: {
       paddingHorizontal: 4,

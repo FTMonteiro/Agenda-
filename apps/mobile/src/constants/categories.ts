@@ -7,7 +7,7 @@ type IconName = keyof typeof Ionicons.glyphMap;
 // só o que é da app: a fotografia de cada um (assets/images/categories), e o ícone e a
 // cor para os sítios onde não cabe uma imagem.
 const CATEGORY_STYLE: Record<BusinessCategory, { icon: IconName; color: string; image: number }> = {
-  Barbearia: { icon: "cut", color: "#2E67B3", image: require("../../assets/images/categories/barbearia.jpg") },
+  Barbearia: { icon: "cut", color: "#1451D6", image: require("../../assets/images/categories/barbearia.jpg") },
   Salão: { icon: "sparkles", color: "#AF52DE", image: require("../../assets/images/categories/salao.jpg") },
   Nails: { icon: "color-palette", color: "#FF2D55", image: require("../../assets/images/categories/nails.jpg") },
   SPA: { icon: "water", color: "#30B0C7", image: require("../../assets/images/categories/spa.jpg") },

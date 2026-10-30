@@ -356,7 +356,7 @@ const SpaceScreen = () => {
   if (loading) {
     return (
       <View style={styles.screen}>
-        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
         <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
           <View style={styles.centerState}>
@@ -370,7 +370,7 @@ const SpaceScreen = () => {
   if (error || !business || !businessId) {
     return (
       <View style={styles.screen}>
-        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
         <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
           <View style={styles.centerState}>
@@ -439,7 +439,7 @@ const SpaceScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -1110,7 +1110,7 @@ const createStyles = (tc: ThemeRoles) =>
 
     locationLink: {
       marginTop: 6,
-      color: tc.fg("#2E67B3"),
+      color: tc.fg("#1451D6"),
       fontSize: 13,
       fontWeight: "600",
     },

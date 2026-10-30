@@ -12,6 +12,7 @@ import { getAvailability } from "../../services/availability";
 import { useThemed, type ThemeRoles } from "@/theme/roles";
 import { useT, dateLocale } from "@/i18n";
 
+import type { ScrollViewInstance } from "react-native";
 // O valor que chega do passo anterior quando a pessoa não escolheu ninguém.
 const ANY_PROFESSIONAL = "any";
 
@@ -93,7 +94,7 @@ const WHEEL_ROWS = 5;
  */
 function TimeWheel({ times, value, onChange }: { times: string[]; value: string | null; onChange: (time: string) => void }) {
   const { tc, styles } = useThemed(createStyles);
-  const list = useRef<ScrollView>(null);
+  const list = useRef<ScrollViewInstance>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
   const padding = (WHEEL_ROW * (WHEEL_ROWS - 1)) / 2;
 
@@ -136,7 +137,7 @@ function TimeWheel({ times, value, onChange }: { times: string[]; value: string 
         })}
       </Animated.ScrollView>
       <View pointerEvents="none" style={styles.wheelIcon}>
-        <Ionicons name="time" size={20} color={tc.fg("#2E67B3")} />
+        <Ionicons name="time" size={20} color={tc.fg("#1451D6")} />
       </View>
     </View>
   );
@@ -676,7 +677,7 @@ const createStyles = (tc: ThemeRoles) =>
       height: WHEEL_ROW,
       borderRadius: 16,
       borderCurve: "continuous",
-      backgroundColor: tc.bg("rgba(46, 103, 179,0.10)"),
+      backgroundColor: tc.bg("rgba(20, 81, 214,0.10)"),
     },
 
     wheelRow: {

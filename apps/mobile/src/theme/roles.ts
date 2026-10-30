@@ -83,7 +83,7 @@ function darkBackground(color: RGBA): string | null {
     if (l >= 0.875) return "#2C2C2E";
     if (l >= 0.8) return "#3A3A3C";
     if (l >= 0.6) return "#48484A";
-    if (l < 0.12) return "#5585C4";
+    if (l < 0.12) return "#1451D6";
     if (l < 0.25) return "#2C2C2E";
     return null;
   }
@@ -134,7 +134,7 @@ function darkGradientStop(color: RGBA): string | null {
   // Véus sobre imagens (pretos translúcidos) têm de continuar escuros.
   if (color.a < 1) return null;
   const { l, s } = lightnessAndSaturation(color);
-  if (isNeutral(l, s) && l < 0.3) return "#5585C4";
+  if (isNeutral(l, s) && l < 0.3) return "#1451D6";
   return darkBackground(color);
 }
 

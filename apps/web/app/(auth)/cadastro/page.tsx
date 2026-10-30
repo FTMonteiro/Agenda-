@@ -440,15 +440,7 @@ export default function CadastroPage() {
         {/* PAINEL ESQUERDO */}
 
         <section className="relative hidden min-h-screen overflow-hidden bg-[#080a0f] lg:flex">
-          <div
-            aria-hidden="true"
-            className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-blue-600/10 blur-[120px]"
-          />
 
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-indigo-600/10 blur-[120px]"
-          />
 
           <div
             aria-hidden="true"
@@ -511,10 +503,6 @@ export default function CadastroPage() {
         {/* PAINEL DIREITO */}
 
         <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-6 py-10 sm:px-10">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-40 -top-40 h-[450px] w-[450px] rounded-full bg-blue-500/[0.035] blur-[120px]"
-          />
 
           <div
             className={`relative z-10 w-full transition-[max-width] duration-300 ${
@@ -957,7 +945,7 @@ export default function CadastroPage() {
                         style={{ animationDelay: `${BUSINESS_CATEGORIES.indexOf(option) * 45}ms` }}
                         className={`fade-up group relative flex items-center gap-3 rounded-[14px] border p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/15 active:scale-[0.99] disabled:cursor-not-allowed ${
                           selected
-                            ? "border-blue-600 bg-blue-50/60 shadow-[0_8px_25px_rgba(37,99,235,0.10)]"
+                            ? "border-blue-600 bg-blue-50/60"
                             : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-[0_8px_25px_rgba(0,0,0,0.05)]"
                         }`}
                       >

@@ -93,6 +93,10 @@ export default function AppointmentsPage() {
   const [error, setError] = useState("");
 
   const [clientId, setClientId] = useState("");
+  // Quem ainda não é cliente do espaço: regista-se aqui mesmo, ao marcar.
+  const [isNewClient, setIsNewClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [newClientPhone, setNewClientPhone] = useState("");
   const [serviceId, setServiceId] = useState("");
   const [professionalId, setProfessionalId] = useState("");
   const [date, setDate] = useState("");
@@ -105,6 +109,9 @@ export default function AppointmentsPage() {
    */
 
   const [clients, setClients] = useState<Option[]>([]);
+
+  // De onde vem cada cliente: registado à mão ("manual") ou cliente pela app ("app").
+  const [clientSources, setClientSources] = useState<Record<string, string>>({});
 
   const [services, setServices] = useState<Option[]>([]);
 
@@ -254,6 +261,14 @@ export default function AppointmentsPage() {
 
       setClients(toOptions(clientsData, (item) => item.name));
 
+      setClientSources(
+        Object.fromEntries(
+          (Array.isArray(clientsData) ? clientsData : []).map(
+            (item: ApiRecord) => [String(item.id), String(item.source ?? "manual")],
+          ),
+        ),
+      );
+
       /*
        * Profissionais e serviços inativos continuam no banco pelo histórico,
        * mas não devem ser oferecidos para um novo agendamento.
@@ -306,7 +321,17 @@ export default function AppointmentsPage() {
   async function handleCreateAppointment() {
     setFormError("");
 
-    if (!clientId) {
+    if (isNewClient) {
+      if (!newClientName.trim()) {
+        setFormError("Indique o nome do cliente.");
+        return;
+      }
+
+      if (!newClientPhone.trim()) {
+        setFormError("Indique o telefone do cliente.");
+        return;
+      }
+    } else if (!clientId) {
       setFormError("Selecione o cliente.");
       return;
     }
@@ -388,7 +413,14 @@ export default function AppointmentsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          clientId,
+          ...(isNewClient
+            ? {
+                newClient: {
+                  name: newClientName.trim(),
+                  phone: newClientPhone.trim(),
+                },
+              }
+            : { clientId, clientSource: clientSources[clientId] }),
           serviceId,
           professionalId,
           date,
@@ -431,6 +463,9 @@ export default function AppointmentsPage() {
        */
 
       setClientId("");
+      setIsNewClient(false);
+      setNewClientName("");
+      setNewClientPhone("");
       setServiceId("");
       setProfessionalId("");
       setDate("");
@@ -444,8 +479,9 @@ export default function AppointmentsPage() {
 
       setIsModalOpen(false);
 
-      const clientName =
-        clients.find((item) => item.id === clientId)?.label ?? "Cliente";
+      const clientName = isNewClient
+        ? newClientName.trim()
+        : (clients.find((item) => item.id === clientId)?.label ?? "Cliente");
 
       notify({
         kind: "created",
@@ -792,15 +828,44 @@ export default function AppointmentsPage() {
                 </div>
               )}
 
-              <SelectField
-                label="Cliente"
-                value={clientId}
-                onChange={setClientId}
-                options={clients}
-                loading={loadingOptions}
-                placeholder="Selecione o cliente"
-                emptyHint="Nenhum cliente cadastrado. Cadastre um em Clientes."
-              />
+              {isNewClient ? (
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field
+                    label="Nome do cliente"
+                    value={newClientName}
+                    onChange={setNewClientName}
+                    placeholder="Nome completo"
+                  />
+
+                  <Field
+                    label="Telefone"
+                    type="tel"
+                    value={newClientPhone}
+                    onChange={setNewClientPhone}
+                    placeholder="9XX XXX XXX"
+                  />
+                </div>
+              ) : (
+                <SelectField
+                  label="Cliente"
+                  value={clientId}
+                  onChange={setClientId}
+                  options={clients}
+                  loading={loadingOptions}
+                  placeholder="Selecione o cliente"
+                  emptyHint="Nenhum cliente cadastrado. Use “Novo cliente” para marcar para alguém novo."
+                />
+              )}
+
+              <button
+                type="button"
+                onClick={() => setIsNewClient((current) => !current)}
+                className="-mt-3 text-sm font-semibold text-blue-600 hover:underline"
+              >
+                {isNewClient
+                  ? "Escolher um cliente do espaço"
+                  : "+ Novo cliente (ainda não é cliente do espaço)"}
+              </button>
 
               <SelectField
                 label="Serviço"
@@ -961,6 +1026,7 @@ type ApiRecord = {
   name?: unknown;
   price?: unknown;
   active?: unknown;
+  source?: unknown;
 };
 
 /*

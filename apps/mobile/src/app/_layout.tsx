@@ -135,11 +135,7 @@ function RootLayoutContent() {
             STATUS BAR
             ================================================= */}
 
-        <StatusBar
-          translucent
-          backgroundColor="transparent"
-          barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
-        />
+        <StatusBar barStyle={colorScheme === "dark" ? "light-content" : "dark-content"} />
 
         {/* =================================================
             STACK PRINCIPAL

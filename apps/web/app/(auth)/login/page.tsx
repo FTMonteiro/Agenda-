@@ -216,10 +216,6 @@ export default function LoginPage() {
                 {/* MOCKUP */}
 
                 <div className="login-dashboard relative mt-12 h-[205px] max-w-[590px]">
-                  <div
-                    aria-hidden="true"
-                    className="absolute left-[20%] top-[30%] h-32 w-64 rounded-full bg-blue-600/10 blur-[70px]"
-                  />
 
                   <div className="login-card-main absolute left-0 top-0 w-[325px] rounded-[18px] border border-white/[0.09] bg-white/[0.045] p-4 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
                     <div className="flex items-center justify-between">
@@ -363,10 +359,6 @@ export default function LoginPage() {
         {/*PAINEL DIREITO */}
 
         <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-6 py-10 sm:px-10">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-40 -top-40 h-[450px] w-[450px] rounded-full bg-blue-500/[0.035] blur-[120px]"
-          />
 
           <div
             aria-hidden="true"
@@ -643,7 +635,7 @@ export default function LoginPage() {
           top: -150px;
           width: 500px;
           height: 500px;
-          background: rgba(37, 99, 235, 0.09);
+          background: rgba(20, 81, 214, 0.09);
         }
 
         .login-orb-two {
@@ -659,7 +651,7 @@ export default function LoginPage() {
           top: 35%;
           width: 260px;
           height: 260px;
-          background: rgba(37, 99, 235, 0.035);
+          background: rgba(20, 81, 214, 0.035);
         }
 
         .login-grid {
@@ -680,7 +672,7 @@ export default function LoginPage() {
             90deg,
             #ffffff 0%,
             #f1f5f9 48%,
-            #60a5fa 100%
+            #6d93e6 100%
           );
 
           background-clip: text;

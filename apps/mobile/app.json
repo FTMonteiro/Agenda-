@@ -56,7 +56,8 @@
           "icon": "./assets/images/notification-icon.png",
           "color": "#1451D6"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -30,6 +30,7 @@ import { ApiRequestError } from "../../services/api-client";
 import { login } from "../../services/auth";
 import { useT } from "@/i18n";
 
+import type { TextInputInstance } from "react-native";
 export default function LoginScreen() {
   const t = useT();
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [socialBusy, setSocialBusy] = useState(false);
 
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   const handleLogin = async () => {
     if (loading || socialBusy) return;

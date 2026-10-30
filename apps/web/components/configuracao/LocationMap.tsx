@@ -34,7 +34,7 @@ const PROVINCE_ZOOM = 9;
 
 // Leaflet's default marker images don't survive bundling, so the pin is drawn inline.
 const PIN_HTML =
-  '<svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg"><path d="M17 41C17 41 32 26.5 32 16A15 15 0 0 0 2 16C2 26.5 17 41 17 41Z" fill="#2563eb" stroke="#fff" stroke-width="2"/><circle cx="17" cy="16" r="5.5" fill="#fff"/></svg>';
+  '<svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg"><path d="M17 41C17 41 32 26.5 32 16A15 15 0 0 0 2 16C2 26.5 17 41 17 41Z" fill="#1451d6" stroke="#fff" stroke-width="2"/><circle cx="17" cy="16" r="5.5" fill="#fff"/></svg>';
 
 const round = (value: number) => Math.round(value * 1e6) / 1e6;
 

@@ -14,6 +14,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 
 import { Colors, Typography } from "@/constants/theme";
 
+import type { TextInputInstance } from "react-native";
 /*
  * Peças base no estilo das apps da Apple (Definições, Saúde, App Store):
  * secções agrupadas com cantos contínuos, linhas de 44 pt com separadores
@@ -75,7 +76,7 @@ interface FieldRowProps extends TextInputProps {
   trailing?: React.ReactNode;
 }
 
-export const FieldRow = forwardRef<TextInput, FieldRowProps>(function FieldRow(
+export const FieldRow = forwardRef<TextInputInstance, FieldRowProps>(function FieldRow(
   { label, invalid, trailing, style, ...inputProps },
   ref,
 ) {

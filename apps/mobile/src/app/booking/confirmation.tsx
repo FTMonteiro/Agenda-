@@ -3,7 +3,7 @@ import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet,
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, usePreventRemove, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import type { BusinessDTO, ProfessionalDTO, ServiceDTO } from "@slotix/types";
@@ -234,24 +234,21 @@ export default function BookingConfirmationScreen() {
    * ficam bloqueados nesta tela.
    */
   const navigation = useNavigation();
-  const leaving = useRef(false);
 
   useEffect(() => {
     navigation.setOptions({ gestureEnabled: !confirmed });
-    if (!confirmed) return;
-
-    return navigation.addListener("beforeRemove", (event) => {
-      if (!leaving.current) event.preventDefault();
-    });
   }, [navigation, confirmed]);
+
+  // Bloqueia sair desta tela depois de confirmada; as duas saídas desligam o bloqueio.
+  const disablePrevention = usePreventRemove(confirmed);
 
   const leaveTo = useCallback(
     (path: "/" | "/appointments") => {
-      leaving.current = true;
+      disablePrevention();
       if (router.canDismiss()) router.dismissAll();
       router.replace(path);
     },
-    [router],
+    [router, disablePrevention],
   );
 
   if (loading) {

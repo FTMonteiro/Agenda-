@@ -20,7 +20,7 @@ const COLORS = {
   text: "#1C1C1E",
   secondary: "#636366",
   muted: "#AEAEB2",
-  blue: "#2E67B3",
+  blue: "#1451D6",
   blueSoft: "rgba(29, 99, 255, 0.07)",
   blueBorder: "rgba(29, 99, 255, 0.28)",
   gold: "#A2845E",
@@ -199,7 +199,7 @@ export default function BookingProfessionalScreen() {
           <View style={styles.progressContainer}>
             <View style={styles.progressTrack}>
               <LinearGradient
-                colors={tc.bgs(["#2E67B3", "#2E67B3"])}
+                colors={tc.bgs(["#1451D6", "#1451D6"])}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.progressActive}
@@ -569,8 +569,8 @@ const createStyles = (tc: ThemeRoles) =>
     },
 
     progressActive: {
-      width: "50%",
-      height: "100%",
+      width: "50%" as const,
+      height: "100%" as const,
       borderRadius: 2,
       borderCurve: "continuous",
     },

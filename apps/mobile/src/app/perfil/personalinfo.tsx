@@ -35,8 +35,8 @@ const COLORS = {
   muted: "#AEAEB2",
   border: "#E5E5EA",
   inputBackground: "#F2F2F7",
-  blue: "#2E67B3",
-  blueSoft: "#E2EEFF",
+  blue: "#1451D6",
+  blueSoft: "#E5ECFA",
   success: "#34C759",
   danger: "#FF3B30",
   dangerSoft: "#FFEBEA",
@@ -444,7 +444,7 @@ export default function PersonalInfoScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+        <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
         <View style={[styles.keyboardView, styles.loadingContainer]}>
           <ActivityIndicator size="large" color={tc.fg(COLORS.black)} />
@@ -455,7 +455,7 @@ export default function PersonalInfoScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
       <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView
@@ -1081,7 +1081,7 @@ const createStyles = (tc: ThemeRoles) =>
       alignItems: "flex-start",
       marginBottom: 20,
       borderWidth: 1,
-      borderColor: tc.border("#E2EEFF"),
+      borderColor: tc.border("#E5ECFA"),
     },
 
     securityIcon: {

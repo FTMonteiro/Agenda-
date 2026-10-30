@@ -5,6 +5,8 @@ export type AppointmentChange = "created" | "confirmed" | "cancelled" | "complet
 
 export interface DomainEvents {
   AppointmentCreated: AppointmentDTO;
+  // Booked in the dashboard for an app client: they're told in the app.
+  AppointmentBookedForClient: AppointmentDTO;
   // byClient: cancelled by the client in the app (the business is told), not by staff.
   AppointmentCancelled: AppointmentDTO & { byClient: boolean };
   AppointmentConfirmed: AppointmentDTO;

@@ -1,6 +1,6 @@
-import type { AppointmentDTO } from "@slotix/types";
+import type { AppointmentDTO, WalkInClientDTO } from "@slotix/types";
 import { requireStaff } from "@/lib/auth";
-import { ApiCallError, apiCall, errorJson, errorResponse, formatAppointment, jsonBody, loadLookups, parseLocalDateTime } from "@/lib/dashboard-api";
+import { apiCall, errorJson, errorResponse, formatAppointment, jsonBody, loadLookups, parseLocalDateTime } from "@/lib/dashboard-api";
 
 export async function GET() {
   try {
@@ -24,8 +24,10 @@ export async function GET() {
   }
 }
 
-// Booked by staff on behalf of one of the business's own (walk-in) clients. Availability,
-// business hours and "must be in the future" are all enforced by the API.
+// Booked by staff for any of the business's clients — one registered by hand, an app
+// user who is a client of the space (clientSource "app") — or for someone who isn't a
+// client yet (newClient), who is registered first. Availability, business hours and
+// "must be in the future" are all enforced by the API.
 export async function POST(request: Request) {
   try {
     const user = await requireStaff();
@@ -33,23 +35,42 @@ export async function POST(request: Request) {
     if (!body) return errorJson("Dados do agendamento inválidos.", 400);
 
     const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+    const newClient = body.newClient && typeof body.newClient === "object" ? (body.newClient as Record<string, unknown>) : null;
     const clientId = text(body.clientId);
     const professionalId = text(body.professionalId);
     const serviceId = text(body.serviceId);
     const notes = text(body.notes);
 
-    if (!clientId) return errorJson("Selecione o cliente.", 400);
+    if (newClient) {
+      if (!text(newClient.name)) return errorJson("Indique o nome do cliente.", 400);
+      if (!text(newClient.phone)) return errorJson("Indique o telefone do cliente.", 400);
+    } else if (!clientId) {
+      return errorJson("Selecione o cliente.", 400);
+    }
     if (!professionalId) return errorJson("Selecione o profissional.", 400);
     if (!serviceId) return errorJson("Selecione o serviço.", 400);
 
     const scheduledAt = parseLocalDateTime(text(body.date), text(body.time));
     if (!scheduledAt) return errorJson("Data ou hora inválida.", 400);
 
+    // Someone new becomes one of the space's clients first. If the booking then fails
+    // (slot taken, closed that day), they stay registered — the retry picks them from the list.
+    let client: { clientId: string } | { walkInClientId: string };
+    if (newClient) {
+      const created = await apiCall<WalkInClientDTO>(
+        "/clients/walk-in",
+        jsonBody("POST", { businessId: user.businessId, name: text(newClient.name), phone: text(newClient.phone) }),
+      );
+      client = { walkInClientId: created.id };
+    } else {
+      client = body.clientSource === "app" ? { clientId } : { walkInClientId: clientId };
+    }
+
     const appointment = await apiCall<AppointmentDTO>(
       "/appointments/walk-in",
       jsonBody("POST", {
         businessId: user.businessId,
-        walkInClientId: clientId,
+        ...client,
         serviceId,
         professionalId,
         scheduledAt: scheduledAt.toISOString(),
@@ -66,12 +87,6 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
-    if (error instanceof ApiCallError && error.status === 404 && /cliente/i.test(error.message)) {
-      return errorJson(
-        "Este cliente tem conta na app Agenda+ e faz as próprias marcações pela app; não é possível marcar por ele aqui.",
-        409,
-      );
-    }
     return errorResponse(error, "Não foi possível criar o agendamento.");
   }
 }

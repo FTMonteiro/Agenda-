@@ -45,10 +45,10 @@ export const notificationsRepository = {
   },
 
   // Only if it is still open: staff may have completed or cancelled it meanwhile.
-  async markNoShow(id: string): Promise<boolean> {
+  async cancelExpired(id: string): Promise<boolean> {
     const { count } = await prisma.appointment.updateMany({
       where: { id, status: { in: ["PENDING", "CONFIRMED"] } },
-      data: { status: "NO_SHOW" },
+      data: { status: "CANCELLED" },
     });
     return count > 0;
   },

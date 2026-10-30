@@ -9,10 +9,10 @@
 /*
  * MARCA AGENDA+
  *
- * Um azul sereno e pouco saturado, pensado para quem passa o dia inteiro com o
- * painel aberto: lê-se bem, não cansa e não grita. A escala `blue` do Tailwind é
- * redefinida à volta dele, por isso qualquer bg-blue-600 / text-blue-600 já usado
- * nas páginas passa a ser o azul da marca.
+ * O azul do logótipo (#1451D6), chapado, sem gradientes nem brilhos: é o mesmo tom na
+ * web, na app e no ícone. A escala `blue` do Tailwind é redefinida à volta dele
+ * (blue-600 é o próprio), por isso qualquer bg-blue-600 / text-blue-600 já usado nas
+ * páginas passa a ser o azul da marca.
  *
  * Os cinzentos (gray, zinc, neutral, slate, stone) passam todos a uma única escala
  * neutra ligeiramente quente: as páginas que misturavam famílias diferentes ficam
@@ -23,17 +23,17 @@
 @theme {
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
 
-  --color-blue-50: #f2f7ff;
-  --color-blue-100: #e2eeff;
-  --color-blue-200: #c6ddfc;
-  --color-blue-300: #9dc0f1;
-  --color-blue-400: #6e9ddf;
-  --color-blue-500: #477ec9;
-  --color-blue-600: #2e67b3;
-  --color-blue-700: #245496;
-  --color-blue-800: #1e4579;
-  --color-blue-900: #18355e;
-  --color-blue-950: #0f223b;
+  --color-blue-50: #f3f6fd;
+  --color-blue-100: #e5ecfa;
+  --color-blue-200: #c9d7f6;
+  --color-blue-300: #a1b9ef;
+  --color-blue-400: #6d93e6;
+  --color-blue-500: #3c6fdd;
+  --color-blue-600: #1451d6;
+  --color-blue-700: #1143b2;
+  --color-blue-800: #0d368f;
+  --color-blue-900: #0a286b;
+  --color-blue-950: #061a44;
 
   --color-gray-50: #fbfaf9;
   --color-gray-100: #f5f3f1;
@@ -133,10 +133,10 @@ html.light {
   --surface-secondary: #f5f3f1;
   --surface-hover: #efedea;
 
-  --brand: #2e67b3;
-  --brand-hover: #245496;
-  --brand-deep: #1e4579;
-  --brand-text: #2e67b3;
+  --brand: #1451d6;
+  --brand-hover: #1143b2;
+  --brand-deep: #0d368f;
+  --brand-text: #1451d6;
 }
 
 html.dark {
@@ -160,10 +160,11 @@ html.dark {
   --surface-secondary: #222225;
   --surface-hover: #2a2a2d;
 
-  --brand: #4677be;
-  --brand-hover: #5888ca;
-  --brand-deep: #2c568f;
-  --brand-text: #93b6e8;
+  --brand: #1451d6;
+  --brand-hover: #1143b2;
+  --brand-deep: #0d368f;
+  /* Texto azul sobre o fundo escuro: um degrau mais claro do mesmo tom, para se ler. */
+  --brand-text: #6d93e6;
 }
 
 /* ============================================================
@@ -282,7 +283,7 @@ select {
 
   color: #111111 !important;
 
-  border-color: #2e67b3 !important;
+  border-color: #1451d6 !important;
 
   outline: none;
 }
@@ -294,7 +295,7 @@ select {
 .nevrx-logo-box {
   background: #05070b;
 
-  color: #3b82f6;
+  color: #1451d6;
 
   border: 1px solid rgba(255, 255, 255, 0.08);
 
@@ -648,7 +649,7 @@ select {
 }
 
 .nevrx-primary-button:hover {
-  background: #2e67b3 !important;
+  background: #1451d6 !important;
 
   color: #ffffff !important;
 
@@ -1328,18 +1329,18 @@ select:disabled {
 
 :root,
 html.light {
-  --chart-bar: #2e67b3;
+  --chart-bar: #1451d6;
   --method-cash: #009685;
-  --method-card: #2a78d6;
+  --method-card: #1451d6;
   --method-transfer: #eb6834;
   --method-mobile: #4a3aa7;
   --method-other: #e87ba4;
 }
 
 html.dark {
-  --chart-bar: #4f80c4;
+  --chart-bar: #1451d6;
   --method-cash: #00a896;
-  --method-card: #3987e5;
+  --method-card: #3c6fdd;
   --method-transfer: #d95926;
   --method-mobile: #9085e9;
   --method-other: #d55181;
@@ -1852,5 +1853,72 @@ html.dark :where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"
   :where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full) :is(button, a, label, [role="option"], [role="menuitem"], [role="tab"]):hover,
   :where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"], .absolute.top-full) :is(button, a, label, [role="option"], [role="menuitem"], [role="tab"]):active {
     transform: none;
+  }
+}
+
+/* ============================================================
+   CARTÕES DA AGENDA
+
+   Entram em cascata curta; o que acabou de mudar de estado (confirmado, cancelado…)
+   ganha um contorno da cor da marca que se desvanece, e a etiqueta do estado entra de
+   novo — para se ver, no próprio cartão, o que foi gravado.
+============================================================ */
+
+@keyframes apptIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes apptFlash {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+    border-color: var(--brand);
+  }
+  25% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 18%, transparent);
+    border-color: var(--brand);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes apptPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.appt-card {
+  animation: apptIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.appt-card.appt-flash {
+  animation: apptFlash 1.6s ease-out;
+}
+
+.appt-pop {
+  animation: apptPop 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appt-card,
+  .appt-card.appt-flash,
+  .appt-pop {
+    animation: none;
   }
 }

@@ -2,6 +2,8 @@ import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appointmentsRepository } from "../../src/modules/appointments/appointments.repository";
 import { paymentsRepository } from "../../src/modules/payments/payments.repository";
+import { cancelExpiredAppointments } from "../../src/modules/notifications/appointmentReminders";
+import { domainEvents } from "../../src/shared/events/domainEvents";
 import { resetRateLimits } from "../../src/shared/middleware/rateLimit";
 import { app, auth, createAppointment, createBusinessFixture, createPayment, prisma, resetDatabase, type BusinessFixture } from "./helpers";
 
@@ -54,6 +56,57 @@ describe("isolamento entre empresas", () => {
         scheduledAt: tomorrowAt(10),
       });
     expect(response.status).toBe(201);
+  });
+
+  it("o espaço marca para um cliente da app que é seu cliente, e ele é avisado", async () => {
+    const emit = vi.spyOn(domainEvents, "emitEvent");
+    await prisma.businessClient.create({ data: { businessId: a.business.id, userId: a.customer.user.id } });
+
+    const response = await request(app)
+      .post("/api/v1/appointments/walk-in")
+      .set(auth(a.employee.token))
+      .send({
+        businessId: a.business.id,
+        clientId: a.customer.user.id,
+        serviceId: a.service.id,
+        professionalId: a.professional.id,
+        scheduledAt: tomorrowAt(10),
+      });
+    expect(response.status).toBe(201);
+    expect(response.body.data.clientId).toBe(a.customer.user.id);
+    expect(response.body.data.walkInClientId).toBeNull();
+
+    expect(emit).toHaveBeenCalledWith("AppointmentBookedForClient", expect.objectContaining({ clientId: a.customer.user.id }));
+  });
+
+  it("não é possível marcar para um utilizador da app que não é cliente do espaço", async () => {
+    const response = await request(app)
+      .post("/api/v1/appointments/walk-in")
+      .set(auth(a.owner.token))
+      .send({
+        businessId: a.business.id,
+        clientId: b.customer.user.id,
+        serviceId: a.service.id,
+        professionalId: a.professional.id,
+        scheduledAt: tomorrowAt(10),
+      });
+    expect(response.status).toBe(404);
+    expect(await prisma.appointment.count()).toBe(0);
+  });
+
+  it("a marcação pelo espaço exige exatamente um cliente", async () => {
+    const response = await request(app)
+      .post("/api/v1/appointments/walk-in")
+      .set(auth(a.owner.token))
+      .send({
+        businessId: a.business.id,
+        walkInClientId: a.walkIn.id,
+        clientId: a.customer.user.id,
+        serviceId: a.service.id,
+        professionalId: a.professional.id,
+        scheduledAt: tomorrowAt(10),
+      });
+    expect(response.status).toBe(400);
   });
 
   it.each([
@@ -214,5 +267,30 @@ describe("validação de parâmetros", () => {
   it("push tokens têm de ter o formato da Expo", async () => {
     expect((await request(app).post("/api/v1/notifications/push-token").set(auth(a.customer.token)).send({ token: "x".repeat(5000) })).status).toBe(400);
     expect((await request(app).post("/api/v1/notifications/push-token").set(auth(a.customer.token)).send({ token: "ExponentPushToken[abc123]" })).status).toBe(200);
+  });
+});
+
+describe("agendamentos de dias que já passaram", () => {
+  it("passado o dia marcado, os que ficaram por fazer são cancelados; os de hoje e os concluídos não", async () => {
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 26 * 60 * 60_000);
+    const later = new Date(now.getTime() + 60_000);
+
+    const pending = await createAppointment(a, { status: "PENDING", scheduledAt: yesterday });
+    const confirmed = await createAppointment(a, { status: "CONFIRMED", scheduledAt: yesterday, walkIn: true });
+    const completed = await createAppointment(a, { status: "COMPLETED", scheduledAt: yesterday });
+    const upcoming = await createAppointment(a, { status: "PENDING", scheduledAt: later });
+
+    expect(await cancelExpiredAppointments(now)).toBe(2);
+
+    const status = async (id: string) => (await prisma.appointment.findUniqueOrThrow({ where: { id } })).status;
+    expect(await status(pending.id)).toBe("CANCELLED");
+    expect(await status(confirmed.id)).toBe("CANCELLED");
+    expect(await status(completed.id)).toBe("COMPLETED");
+    expect(await status(upcoming.id)).toBe("PENDING");
+
+    // O cliente com conta é avisado de que foi cancelado.
+    const notice = await prisma.notification.findFirst({ where: { userId: a.customer.user.id } });
+    expect(notice?.type).toBe("APPOINTMENT_CANCELLED");
   });
 });

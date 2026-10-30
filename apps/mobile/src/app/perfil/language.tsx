@@ -13,8 +13,8 @@ const COLORS = {
   secondary: "#636366",
   muted: "#AEAEB2",
   border: "#E5E5EA",
-  blue: "#2E67B3",
-  blueSoft: "#E2EEFF",
+  blue: "#1451D6",
+  blueSoft: "#E5ECFA",
   green: "#34C759",
 };
 
@@ -31,7 +31,7 @@ export default function LanguageScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} backgroundColor={tc.bg(COLORS.background)} />
+      <StatusBar barStyle={tc.dark ? "light-content" : "dark-content"} />
 
       <View style={styles.container}>
         {/* HEADER */}
