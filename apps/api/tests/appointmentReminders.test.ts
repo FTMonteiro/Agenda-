@@ -6,7 +6,7 @@ vi.mock("../src/modules/notifications/notifications.repository", () => ({ notifi
 vi.mock("../src/modules/notifications/notifications.service", () => ({ notificationsService: {} }));
 vi.mock("../src/modules/appointments", () => ({ announceAppointmentChange: vi.fn() }));
 
-import { isPastDay, noShowText, reminderKindFor, reminderText } from "../src/modules/notifications/appointmentReminders";
+import { expiredText, isPastDay, reminderKindFor, reminderText } from "../src/modules/notifications/appointmentReminders";
 
 const TZ = "Africa/Luanda"; // UTC+1, sem hora de verão
 const at = (iso: string) => new Date(iso);
@@ -37,7 +37,7 @@ describe("reminderKindFor", () => {
 describe("isPastDay", () => {
   const booked = at("2026-10-10T08:00:00Z"); // 09:00 de dia 10 em Luanda
 
-  it("só passa a falta depois da meia-noite de Luanda", () => {
+  it("só cancela depois da meia-noite de Luanda", () => {
     expect(isPastDay(booked, at("2026-10-10T22:59:00Z"), TZ)).toBe(false); // 23:59 de dia 10
     expect(isPastDay(booked, at("2026-10-10T23:00:00Z"), TZ)).toBe(true); // 00:00 de dia 11
   });
@@ -50,8 +50,8 @@ describe("reminderText", () => {
       "Hoje é o dia do seu agendamento em Barbearia Luz (Corte), às 09:00.",
     );
     expect(reminderText("APPOINTMENT_REMINDER_TOMORROW", details, TZ).message).toContain("amanhã, 10/10, às 09:00");
-    expect(noShowText(details, TZ).message).toBe(
-      "Não compareceu ao agendamento em Barbearia Luz (Corte) de 10/10 às 09:00. O agendamento foi cancelado.",
+    expect(expiredText(details, TZ).message).toBe(
+      "O seu agendamento em Barbearia Luz (Corte) de 10/10 às 09:00 foi cancelado: o dia passou sem ter sido realizado.",
     );
   });
 });

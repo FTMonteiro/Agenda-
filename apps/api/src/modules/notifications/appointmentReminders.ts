@@ -7,8 +7,8 @@ import { notificationsService } from "./notifications.service";
  * Avisos ligados à data de um agendamento, para o cliente que o marcou:
  *   - na véspera:        "Falta um dia…"
  *   - no próprio dia:    "Hoje é o dia…", com a hora marcada
- * e, passado o dia marcado sem ninguém o concluir nem cancelar, o agendamento fica
- * "Não compareceu" (NO_SHOW) — ver markMissedAppointments.
+ * e, passado o dia marcado sem ninguém o concluir nem cancelar, o agendamento é
+ * cancelado — ver cancelExpiredAppointments.
  *
  * Não há eventos para isto (nada acontece no sistema quando o relógio avança), por isso um
  * ciclo verifica de minuto a minuto. Cada aviso só é criado uma vez: antes de gravar,
@@ -63,7 +63,7 @@ export function reminderText(
   }
 }
 
-export function noShowText(
+export function expiredText(
   appointment: { scheduledAt: Date; business: { name: string }; service: { name: string } },
   timeZone: string,
 ): { title: string; message: string } {
@@ -71,37 +71,37 @@ export function noShowText(
   const time = new Intl.DateTimeFormat("pt-PT", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(appointment.scheduledAt);
 
   return {
-    title: "Não compareceu",
-    message: `Não compareceu ao agendamento em ${appointment.business.name} (${appointment.service.name}) de ${day} às ${time}. O agendamento foi cancelado.`,
+    title: "Agendamento cancelado",
+    message: `O seu agendamento em ${appointment.business.name} (${appointment.service.name}) de ${day} às ${time} foi cancelado: o dia passou sem ter sido realizado.`,
   };
 }
 
 // O dia marcado já acabou (no fuso da aplicação) — não basta a hora ter passado: até ao
-// fim do dia o espaço ainda pode registar o atendimento.
+// fim do dia o espaço ainda pode confirmar ou registar o atendimento.
 export function isPastDay(scheduledAt: Date, now: Date, timeZone: string): boolean {
   return localDay(scheduledAt, timeZone) < localDay(now, timeZone);
 }
 
-// Os agendamentos que ficaram por concluir, cancelar ou marcar até ao fim do dia passam a
-// "Não compareceu": saem da agenda como por fazer, e o painel e a app veem-no logo (realtime).
+// Os agendamentos que ficaram por concluir (pendentes ou confirmados) depois do dia marcado
+// são cancelados: saem da agenda como por fazer, e o painel e a app veem-no logo (realtime).
 // O cliente é avisado, mas só dos do último dia — os antigos que já estavam por fechar
 // quando isto entrou mudam de estado sem notificação.
-export async function markMissedAppointments(now: Date = new Date()): Promise<number> {
+export async function cancelExpiredAppointments(now: Date = new Date()): Promise<number> {
   const timeZone = env.APP_TIMEZONE;
   const open = await notificationsRepository.findOpenAppointmentsBefore(now);
 
   let marked = 0;
   for (const appointment of open) {
     if (!isPastDay(appointment.scheduledAt, now, timeZone)) continue;
-    if (!(await notificationsRepository.markNoShow(appointment.id))) continue;
+    if (!(await notificationsRepository.cancelExpired(appointment.id))) continue;
     marked++;
 
-    await announceAppointmentChange(appointment.id, "no_show");
+    await announceAppointmentChange(appointment.id, "cancelled");
 
     const recent = now.getTime() - appointment.scheduledAt.getTime() < 2 * DAY_MS;
     if (appointment.clientId && recent) {
-      const { title, message } = noShowText(appointment, timeZone);
-      await notificationsService.notify(appointment.clientId, "APPOINTMENT_NO_SHOW", title, message);
+      const { title, message } = expiredText(appointment, timeZone);
+      await notificationsService.notify(appointment.clientId, "APPOINTMENT_CANCELLED", title, message);
     }
   }
   return marked;
@@ -142,7 +142,7 @@ export function startAppointmentReminders(): void {
     if (running) return;
     running = true;
     try {
-      await markMissedAppointments();
+      await cancelExpiredAppointments();
       await sendDueAppointmentReminders();
     } catch (error) {
       console.error("Avisos de agendamento: a verificação falhou, repete no próximo minuto.", error);
