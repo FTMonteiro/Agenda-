@@ -8,7 +8,7 @@ import { isFreeOfConflicts, isSlotAvailable, resolveDayHours, type TimeWindow } 
 import { businessesRepository, getBusinessOrThrow } from "../businesses";
 import { getServiceOrThrow } from "../services";
 import { getProfessionalOrThrow, professionalsRepository } from "../professionals";
-import { getWalkInClientOrThrow } from "../clients";
+import { getMemberClientOrThrow, getWalkInClientOrThrow } from "../clients";
 import { assertStaffOfBusiness } from "../../shared/authz";
 import { appointmentsRepository } from "./appointments.repository";
 import { paymentsRepository } from "../payments/payments.repository";
@@ -177,15 +177,22 @@ export const appointmentsService = {
     return announce(toAppointmentDTO(appointment), "created");
   },
 
-  // Booked by the business (OWNER/EMPLOYEE) on behalf of someone with no account —
-  // otherwise identical to `create`, including slot-availability and future-date checks.
+  // Booked by the business (OWNER/EMPLOYEE) on behalf of one of its clients: someone
+  // registered by hand (walkInClientId) or an app user who is a client of the space
+  // (clientId) — otherwise identical to `create`, including slot-availability and
+  // future-date checks.
   async createForWalkIn(requesterId: string, input: CreateWalkInAppointmentInput): Promise<AppointmentDTO> {
     await assertStaffOfBusiness(input.businessId, requesterId);
-    // The walk-in client must be one of this business's own: staff of one space can't
-    // book (and so link, and later read in its financials) another space's client.
-    const walkIn = await getWalkInClientOrThrow(input.walkInClientId);
-    if (walkIn.businessId !== input.businessId) {
-      throw new NotFoundError("Cliente não encontrado.", "WALK_IN_CLIENT_NOT_FOUND");
+    // The client must be one of this business's own: staff of one space can't book (and
+    // so link, and later read in its financials) another space's client, nor any app user
+    // who never chose to be a client here.
+    if (input.clientId) {
+      await getMemberClientOrThrow(input.businessId, input.clientId);
+    } else {
+      const walkIn = await getWalkInClientOrThrow(input.walkInClientId!);
+      if (walkIn.businessId !== input.businessId) {
+        throw new NotFoundError("Cliente não encontrado.", "WALK_IN_CLIENT_NOT_FOUND");
+      }
     }
 
     const { service } = await validateBookingContext(input.businessId, input.serviceId, input.professionalId);
@@ -201,7 +208,7 @@ export const appointmentsService = {
       return appointmentsRepository.create(
         {
           businessId: input.businessId,
-          walkInClientId: input.walkInClientId,
+          ...(input.clientId ? { clientId: input.clientId } : { walkInClientId: input.walkInClientId }),
           serviceId: input.serviceId,
           professionalId: input.professionalId,
           scheduledAt,
@@ -213,6 +220,7 @@ export const appointmentsService = {
       );
     });
 
+    if (input.clientId) domainEvents.emitEvent("AppointmentBookedForClient", toAppointmentDTO(appointment));
     return announce(toAppointmentDTO(appointment), "created");
   },
 

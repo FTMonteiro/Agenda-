@@ -1,2 +1,2 @@
 export { clientsRoutes } from "./clients.routes";
-export { clientsService, getWalkInClientOrThrow } from "./clients.service";
+export { clientsService, getMemberClientOrThrow, getWalkInClientOrThrow } from "./clients.service";

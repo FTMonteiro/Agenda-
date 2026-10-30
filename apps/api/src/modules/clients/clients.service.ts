@@ -12,6 +12,14 @@ export async function getWalkInClientOrThrow(id: string) {
   return client;
 }
 
+// An app user who chose to be a client of this business (see join) — the only app users
+// the business may book on behalf of.
+export async function getMemberClientOrThrow(businessId: string, userId: string) {
+  const membership = await clientsRepository.findMembership(businessId, userId);
+  if (!membership) throw new NotFoundError("Cliente não encontrado.", "CLIENT_NOT_FOUND");
+  return membership;
+}
+
 function toWalkInClientDTO(
   client: { id: string; businessId: string; name: string; phone: string; email: string | null; active: boolean; createdAt: Date; updatedAt: Date },
   history: { visits: number; totalSpent: number; lastVisit: Date | null },

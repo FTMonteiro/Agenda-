@@ -20,7 +20,7 @@ registry.registerPath({
   method: "post",
   path: "/appointments/walk-in",
   tags: ["Appointments"],
-  summary: "Criar agendamento em nome de um cliente walk-in (staff)",
+  summary: "Criar agendamento em nome de um cliente do espaço — walk-in ou cliente da app (staff)",
   security: bearerAuth,
   request: { body: { content: { "application/json": { schema: createWalkInAppointmentSchema } } } },
   responses: { 201: successResponse(appointmentSchema), ...commonErrors, ...authErrors, ...forbiddenError },

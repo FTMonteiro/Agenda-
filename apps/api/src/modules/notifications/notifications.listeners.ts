@@ -50,6 +50,14 @@ export function registerNotificationListeners(): void {
     run(notifyBusiness(appointment, "APPOINTMENT_CREATED", "Novo agendamento", (details) => `Novo agendamento pela app: ${details}.`));
   });
 
+  domainEvents.onEvent("AppointmentBookedForClient", (appointment) => {
+    run(
+      notifyClient(appointment, "APPOINTMENT_CREATED", "Agendamento criado", (details) =>
+        details ? `O espaço marcou um agendamento para si (${details}).` : "O espaço marcou um agendamento para si.",
+      ),
+    );
+  });
+
   domainEvents.onEvent("AppointmentConfirmed", (appointment) => {
     run(
       notifyClient(appointment, "APPOINTMENT_CONFIRMED", "Agendamento confirmado", (details) =>

@@ -2,6 +2,7 @@ import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appointmentsRepository } from "../../src/modules/appointments/appointments.repository";
 import { paymentsRepository } from "../../src/modules/payments/payments.repository";
+import { domainEvents } from "../../src/shared/events/domainEvents";
 import { resetRateLimits } from "../../src/shared/middleware/rateLimit";
 import { app, auth, createAppointment, createBusinessFixture, createPayment, prisma, resetDatabase, type BusinessFixture } from "./helpers";
 
@@ -54,6 +55,57 @@ describe("isolamento entre empresas", () => {
         scheduledAt: tomorrowAt(10),
       });
     expect(response.status).toBe(201);
+  });
+
+  it("o espaço marca para um cliente da app que é seu cliente, e ele é avisado", async () => {
+    const emit = vi.spyOn(domainEvents, "emitEvent");
+    await prisma.businessClient.create({ data: { businessId: a.business.id, userId: a.customer.user.id } });
+
+    const response = await request(app)
+      .post("/api/v1/appointments/walk-in")
+      .set(auth(a.employee.token))
+      .send({
+        businessId: a.business.id,
+        clientId: a.customer.user.id,
+        serviceId: a.service.id,
+        professionalId: a.professional.id,
+        scheduledAt: tomorrowAt(10),
+      });
+    expect(response.status).toBe(201);
+    expect(response.body.data.clientId).toBe(a.customer.user.id);
+    expect(response.body.data.walkInClientId).toBeNull();
+
+    expect(emit).toHaveBeenCalledWith("AppointmentBookedForClient", expect.objectContaining({ clientId: a.customer.user.id }));
+  });
+
+  it("não é possível marcar para um utilizador da app que não é cliente do espaço", async () => {
+    const response = await request(app)
+      .post("/api/v1/appointments/walk-in")
+      .set(auth(a.owner.token))
+      .send({
+        businessId: a.business.id,
+        clientId: b.customer.user.id,
+        serviceId: a.service.id,
+        professionalId: a.professional.id,
+        scheduledAt: tomorrowAt(10),
+      });
+    expect(response.status).toBe(404);
+    expect(await prisma.appointment.count()).toBe(0);
+  });
+
+  it("a marcação pelo espaço exige exatamente um cliente", async () => {
+    const response = await request(app)
+      .post("/api/v1/appointments/walk-in")
+      .set(auth(a.owner.token))
+      .send({
+        businessId: a.business.id,
+        walkInClientId: a.walkIn.id,
+        clientId: a.customer.user.id,
+        serviceId: a.service.id,
+        professionalId: a.professional.id,
+        scheduledAt: tomorrowAt(10),
+      });
+    expect(response.status).toBe(400);
   });
 
   it.each([
