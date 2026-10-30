@@ -5,6 +5,8 @@ import type { CreateWalkInAppointmentInput } from "./appointments.schema";
 import { AuthorizationError, ConflictError, NotFoundError, ValidationError } from "../../shared/errors";
 import { domainEvents, type AppointmentChange } from "../../shared/events/domainEvents";
 import { isFreeOfConflicts, isSlotAvailable, resolveDayHours, type TimeWindow } from "../../shared/utils/scheduling";
+import { weekdayOf, zonedDateKey } from "../../shared/utils/timezone";
+import { env } from "../../config/env";
 import { businessesRepository, getBusinessOrThrow } from "../businesses";
 import { getServiceOrThrow } from "../services";
 import { getProfessionalOrThrow, professionalsRepository } from "../professionals";
@@ -81,10 +83,10 @@ async function assertSlotAvailable(
     throw new ConflictError("Este profissional já tem um agendamento neste horário. Escolha outro horário ou profissional.", "PROFESSIONAL_ALREADY_BOOKED");
   }
 
-  const dayHours = resolveDayHours(allHours, start.getDay());
+  const dayHours = resolveDayHours(allHours, weekdayOf(zonedDateKey(start, env.APP_TIMEZONE)));
   const busy: TimeWindow[] = blocks.map((b) => ({ start: b.startAt, end: b.endAt }));
 
-  if (!isSlotAvailable(slot, dayHours, busy)) {
+  if (!isSlotAvailable(slot, dayHours, busy, env.APP_TIMEZONE)) {
     throw new ConflictError("Este horário não está disponível.", "APPOINTMENT_NOT_AVAILABLE");
   }
 }

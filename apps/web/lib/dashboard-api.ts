@@ -81,26 +81,68 @@ export function fromApiMethod(method: PaymentMethod): string {
   return method;
 }
 
-// The appointment forms send and show a separate date and time with no timezone. Both
-// directions go through this server's local time, so what was typed is what is shown.
+// The appointment forms send and show a separate date and time with no timezone: both
+// are the business's wall clock (APP_TIMEZONE, Africa/Luanda by default — the same zone
+// the API reads business hours in). Never this server's own clock: it runs in UTC.
+const APP_TIMEZONE = process.env.APP_TIMEZONE || "Africa/Luanda";
+
 function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
+function zonedParts(value: Date) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: APP_TIMEZONE,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+      .formatToParts(value)
+      .map((part) => [part.type, part.value]),
+  );
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+    second: Number(parts.second),
+  };
+}
+
 export function localDate(value: Date): string {
-  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+  const { year, month, day } = zonedParts(value);
+  return `${year}-${pad(month)}-${pad(day)}`;
 }
 
 export function localTime(value: Date): string {
-  return `${pad(value.getHours())}:${pad(value.getMinutes())}`;
+  const { hour, minute } = zonedParts(value);
+  return `${pad(hour)}:${pad(minute)}`;
+}
+
+// How far the business's clock is ahead of UTC at that instant, in milliseconds.
+function offsetAt(value: Date): number {
+  const p = zonedParts(value);
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(value.getTime() / 1000) * 1000;
 }
 
 export function parseLocalDateTime(date: string, time: string): Date | null {
   // nosemgrep: ajinabraham.njsscan.dos.regex_dos.regex_dos -- regex ancoradas e de comprimento fixo: sem retrocesso.
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null;
 
-  const parsed = new Date(`${date}T${time}:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  const asUtc = Date.UTC(year, month - 1, day, hour, minute);
+  if (Number.isNaN(asUtc)) return null;
+
+  // That wall-clock time in the business's zone (again at the result, in case of DST).
+  const first = asUtc - offsetAt(new Date(asUtc));
+  return new Date(asUtc - offsetAt(new Date(first)));
 }
 
 export interface ClientSummary {

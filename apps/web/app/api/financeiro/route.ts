@@ -1,6 +1,6 @@
 import type { FinancialsSummaryDTO, PaymentDTO } from "@slotix/types";
 import { requireStaff } from "@/lib/auth";
-import { apiCall, errorJson, errorResponse, fromApiMethod } from "@/lib/dashboard-api";
+import { apiCall, errorJson, errorResponse, fromApiMethod, localDate } from "@/lib/dashboard-api";
 
 // Paid payments for a month (default: the current one), by the date they were received.
 // The monthly report is the owner's. An EMPLOYEE only gets today's two figures, which is
@@ -16,9 +16,9 @@ export async function GET(request: Request) {
 
     if (user.role === "EMPLOYEE") {
       const payments = await apiCall<PaymentDTO[]>(`/payments?businessId=${user.businessId}`);
-      const today = new Date().toDateString();
+      const today = localDate(new Date());
       const paidToday = payments.filter(
-        (payment) => payment.status === "PAID" && payment.paidAt && new Date(payment.paidAt).toDateString() === today,
+        (payment) => payment.status === "PAID" && payment.paidAt && localDate(new Date(payment.paidAt)) === today,
       );
       const revenueToday = paidToday.reduce((sum, payment) => sum + payment.amount, 0);
 
