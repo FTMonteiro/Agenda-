@@ -206,6 +206,8 @@ export function formatAppointment(appointment: AppointmentDTO, lookups: Business
     clientId: client?.id ?? null,
     clientEmail: client?.email ?? null,
     clientPhone: client?.phone ?? null,
+    // Só quem tem conta na app tem foto de perfil.
+    clientAvatarUrl: client?.avatarUrl ?? null,
     service: service?.name ?? "",
     serviceId: appointment.serviceId,
     price: appointment.price,

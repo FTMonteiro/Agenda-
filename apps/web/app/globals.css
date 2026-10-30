@@ -1855,3 +1855,70 @@ html.dark :where(.fixed.inset-0, [role="dialog"], [role="menu"], [role="listbox"
     transform: none;
   }
 }
+
+/* ============================================================
+   CARTÕES DA AGENDA
+
+   Entram em cascata curta; o que acabou de mudar de estado (confirmado, cancelado…)
+   ganha um contorno da cor da marca que se desvanece, e a etiqueta do estado entra de
+   novo — para se ver, no próprio cartão, o que foi gravado.
+============================================================ */
+
+@keyframes apptIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes apptFlash {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+    border-color: var(--brand);
+  }
+  25% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 18%, transparent);
+    border-color: var(--brand);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes apptPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.appt-card {
+  animation: apptIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.appt-card.appt-flash {
+  animation: apptFlash 1.6s ease-out;
+}
+
+.appt-pop {
+  animation: apptPop 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appt-card,
+  .appt-card.appt-flash,
+  .appt-pop {
+    animation: none;
+  }
+}

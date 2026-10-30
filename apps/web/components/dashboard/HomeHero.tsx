@@ -4,7 +4,8 @@ import Link from "next/link";
 import { CalendarCheck2, CalendarPlus, Clock3, Coffee, UserRound } from "lucide-react";
 import { ReceivePayment } from "@/components/appointments/ReceivePayment";
 import type { Appointment } from "@/types/appointment";
-import { firstName, formatCountdown, formatLongDate, greeting, initials, minutesUntil, timeKey } from "./home-utils";
+import { ClientAvatar } from "@/components/ui/ClientAvatar";
+import { firstName, formatCountdown, formatLongDate, greeting, minutesUntil, timeKey } from "./home-utils";
 
 type Props = {
   userName: string;
@@ -121,9 +122,7 @@ function NextUp({ next, now, loading }: { next: Appointment | null; now: Date; l
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-[var(--brand-text)]">
-          {initials(next.client)}
-        </div>
+        <ClientAvatar name={next.client} src={next.clientAvatarUrl} className="h-11 w-11 text-sm" />
         <div className="min-w-0">
           <p className="truncate text-base font-semibold leading-tight text-[var(--foreground)]">{next.client || "Cliente"}</p>
           <p className="mt-0.5 truncate text-sm text-[var(--muted)]">{next.service}</p>

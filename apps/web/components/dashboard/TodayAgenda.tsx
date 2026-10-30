@@ -5,7 +5,8 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { CalendarDays, CalendarPlus, Check, CheckCircle2, ChevronRight, Loader2, RefreshCw, XCircle } from "lucide-react";
 import type { Appointment } from "@/types/appointment";
-import { formatPrice, initials, isOpen, statusMeta, timeKey } from "./home-utils";
+import { ClientAvatar } from "@/components/ui/ClientAvatar";
+import { formatPrice, isOpen, statusMeta, timeKey } from "./home-utils";
 
 type Filter = "all" | "pending" | "confirmed" | "completed";
 
@@ -239,9 +240,7 @@ function AgendaItem({
         }`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-            {initials(appointment.client)}
-          </div>
+          <ClientAvatar name={appointment.client} src={appointment.clientAvatarUrl} className="h-10 w-10 text-xs" />
           <div className="min-w-0">
             <p
               className={`truncate text-sm font-semibold text-[var(--foreground)] ${

@@ -25,6 +25,8 @@ export interface Appointment {
   professionalId: string;
 
   client: string;
+  /* Foto de perfil do cliente, quando tem conta na app. */
+  clientAvatarUrl?: string | null;
   service: string;
   professional: string;
 

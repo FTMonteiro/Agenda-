@@ -7,6 +7,8 @@ import { toast } from "sonner";
 
 import { Appointment } from "@/types/appointment";
 import { useNotifications } from "@/components/notifications/NotificationsProvider";
+import { statusMeta } from "@/components/dashboard/home-utils";
+import { ClientAvatar } from "@/components/ui/ClientAvatar";
 
 import {
   MoreHorizontal,
@@ -42,6 +44,7 @@ interface AppointmentListProps {
 }
 
 type AppointmentWithPayment = Appointment & {
+  duration?: number | null;
   paymentMethod?: string | null;
   paymentStatus?: string | null;
   paymentAmount?: number | null;
@@ -121,6 +124,15 @@ export function AppointmentList({
   } | null>(null);
 
   const [validationError, setValidationError] = useState("");
+
+  // O cartão que acabou de mudar de estado: brilha um instante, para se ver o que mudou.
+  const [recentlyChanged, setRecentlyChanged] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!recentlyChanged) return;
+    const timer = window.setTimeout(() => setRecentlyChanged(null), 1600);
+    return () => window.clearTimeout(timer);
+  }, [recentlyChanged]);
 
   const router = useRouter();
 
@@ -818,6 +830,8 @@ export function AppointmentList({
           : current
       );
 
+      setRecentlyChanged(savedAppointment.id);
+
       window.dispatchEvent(
         new Event("appointments:changed")
       );
@@ -875,29 +889,6 @@ export function AppointmentList({
 
       default:
         return "Aguardando";
-    }
-  }
-
-  function getStatusClass(
-    status: Appointment["status"]
-  ): string {
-    switch (
-      String(status ?? "").toLowerCase()
-    ) {
-      case "confirmed":
-        return "bg-blue-50 text-blue-700";
-
-      case "completed":
-        return "bg-green-50 text-green-700";
-
-      case "cancelled":
-        return "bg-red-50 text-red-700";
-
-      case "no_show":
-        return "bg-gray-100 text-gray-700";
-
-      default:
-        return "bg-amber-50 text-amber-700";
     }
   }
 
@@ -1039,7 +1030,7 @@ export function AppointmentList({
       ) : (
         <div className="space-y-3">
           {sortedAppointments.map(
-            (appointment) => {
+            (appointment, index) => {
               const canEdit =
                 canEditAppointment(
                   appointment
@@ -1055,138 +1046,130 @@ export function AppointmentList({
                 ).toLowerCase() ===
                 "paid";
 
+              const meta = statusMeta(appointment.status);
+              const status = String(appointment.status ?? "").toLowerCase();
+              const isClosed = status === "cancelled" || status === "no_show";
+              const isBusy = changingStatus?.id === appointment.id;
+              const isFresh = recentlyChanged === appointment.id;
+
               return (
-                <div
+                <article
                   key={appointment.id}
-                  className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-gray-200 hover:shadow-md sm:p-5"
+                  style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
+                  className={`appt-card group relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-[var(--border-strong)] hover:shadow-md ${
+                    isFresh ? "appt-flash" : ""
+                  } ${openMenu === appointment.id ? "z-30" : ""}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  {/* Faixa da cor do estado */}
+                  <span
+                    aria-hidden="true"
+                    className={`absolute inset-y-3 left-0 w-1 rounded-r-full transition-colors duration-500 ${meta.dot}`}
+                  />
+
+                  <div className="flex items-stretch gap-3 py-4 pl-5 pr-3 sm:gap-5 sm:pl-6 sm:pr-4">
+                    {/* HORA */}
+                    <div className="flex w-14 shrink-0 flex-col justify-center sm:w-16">
+                      <span
+                        className={`text-lg font-semibold leading-none tabular-nums sm:text-xl ${
+                          isClosed ? "text-[var(--muted)] line-through decoration-1" : "text-[var(--foreground)]"
+                        }`}
+                      >
+                        {appointment.time}
+                      </span>
+                      <span className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">
+                        {appointment.date === today ? "Hoje" : formatDate(appointment.date).slice(0, 5)}
+                      </span>
+                      {Number(appointment.duration) > 0 && (
+                        <span className="mt-0.5 text-[11px] text-[var(--subtle)]">
+                          {appointment.duration} min
+                        </span>
+                      )}
+                    </div>
+
+                    <span aria-hidden="true" className="w-px shrink-0 bg-[var(--border)]" />
+
+                    {/* CLIENTE E SERVIÇO */}
                     <div
                       role="button"
                       tabIndex={0}
-                      onClick={() =>
-                        setSelectedAppointment(
-                          appointment
-                        )
-                      }
+                      onClick={() => setSelectedAppointment(appointment)}
                       onKeyDown={(event) => {
-                        if (
-                          event.key === "Enter" ||
-                          event.key === " "
-                        ) {
+                        if (event.key === "Enter" || event.key === " ") {
                           event.preventDefault();
-                          setSelectedAppointment(
-                            appointment
-                          );
+                          setSelectedAppointment(appointment);
                         }
                       }}
-                      className="min-w-0 flex-1 cursor-pointer"
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                     >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-base font-semibold text-gray-950">
-                          {appointment.client}
-                        </h3>
-
+                      <div className="relative shrink-0">
+                        <ClientAvatar
+                          name={appointment.client}
+                          src={appointment.clientAvatarUrl}
+                          className={`h-11 w-11 text-sm ${isClosed ? "opacity-60 grayscale" : ""}`}
+                        />
                         <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusClass(
-                            appointment.status
-                          )}`}
-                        >
-                          {getStatusLabel(
-                            appointment.status
-                          )}
-                        </span>
-
-                        {isPaid && (
-                          <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                            <CheckCircle2 className="h-4 w-4" />
-                            Pago
-                          </span>
-                        )}
+                          aria-hidden="true"
+                          className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full ring-[2.5px] ring-[var(--surface)] transition-colors duration-500 ${meta.dot}`}
+                        />
                       </div>
 
-                      <div className="mt-3 grid gap-2 text-sm text-gray-500 sm:grid-cols-2 xl:grid-cols-5">
-                        <div className="flex items-center gap-2">
-                          <Scissors className="h-[18px] w-[18px] shrink-0 text-gray-400" />
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                          <h3
+                            className={`truncate text-[15px] font-semibold ${
+                              isClosed ? "text-[var(--muted)]" : "text-[var(--foreground)]"
+                            }`}
+                          >
+                            {appointment.client || "Cliente"}
+                          </h3>
 
-                          <span className="truncate">
-                            {appointment.service}
+                          <span
+                            key={status}
+                            className={`appt-pop inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.badge}`}
+                          >
+                            <meta.icon className="h-3.5 w-3.5" />
+                            {meta.label}
                           </span>
+
+                          {isPaid && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-500/25 dark:text-emerald-400">
+                              <Banknote className="h-3.5 w-3.5" />
+                              Pago
+                            </span>
+                          )}
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <UserRound className="h-[18px] w-[18px] shrink-0 text-gray-400" />
-
-                          <span className="truncate">
-                            {appointment.professional}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <CalendarDays className="h-[18px] w-[18px] shrink-0 text-gray-400" />
-
-                          <span>
-                            {formatDate(
-                              appointment.date
-                            )}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-[18px] w-[18px] shrink-0 text-gray-400" />
-
-                          <span>
-                            {appointment.time}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2 font-semibold text-gray-700">
-                          <Banknote className="h-[18px] w-[18px] shrink-0 text-gray-400" />
-
-                          <span>
-                            {formatMoney(
-                              getAppointmentPrice(
-                                appointment
-                              )
-                            )}
-                          </span>
-                        </div>
+                        <p className="mt-1 truncate text-sm text-[var(--muted)]">
+                          {appointment.service}
+                          {appointment.professional && (
+                            <>
+                              <span className="mx-1.5 opacity-40">·</span>
+                              {appointment.professional}
+                            </>
+                          )}
+                        </p>
                       </div>
                     </div>
 
-                    {/* AÇÕES: confirmar em cima, três pontinhos em baixo */}
+                    {/* PREÇO E AÇÕES */}
+                    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                      <span className="hidden text-sm font-semibold tabular-nums text-[var(--foreground)] md:inline">
+                        {formatMoney(getAppointmentPrice(appointment))}
+                      </span>
 
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                    {canEdit &&
-                      isPendingStatus(
-                        appointment.status
-                      ) && (
+                      {canEdit && isPendingStatus(appointment.status) && (
                         <button
                           type="button"
-                          onClick={() =>
-                            changeStatus(
-                              appointment,
-                              "confirmed"
-                            )
-                          }
-                          disabled={
-                            changingStatus?.id ===
-                            appointment.id
-                          }
-                          className="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                          onClick={() => changeStatus(appointment, "confirmed")}
+                          disabled={isBusy}
+                          className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-3.5 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.97] disabled:cursor-wait disabled:opacity-70"
                         >
-                          <CheckCircle2 className="h-[18px] w-[18px]" />
-                          {changingStatus?.id ===
-                          appointment.id ? (
-                            "Confirmando..."
+                          {isBusy ? (
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                           ) : (
-                            <>
-                              Confirmar
-                              <span className="hidden sm:inline">
-                                {" "}agendamento
-                              </span>
-                            </>
+                            <CheckCircle2 className="h-[18px] w-[18px]" />
                           )}
+                          <span className="hidden sm:inline">{isBusy ? "A confirmar…" : "Confirmar"}</span>
                         </button>
                       )}
 
@@ -1289,7 +1272,7 @@ export function AppointmentList({
                     </div>
                     </div>
                   </div>
-                </div>
+                </article>
               );
             }
           )}
