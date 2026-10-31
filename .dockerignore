@@ -1,0 +1,15 @@
+**/node_modules
+**/.next
+**/dist
+**/.expo
+**/*.tsbuildinfo
+.git
+
+# Segredos locais e endereços de produção: nunca entram nas imagens.
+**/.env
+**/.env.*
+!**/.env.example
+
+# A app mobile corre fora do Docker; daqui só é preciso o package.json (copiado à parte).
+apps/mobile
+!apps/mobile/package.json

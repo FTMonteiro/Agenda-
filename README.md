@@ -31,6 +31,39 @@ SLOTIX/
 - Todos os módulos do plano original estão implementados. O storage de
   imagens (`gallery`) usa Supabase Storage.
 
+## Correr com Docker (recomendado para começar)
+
+Só é preciso o [Docker Desktop](https://www.docker.com/products/docker-desktop/) (ou Docker
+Engine com Compose). Não é preciso instalar Node nem PostgreSQL.
+
+```bash
+git clone https://github.com/FTMonteiro/Agenda-.git
+cd Agenda-
+docker compose up --build
+```
+
+A primeira vez demora alguns minutos. Depois:
+
+- Painel web: http://localhost:3001 — entrar com `owner@slotix.dev` / `password123`
+- API: http://localhost:3000/api/v1 (documentação em `/api/v1/docs`)
+- PostgreSQL: `localhost:5433`, utilizador/password/base `agenda`
+
+A base de dados é local e começa com os dados de exemplo do seed. Os dados ficam guardados
+entre arranques; `docker compose down -v` apaga-os e recomeça do zero. Depois de mudar
+código, volte a correr `docker compose up --build`.
+
+Login com Google, upload de imagens e mapa precisam de chaves próprias: copie
+`.env.docker.example` para `.env` na raiz e preencha. Sem elas, o resto funciona.
+
+**App mobile:** corre fora do Docker. Com o Docker ligado, em `apps/mobile`:
+
+```bash
+npm install
+# no .env da app, o IP do computador na rede (não "localhost", que no telemóvel é o próprio telemóvel):
+# EXPO_PUBLIC_API_URL=http://192.168.x.x:3000/api/v1
+npx expo start
+```
+
 ## Instalação
 
 Requisitos: Node.js 20+, PostgreSQL, npm (workspaces).
